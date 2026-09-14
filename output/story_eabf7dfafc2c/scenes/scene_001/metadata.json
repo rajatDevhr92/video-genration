@@ -1,0 +1,34 @@
+{
+  "scene_id": "scene_001",
+  "order": 1,
+  "character_ids": [
+    "character_001"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_eabf7dfafc2c/references/characters/arjun_character_001.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_eabf7dfafc2c/scenes/scene_001/composition.png",
+  "composition_source": "qwen_t2i",
+  "keyframe": "/workspace/story-video-engine/output/story_eabf7dfafc2c/scenes/scene_001/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_eabf7dfafc2c/scenes/scene_001/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_eabf7dfafc2c/scenes/scene_001/last_frame.png",
+  "previous_last_frame": null,
+  "composition_prompt_id": "30e15d76-8c98-4000-93c3-93d50f3335ed",
+  "keyframe_prompt_id": "503d3a88-d44d-4f8f-ada8-178c1d8099c7",
+  "video_prompt_id": "36a1a61f-c4b2-47a6-b0d3-7ab1f657cf72",
+  "video_generation_time_seconds": 104.3007664680481,
+  "scene_state": {
+    "scene_id": "scene_001",
+    "order": 1,
+    "location": "location_001",
+    "characters": [
+      "character_001"
+    ],
+    "weather": null,
+    "lighting": "Low-key ambient light with a strong central source from the lantern. Raindrops catch the light in soft glimmers. Shadows are deep and textured.",
+    "objects": {},
+    "notes": []
+  },
+  "audio": "/workspace/story-video-engine/output/story_eabf7dfafc2c/scenes/scene_001/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_eabf7dfafc2c/scenes/scene_001/video_with_audio.mp4"
+}

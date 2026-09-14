@@ -1,0 +1,37 @@
+{
+  "scene_id": "scene_003",
+  "order": 3,
+  "character_ids": [
+    "character_001",
+    "character_002"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_eabf7dfafc2c/references/characters/arjun_character_001.png",
+    "/workspace/story-video-engine/output/story_eabf7dfafc2c/references/characters/lila_character_002.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_eabf7dfafc2c/scenes/scene_003/composition.png",
+  "composition_source": "previous_video_last_frame",
+  "keyframe": "/workspace/story-video-engine/output/story_eabf7dfafc2c/scenes/scene_003/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_eabf7dfafc2c/scenes/scene_003/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_eabf7dfafc2c/scenes/scene_003/last_frame.png",
+  "previous_last_frame": "/workspace/story-video-engine/output/story_eabf7dfafc2c/scenes/scene_002/last_frame.png",
+  "composition_prompt_id": null,
+  "keyframe_prompt_id": "6008321e-34f5-42fa-a819-39b52420c841",
+  "video_prompt_id": "a1395068-90a2-4efe-9dea-8bb9b3040127",
+  "video_generation_time_seconds": 80.08128094673157,
+  "scene_state": {
+    "scene_id": "scene_003",
+    "order": 3,
+    "location": "location_001",
+    "characters": [
+      "character_001",
+      "character_002"
+    ],
+    "weather": null,
+    "lighting": "Lantern light remains the primary source, casting long shadows. Raindrops reflect the glow in the puddles.",
+    "objects": {},
+    "notes": []
+  },
+  "audio": "/workspace/story-video-engine/output/story_eabf7dfafc2c/scenes/scene_003/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_eabf7dfafc2c/scenes/scene_003/video_with_audio.mp4"
+}

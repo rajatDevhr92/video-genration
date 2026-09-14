@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+
+import argparse
+import json
+from pathlib import Path
+
+from app.story_planner import StoryPlanner
+from app.local_llm_provider import LocalLLMProvider
+
+
+BASE_DIR = Path(__file__).resolve().parent
+
+
+def main():
+
+    parser = argparse.ArgumentParser(
+        description="Convert a story into a structured scene plan."
+    )
+
+    parser.add_argument(
+        "--story",
+        required=True,
+        help="Story text",
+    )
+
+    parser.add_argument(
+        "--output",
+        default="output/story_plan.json",
+    )
+
+    args = parser.parse_args()
+
+    # --------------------------------------------------
+    # Create local LLM provider AFTER GPU is prepared
+    # --------------------------------------------------
+
+    planner = StoryPlanner(
+        provider=LocalLLMProvider()
+    )
+
+    print("\n[DEBUG] Calling StoryPlanner...")
+
+    plan = planner.build(args.story)
+
+    print(
+        "[DEBUG] StoryPlanner returned:",
+        type(plan),
+    )
+
+    output = BASE_DIR / args.output
+
+    print(
+        "[DEBUG] Preparing output:",
+        output,
+    )
+
+    output.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    print(
+        "[DEBUG] Opening output file for writing:",
+        output,
+    )
+
+    with open(
+        output,
+        "w",
+        encoding="utf-8",
+    ) as f:
+
+        print("[DEBUG] Writing JSON...")
+
+        json.dump(
+            plan,
+            f,
+            indent=2,
+            ensure_ascii=False,
+        )
+
+    print("=" * 70)
+    print("STORY PLAN CREATED")
+    print("=" * 70)
+
+    print(
+        f"Title:  {plan['title']}"
+    )
+
+    print(
+        f"Scenes: {len(plan['scenes'])}"
+    )
+
+    print(
+        f"Output: {output}"
+    )
+
+    print()
+    print("Scenes:")
+
+    for scene in plan["scenes"]:
+
+        print(
+            f"  {scene['order']:02d}. "
+            f"{scene['id']} "
+            f"({scene['duration']} sec)"
+        )
+
+
+if __name__ == "__main__":
+    main()

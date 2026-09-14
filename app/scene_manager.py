@@ -1,0 +1,918 @@
+import json
+import shutil
+
+from .composition_generator import CompositionGenerator
+from .config import OUTPUT_DIR
+from .keyframe_generator import KeyframeGenerator
+from .video_generator import VideoGenerator
+from .video_utils import extract_last_frame
+
+
+class SceneManager:
+
+    def __init__(self):
+        self.composition_generator = (
+            CompositionGenerator()
+        )
+
+        self.keyframe_generator = (
+            KeyframeGenerator()
+        )
+
+        self.video_generator = (
+            VideoGenerator()
+        )
+
+    @staticmethod
+    def build_motion_prompt(scene):
+        description = scene.get("description", "")
+        action = scene.get("action", "")
+        camera = scene.get("camera", "")
+        lighting = scene.get("lighting", "")
+
+        # Detect or force sexual continuity
+        sexual_keywords = [
+            "sex", "fuck", "penetrat", "oral", "blowjob", "cunnilingus",
+            "handjob", "masturbat", "nude", "naked", "breast", "pussy",
+            "cock", "penis", "vagina", "orgasm", "cum", "thrust", "moan"
+        ]
+        is_sexual = any(kw in (description + action).lower() for kw in sexual_keywords)
+
+        base = f"""
+Animate this established cinematic scene naturally.
+Scene:
+{description}
+Action:
+{action}
+Camera movement:
+{camera}
+Lighting:
+{lighting}
+
+The input keyframe is the visual authority for:
+- character identity
+- character clothing (or lack of clothing)
+- environment
+- architecture
+- spatial layout
+- lighting
+- weather
+- time of day
+- body positions and sexual contact if present
+
+Introduce realistic motion only.
+"""
+
+        if is_sexual:
+            base += """
+This is an explicit adult sexual scene. 
+Animate the exact sexual action visible in the keyframe with realistic, continuous motion:
+- Clear thrusting / penetration / oral / stroking motion
+- Natural body movement, hip motion, and muscle tension
+- Realistic movement of breasts, genitals, and any remaining clothing
+- Visible wetness and skin contact
+- Facial expressions of pleasure
+Do not stop the sexual activity.
+Do not add clothing.
+Do not fade to black.
+Do not change the sexual act into something non-sexual.
+Keep the motion physically believable and continuous for the full duration.
+"""
+        else:
+            base += """
+Natural human movement.
+Natural clothing movement.
+Physically believable environmental motion.
+Subtle atmospheric motion.
+Cinematic camera movement.
+"""
+
+        base += """
+Do not redesign the characters.
+Do not change their faces.
+Do not change their clothing (or lack of it).
+Do not change the location.
+Do not introduce additional characters.
+Do not create a different scene.
+Do not create a collage or split screen.
+"""
+        return base
+    
+#     @staticmethod
+#     def build_motion_prompt(scene):
+#         return f"""
+# Animate this established cinematic scene naturally.
+
+# Scene:
+# {scene.get("description", "")}
+
+# Action:
+# {scene.get("action", "")}
+
+# Camera movement:
+# {scene.get("camera", "")}
+
+# Lighting:
+# {scene.get("lighting", "")}
+
+# The input keyframe is the visual authority for:
+# - character identity
+# - character clothing
+# - environment
+# - architecture
+# - spatial layout
+# - lighting
+# - weather
+# - time of day
+
+# Introduce realistic motion only.
+
+# Natural human movement.
+# Natural clothing movement.
+# Physically believable rain.
+# Natural environmental motion.
+# Subtle atmospheric motion.
+# Cinematic camera movement.
+
+# Do not redesign the characters.
+# Do not change their faces.
+# Do not change their clothing.
+# Do not change the location.
+# Do not introduce additional characters.
+# Do not create a different scene.
+# Do not create a collage or split screen.
+# """
+
+    @staticmethod
+    def build_scene_state(
+        scene,
+        previous_state=None,
+    ):
+        """
+        Build explicit continuity state for the current scene.
+
+        State is intentionally derived from the story plan and
+        previous scene state. It does not invent persistent objects.
+        """
+        previous_state = previous_state or {}
+
+        state = {
+            "scene_id": scene.get("id"),
+            "order": scene.get("order"),
+            "location": scene.get(
+                "location_id"
+            ),
+            "characters": list(
+                scene.get(
+                    "character_ids",
+                    []
+                )
+            ),
+            "weather": scene.get(
+                "weather"
+            ),
+            "lighting": scene.get(
+                "lighting"
+            ),
+            "objects": dict(
+                previous_state.get(
+                    "objects",
+                    {}
+                )
+            ),
+            "notes": list(
+                previous_state.get(
+                    "notes",
+                    []
+                )
+            ),
+        }
+
+        # Optional continuity section generated by the planner.
+        continuity = scene.get(
+            "continuity"
+        )
+
+        if isinstance(continuity, dict):
+
+            persistent_objects = continuity.get(
+                "persistent_objects",
+                []
+            )
+
+            if isinstance(
+                persistent_objects,
+                list,
+            ):
+                for obj in persistent_objects:
+
+                    if not isinstance(
+                        obj,
+                        dict,
+                    ):
+                        continue
+
+                    obj_id = obj.get("id")
+
+                    if obj_id:
+                        state["objects"][obj_id] = obj
+
+            continuity_notes = continuity.get(
+                "notes",
+                []
+            )
+
+            if isinstance(
+                continuity_notes,
+                list,
+            ):
+                state["notes"].extend(
+                    continuity_notes
+                )
+
+            elif continuity_notes:
+                state["notes"].append(
+                    continuity_notes
+                )
+
+        return state
+
+    def generate_keyframes(
+        self,
+        job_id,
+        story_plan,
+        references,
+        start_scene=1,
+        end_scene=None,
+    ):
+        job_dir = OUTPUT_DIR / job_id
+
+        scenes = story_plan.get(
+            "scenes",
+            []
+        )
+
+        if not scenes:
+            raise RuntimeError(
+                "Story plan contains no scenes."
+            )
+
+        if end_scene is None:
+            end_scene = len(scenes)
+
+        results = []
+
+        previous_last_frame = None
+        previous_scene_state = None
+
+        character_map = {
+            character["id"]: character
+            for character in story_plan.get(
+                "characters",
+                []
+            )
+        }
+
+        for scene in scenes:
+
+            order = int(
+                scene["order"]
+            )
+
+            if order < start_scene:
+                continue
+
+            if order > end_scene:
+                break
+
+            scene_id = scene["id"]
+
+            # --------------------------------------------------
+            # Persistent scene state
+            # --------------------------------------------------
+
+            scene_state = (
+                self.build_scene_state(
+                    scene,
+                    previous_scene_state,
+                )
+            )
+
+            scene_dir = (
+                job_dir
+                / "scenes"
+                / scene_id
+            )
+
+            scene_dir.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+
+            composition_path = (
+                scene_dir
+                / "composition.png"
+            )
+
+            keyframe_path = (
+                scene_dir
+                / "keyframe.png"
+            )
+
+            video_path = (
+                scene_dir
+                / "video.mp4"
+            )
+
+            last_frame_path = (
+                scene_dir
+                / "last_frame.png"
+            )
+
+            # --------------------------------------------------
+            # Character references
+            # --------------------------------------------------
+
+            scene_character_ids = scene.get(
+                "character_ids",
+                []
+            )
+
+            character_refs = []
+            scene_characters = []
+
+            for char_id in scene_character_ids:
+
+                reference = references.get(
+                    char_id
+                )
+
+                if not reference:
+                    raise RuntimeError(
+                        f"No character reference found "
+                        f"for '{char_id}' in scene "
+                        f"'{scene_id}'."
+                    )
+
+                character_refs.append(
+                    reference
+                )
+
+                character = character_map.get(
+                    char_id
+                )
+
+                if character:
+                    scene_characters.append(
+                        character
+                    )
+
+            if not character_refs:
+                raise RuntimeError(
+                    f"Scene '{scene_id}' contains no characters."
+                )
+
+            if len(character_refs) > 3:
+                raise RuntimeError(
+                    f"Scene '{scene_id}' contains "
+                    f"{len(character_refs)} character references. "
+                    f"Maximum supported is 3."
+                )
+
+            # --------------------------------------------------
+            # Stage 1
+            #
+            # Scene 1:
+            #     Qwen T2I creates initial composition.
+            #
+            # Scene 2+:
+            #     Actual last frame of previous video is reused.
+            # --------------------------------------------------
+
+            if previous_last_frame is None:
+
+                print()
+                print("=" * 80)
+                print(
+                    f"SCENE {order}: "
+                    f"GENERATING INITIAL COMPOSITION"
+                )
+                print("=" * 80)
+
+                composition_result = (
+                    self.composition_generator.generate(
+                        scene=scene,
+                        characters=scene_characters,
+                        output_path=composition_path,
+                        seed=1000003 + order * 7919,
+                    )
+                )
+
+                base_image = (
+                    composition_path
+                )
+
+                base_source = (
+                    "qwen_t2i"
+                )
+
+            else:
+
+                print()
+                print("=" * 80)
+                print(
+                    f"SCENE {order}: "
+                    f"USING PREVIOUS VIDEO LAST FRAME"
+                )
+                print("=" * 80)
+
+                print(
+                    "Previous last frame:",
+                    previous_last_frame,
+                )
+
+                shutil.copy2(
+                    previous_last_frame,
+                    composition_path,
+                )
+
+                base_image = (
+                    composition_path
+                )
+
+                base_source = (
+                    "previous_video_last_frame"
+                )
+
+                composition_result = {
+                    "prompt_id": None
+                }
+
+            # --------------------------------------------------
+            # Stage 2: Qwen Image Edit
+            # --------------------------------------------------
+
+            print()
+            print("=" * 80)
+            print(
+                f"SCENE {order}: "
+                f"GENERATING CONTINUITY KEYFRAME"
+            )
+            print("=" * 80)
+
+            if previous_last_frame:
+
+                continuity_instruction = f"""
+This scene continues from the previous video last frame.
+You may change pose, clothing state, and sexual position as required by the NEW scene description and action.
+Do not simply copy the previous frame.
+Advance the sexual action according to the current scene.
+"""
+
+            else:
+
+                continuity_instruction = """
+This is the opening scene.
+
+Establish the visual world, characters,
+environment and cinematic language of the story.
+"""
+
+            keyframe_prompt = f"""
+Create ONE SINGLE photorealistic cinematic frame
+that represents the exact story moment described below.
+
+The generated image will become the visual starting point
+for the next video-generation stage.
+
+============================================================
+STORY MOMENT
+============================================================
+
+Scene description:
+{scene.get("description", "")}
+
+Action happening in this exact moment:
+{scene.get("action", "")}
+
+Camera direction:
+{scene.get("camera", "")}
+
+Lighting:
+{scene.get("lighting", "")}
+
+============================================================
+CONTINUITY
+============================================================
+
+{continuity_instruction}
+
+Continuity state:
+{json.dumps(
+    scene_state,
+    ensure_ascii=False,
+    indent=2,
+)}
+
+CRITICAL: This scene contains ONLY the characters listed in character_ids.
+Never add extra people.
+
+============================================================
+CHARACTER IDENTITY & COUNT
+============================================================
+Use the supplied character reference images as the
+PRIMARY identity authority.
+
+There are EXACTLY {len(character_refs)} characters in this scene.
+Do NOT add any extra people.
+Do NOT invent additional characters.
+Do NOT create background people.
+Do NOT create reflections that look like extra people.
+Do NOT create a third person.
+
+Preserve the exact identity of every supplied character:
+- facial structure
+- facial proportions
+- age
+- hairstyle
+- hair color
+- eye color
+- skin appearance
+- body proportions
+- clothing (or nudity) as required by the current scene
+- distinctive features
+- visual anchor
+
+Do NOT redesign the characters.
+Do NOT replace the characters.
+Do NOT merge characters.
+Do NOT create alternate versions of characters.
+Do NOT create look-alikes.
+
+============================================================
+STORY ACTION
+============================================================
+
+The image must visually represent the action described
+in the story.
+
+If a character is:
+
+- walking, show them walking
+- entering, show them entering
+- leaving, show them leaving
+- sitting, show them sitting
+- standing, show them standing
+- looking at someone, show the correct eyeline
+- holding something, show the correct object in their hand
+- touching something, show the interaction
+- reacting emotionally, show the appropriate facial expression
+- speaking to another character, show their physical interaction
+- running, show believable running posture
+- falling, show believable body position
+- hiding, show believable concealment
+- interacting with the environment, show that interaction
+
+
+
+Do not invent unrelated characters.
+
+Do not create events that are not described by the story.
+
+The frame must represent ONE specific moment,
+not several moments combined together.
+
+============================================================
+EXPLICIT SEXUAL CONTENT (CRITICAL)
+============================================================
+If the scene description or action contains sexual activity,
+you MUST show it clearly and photorealistically:
+
+- Correct sexual position and body contact
+- Visible genitals / penetration / oral contact when described
+- Realistic wetness and physical interaction
+- Correct facial expressions of pleasure
+
+Do NOT:
+- Keep clothes on when the action requires nudity
+- Soften or censor the sexual act
+- Turn the scene non-sexual
+- Create a different action than the one written
+
+============================================================
+ENVIRONMENT
+============================================================
+
+The environment must remain consistent with the story.
+
+Preserve and correctly depict:
+
+- location
+- architecture
+- furniture
+- important props
+- weather
+- time of day
+- atmosphere
+- spatial relationships
+- background elements
+- foreground elements
+
+Objects mentioned by the story should appear when
+they are relevant to the current visual moment.
+
+============================================================
+CAMERA
+============================================================
+
+Follow the requested camera direction:
+
+{scene.get("camera", "")}
+
+Use exactly ONE physical camera.
+
+ONE viewpoint.
+
+ONE shot.
+
+ONE continuous photographic frame.
+
+Do not show alternate camera angles.
+
+Do not show multiple viewpoints.
+
+============================================================
+LIGHTING
+============================================================
+
+Follow the requested lighting:
+
+{scene.get("lighting", "")}
+
+Lighting must remain physically believable and consistent
+with the environment, weather and time of day.
+
+============================================================
+CINEMATIC QUALITY
+============================================================
+
+Photorealistic live-action feature-film appearance.
+
+Realistic human anatomy.
+
+Realistic facial proportions.
+
+Realistic skin texture.
+
+Realistic hair.
+
+Realistic clothing materials.
+
+Realistic environments.
+
+Natural perspective.
+
+Natural depth of field.
+
+Physically believable lighting.
+
+Natural shadows.
+
+Subtle cinematic color grading.
+
+High-end feature-film cinematography.
+
+The image must look like an actual frame captured
+from a professionally produced live-action movie.
+
+============================================================
+STRICT IMAGE RULES
+============================================================
+
+ONE image.
+
+ONE moment.
+
+ONE continuous frame.
+
+ONE camera.
+
+ONE viewpoint.
+
+No character sheet.
+
+No reference sheet.
+
+No turnaround sheet.
+
+No multiple views.
+
+No alternate poses.
+
+No collage.
+
+No split screen.
+
+No storyboard.
+
+No comic panels.
+
+No multiple panels.
+
+No duplicate characters.
+
+No duplicated faces.
+
+No duplicated bodies.
+
+No mirrored characters.
+
+No double exposure.
+
+No picture-in-picture.
+
+No montage.
+
+No unrelated people.
+
+No text.
+
+No captions.
+
+No subtitles.
+
+No labels.
+
+No watermark.
+
+No logo.
+
+Generate the exact cinematic story moment
+while preserving character and scene continuity.
+"""
+
+            keyframe_result = (
+                self.keyframe_generator.generate(
+                    scene_image=base_image,
+                    character_references=character_refs,
+                    prompt=keyframe_prompt,
+                    output_path=keyframe_path,
+                    seed=2000003 + order * 7919,
+                )
+            )
+
+            # --------------------------------------------------
+            # Stage 3: Wan 2.2 I2V
+            # --------------------------------------------------
+
+            print()
+            print("=" * 80)
+            print(
+                f"SCENE {order}: "
+                f"GENERATING WAN 2.2 VIDEO"
+            )
+            print("=" * 80)
+
+            motion_prompt = (
+                self.build_motion_prompt(
+                    scene
+                )
+            )
+
+            video_result = (
+                self.video_generator.generate(
+                    keyframe=keyframe_path,
+                    motion_prompt=motion_prompt,
+                    output_path=video_path,
+                    seed=3000003 + order * 7919,
+                )
+            )
+
+            # --------------------------------------------------
+            # Stage 4: extract ACTUAL final video frame
+            # --------------------------------------------------
+
+            print()
+            print("=" * 80)
+            print(
+                f"SCENE {order}: "
+                f"EXTRACTING LAST FRAME"
+            )
+            print("=" * 80)
+
+            extract_last_frame(
+                video_path,
+                last_frame_path,
+            )
+
+            # --------------------------------------------------
+            # Metadata
+            # --------------------------------------------------
+
+            metadata = {
+                "scene_id": scene_id,
+                "order": order,
+
+                "character_ids": (
+                    scene_character_ids
+                ),
+
+                "character_references": (
+                    character_refs
+                ),
+
+                "composition": (
+                    str(
+                        composition_path
+                    )
+                ),
+
+                "composition_source": (
+                    base_source
+                ),
+
+                "keyframe": (
+                    str(
+                        keyframe_path
+                    )
+                ),
+
+                "video": (
+                    str(
+                        video_path
+                    )
+                ),
+
+                "last_frame": (
+                    str(
+                        last_frame_path
+                    )
+                ),
+
+                "previous_last_frame": (
+                    str(
+                        previous_last_frame
+                    )
+                    if previous_last_frame
+                    else None
+                ),
+
+                "composition_prompt_id": (
+                    composition_result.get(
+                        "prompt_id"
+                    )
+                ),
+
+                "keyframe_prompt_id": (
+                    keyframe_result.get(
+                        "prompt_id"
+                    )
+                ),
+
+                "video_prompt_id": (
+                    video_result.get(
+                        "prompt_id"
+                    )
+                ),
+
+                "video_generation_time_seconds": (
+                    video_result.get(
+                        "generation_time_seconds"
+                    )
+                ),
+
+                "scene_state": (
+                    scene_state
+                ),
+            }
+
+            with open(
+                scene_dir / "metadata.json",
+                "w",
+                encoding="utf-8",
+            ) as f:
+                json.dump(
+                    metadata,
+                    f,
+                    indent=2,
+                    ensure_ascii=False,
+                )
+
+            results.append(
+                metadata
+            )
+
+            # --------------------------------------------------
+            # Current scene becomes continuity state
+            # for the next scene.
+            # --------------------------------------------------
+
+            previous_last_frame = (
+                last_frame_path
+            )
+
+            previous_scene_state = (
+                scene_state
+            )
+
+        return results

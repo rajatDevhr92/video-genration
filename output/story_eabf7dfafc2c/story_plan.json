@@ -1,0 +1,291 @@
+{
+  "title": "The Lantern Keeper",
+  "summary": "A kind villager named Arjun helps a lost little girl find her way home on a rainy night, only to discover that his old lantern no longer works—yet he realizes that compassion is the true light.",
+  "characters": [
+    {
+      "id": "character_001",
+      "name": "Arjun",
+      "appearance": "Adult man, 42 years old, male, warm brown skin, oval face with faint wrinkles around eyes, deep-set dark brown eyes, short black hair with silver streaks, lean but strong build, slight stoop from years of carrying a lantern, small scar on left temple from childhood accident",
+      "clothing": "Dark brown woolen coat with a high collar, faded gray trousers, leather boots, and a worn leather satchel slung across his shoulder",
+      "personality": "Gentle, patient, quietly observant, deeply empathetic, speaks little but acts with quiet resolve",
+      "visual_anchor": "Adult man, short black hair with silver streaks, deep-set dark brown eyes, warm brown skin, lean strong build, small scar on left temple, wearing a dark brown woolen coat with high collar"
+    },
+    {
+      "id": "character_002",
+      "name": "Lila",
+      "appearance": "Adult girl, 8 years old, female, fair skin with freckles across nose and cheeks, round face with wide hazel eyes, long chestnut brown hair in two messy braids, small frame, bare feet with muddy toes, one missing front tooth",
+      "clothing": "Blue cotton dress with white polka dots, one strap broken, muddy at the hem",
+      "personality": "Shy, frightened, quiet but observant, speaks in soft whispers, clings to small objects for comfort",
+      "visual_anchor": "Child girl, fair skin with freckles, hazel eyes, long chestnut brown hair in two braids, small frame, wearing a blue cotton dress with white polka dots"
+    }
+  ],
+  "locations": [
+    {
+      "id": "location_001",
+      "name": "Village Path at Night",
+      "description": "A narrow dirt road winding through a quiet rural village, lined with old stone houses and overgrown hedges. Puddles reflect dim lantern light. Rain falls steadily, creating a soft drumming sound on the ground.",
+      "visual_style": "Moody, cinematic, low-key lighting, soft focus on background, rain-slicked ground, muted earth tones with occasional pops of color from lantern glow"
+    },
+    {
+      "id": "location_002",
+      "name": "Lila's House",
+      "description": "A small blue-painted cottage with a red door, wooden shutters, and a small porch. A single window glows with warm light. A wooden swing hangs from a tree beside the path.",
+      "visual_style": "Cozy, intimate, warm lighting, soft bokeh on background, slightly weathered wood, glowing window light casting soft shadows"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "scene_001",
+      "order": 1,
+      "duration": 12,
+      "location_id": "location_001",
+      "character_ids": [
+        "character_001"
+      ],
+      "description": "Arjun walks slowly down a rain-soaked village path, his old lantern casting a weak yellow glow. The rain falls steadily, and the world is quiet except for the sound of dripping leaves and distant thunder. His coat is damp, and he pulls the collar higher.",
+      "action": "Arjun walks forward, head slightly lowered, one hand holding the lantern, the other gripping the satchel. His boots splash through puddles. He pauses, glancing around as if listening.",
+      "camera": "Medium tracking shot from behind, following Arjun’s back as he walks. Slight handheld shake to simulate rain and movement.",
+      "lighting": "Low-key ambient light with a strong central source from the lantern. Raindrops catch the light in soft glimmers. Shadows are deep and textured.",
+      "video_prompt": "Arjun walks slowly down the wet path, lantern bobbing slightly. Rain falls in soft sheets. His coat flaps slightly with each step. Camera follows from behind, slightly shaky to convey motion and weather.",
+      "audio": {
+        "narration": [
+          {
+            "text": "Every evening, Arjun walked through the quiet village carrying an old lantern.",
+            "voice": "alloy"
+          }
+        ],
+        "dialogue": [],
+        "sound_effects": [
+          "rain falling",
+          "distant thunder",
+          "boots splashing in puddles",
+          "soft creak of lantern chain"
+        ],
+        "music": {
+          "mood": "melancholy",
+          "intensity": "low"
+        }
+      }
+    },
+    {
+      "id": "scene_002",
+      "order": 2,
+      "duration": 10,
+      "location_id": "location_001",
+      "character_ids": [
+        "character_001",
+        "character_002"
+      ],
+      "description": "Arjun stops abruptly. In the dim light, he sees a small girl huddled under a broken awning, shivering. She wears a blue dress, one strap dangling, her feet bare and muddy. She looks up at him with wide, frightened eyes.",
+      "action": "Arjun turns toward the girl, lowering the lantern slightly. He crouches slowly, extending his hand. The girl flinches but doesn’t move.",
+      "camera": "Close-up on the girl’s face, then a medium two-shot from the side as Arjun crouches. Slow push-in on their eyes.",
+      "lighting": "Lantern light casts a warm pool around Arjun, illuminating the girl’s face partially. Rain blurs the background.",
+      "video_prompt": "Arjun crouches slowly, hand extended. The girl flinches but stays still. Lantern light flickers on her face. Camera slowly pushes in on their eyes.",
+      "audio": {
+        "narration": [
+          {
+            "text": "One rainy night, he noticed a little girl sitting alone beside the road.",
+            "voice": "alloy"
+          }
+        ],
+        "dialogue": [],
+        "sound_effects": [
+          "rain intensifying",
+          "girl’s soft whimper",
+          "crack of distant lightning"
+        ],
+        "music": {
+          "mood": "tense",
+          "intensity": "medium"
+        }
+      },
+      "continuity": {
+        "character_001": {
+          "position": "center frame, crouched slightly",
+          "lighting": "lantern glow on face"
+        },
+        "character_002": {
+          "position": "left side, hunched, face partially lit"
+        }
+      }
+    },
+    {
+      "id": "scene_003",
+      "order": 3,
+      "duration": 15,
+      "location_id": "location_001",
+      "character_ids": [
+        "character_001",
+        "character_002"
+      ],
+      "description": "Arjun takes the girl’s hand. They walk together through the dark, wet streets. He keeps the lantern low, shielding her from the rain. She walks close, her small fingers gripping his. The path stretches ahead, endless.",
+      "action": "Arjun walks forward, holding the girl’s hand. He adjusts his coat to cover her slightly. She looks up at him, then back at the ground.",
+      "camera": "Side tracking shot, slightly low angle. Follows their feet and hands. Rain streaks across the lens.",
+      "lighting": "Lantern light remains the primary source, casting long shadows. Raindrops reflect the glow in the puddles.",
+      "video_prompt": "Arjun and the girl walk side by side. His hand holds hers. Rain falls steadily. Camera tracks their feet and hands, lens slightly blurred by rain.",
+      "audio": {
+        "narration": [
+          {
+            "text": "She had lost her way home. Arjun offered his hand and walked with her through the dark streets.",
+            "voice": "alloy"
+          }
+        ],
+        "dialogue": [],
+        "sound_effects": [
+          "rain falling",
+          "boots on wet ground",
+          "soft breathing",
+          "distant dog bark"
+        ],
+        "music": {
+          "mood": "hopeful",
+          "intensity": "medium"
+        }
+      },
+      "continuity": {
+        "character_001": {
+          "position": "walking forward, hand extended",
+          "lighting": "lantern glow on side of face"
+        },
+        "character_002": {
+          "position": "slightly behind, hand in his",
+          "clothing": "blue dress, muddy hem"
+        }
+      }
+    },
+    {
+      "id": "scene_004",
+      "order": 4,
+      "duration": 8,
+      "location_id": "location_002",
+      "character_ids": [
+        "character_001",
+        "character_002"
+      ],
+      "description": "They stop before a small blue house. The front door opens. A woman in a nightgown and a man in a robe stand there, eyes wide with relief. The girl runs to them, sobbing.",
+      "action": "The girl breaks free and runs into the woman’s arms. The man steps forward, gripping Arjun’s shoulder. The woman kisses the girl’s forehead.",
+      "camera": "Wide shot from the front, showing the house and the family reunion. Slow zoom in on the girl’s face as she runs.",
+      "lighting": "Warm golden light spills from the doorway. Rain continues outside, creating a contrast between warmth and cold.",
+      "video_prompt": "Girl runs toward the door. Woman catches her. Man steps forward, grips Arjun’s shoulder. Camera zooms in on the girl’s tear-streaked face.",
+      "audio": {
+        "narration": [
+          {
+            "text": "They searched for nearly an hour until they reached a small blue house.",
+            "voice": "alloy"
+          }
+        ],
+        "dialogue": [
+          {
+            "character_id": "character_002",
+            "text": "Mama!"
+          }
+        ],
+        "sound_effects": [
+          "door creaking open",
+          "girl’s sobbing",
+          "woman’s soft cry"
+        ],
+        "music": {
+          "mood": "emotional",
+          "intensity": "high"
+        }
+      },
+      "continuity": {
+        "character_001": {
+          "position": "standing at edge of porch",
+          "lighting": "golden glow on face"
+        },
+        "character_002": {
+          "position": "running toward door",
+          "clothing": "blue dress, muddy"
+        }
+      }
+    },
+    {
+      "id": "scene_005",
+      "order": 5,
+      "duration": 10,
+      "location_id": "location_002",
+      "character_ids": [
+        "character_001",
+        "character_002"
+      ],
+      "description": "The parents thank Arjun, their voices thick with emotion. The girl clings to her mother, peeking back at Arjun with a small smile. He nods, then turns to leave.",
+      "action": "The man shakes Arjun’s hand firmly. The woman hugs him briefly. The girl waves shyly. Arjun walks back down the path.",
+      "camera": "Medium two-shot of Arjun and the parents, then a wide shot as he turns to leave. Slow fade to black.",
+      "lighting": "Warm interior light fades into the dark night. Arjun’s silhouette is outlined by the door’s glow.",
+      "video_prompt": "Arjun shakes hands with the man. Woman hugs him. Girl waves. Arjun turns and walks away. Camera lingers on his back as he disappears into the rain.",
+      "audio": {
+        "narration": [
+          {
+            "text": "The girl’s parents opened the door, worried and relieved. They thanked Arjun for helping their daughter.",
+            "voice": "alloy"
+          }
+        ],
+        "dialogue": [
+          {
+            "character_id": "character_001",
+            "text": "You’re welcome."
+          },
+          {
+            "character_id": "character_002",
+            "text": "Thank you..."
+          }
+        ],
+        "sound_effects": [
+          "door closing softly",
+          "rain continuing",
+          "distant wind"
+        ],
+        "music": {
+          "mood": "bittersweet",
+          "intensity": "low"
+        }
+      },
+      "continuity": {
+        "character_001": {
+          "position": "walking away from house",
+          "lighting": "silhouette in rain"
+        }
+      }
+    },
+    {
+      "id": "scene_006",
+      "order": 6,
+      "duration": 8,
+      "location_id": "location_001",
+      "character_ids": [
+        "character_001"
+      ],
+      "description": "The next morning, Arjun stands in the same path, holding his lantern. The light is gone—no glow, no flicker. He looks at it, then smiles faintly, gazing into the distance.",
+      "action": "Arjun holds the lantern up, then lowers it. He looks at it, then slowly smiles, as if understanding something profound.",
+      "camera": "Close-up on the lantern, then a slow pull back to reveal Arjun’s face. Sunlight breaks through clouds.",
+      "lighting": "Soft morning light, golden and clear. No lantern glow. Shadows are sharp and defined.",
+      "video_prompt": "Arjun holds the dead lantern. He looks at it, then slowly smiles. Camera pulls back to show his face in sunlight. Birds chirp.",
+      "audio": {
+        "narration": [
+          {
+            "text": "The next morning, Arjun discovered that his old lantern had stopped working. However, he smiled because he realized something important: sometimes, we do not need a light to guide others. Kindness itself can brighten the darkest path.",
+            "voice": "alloy"
+          }
+        ],
+        "dialogue": [],
+        "sound_effects": [
+          "birds chirping",
+          "distant breeze",
+          "soft rustle of coat"
+        ],
+        "music": {
+          "mood": "peaceful",
+          "intensity": "low"
+        }
+      },
+      "continuity": {
+        "character_001": {
+          "position": "center frame, holding lantern",
+          "lighting": "sunlight on face"
+        }
+      }
+    }
+  ]
+}

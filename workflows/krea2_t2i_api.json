@@ -1,0 +1,119 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "gonzaLomoKrea2_v30_bf16.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+
+  "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_4b_bf16.safetensors",
+      "type": "krea2"
+    }
+  },
+
+  "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    }
+  },
+
+  "4": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "shift": 4
+    }
+  },
+
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "A cinematic photorealistic film still of a detective investigating an abandoned observatory during a violent thunderstorm, massive telescope in the center of the observatory, rain streaming down the glass windows, dramatic lightning illuminating the room, mysterious scientific equipment, realistic human anatomy, detailed clothing, atmospheric cinematic lighting, high-end feature film cinematography, realistic skin, natural depth of field, 16:9 composition",
+      "clip": [
+        "2",
+        0
+      ]
+    }
+  },
+
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "low quality, blurry, distorted anatomy, deformed hands, extra limbs, duplicate people, duplicated characters, collage, split screen, storyboard, multiple panels, multiple views, multiple camera angles, double exposure, mirrored image, text, subtitles, captions, watermark, logo",
+      "clip": [
+        "2",
+        0
+      ]
+    }
+  },
+
+  "7": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 1280,
+      "height": 720,
+      "batch_size": 1
+    }
+  },
+
+  "8": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "4",
+        0
+      ],
+      "seed": 123456789,
+      "steps": 6,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "beta",
+      "positive": [
+        "5",
+        0
+      ],
+      "negative": [
+        "6",
+        0
+      ],
+      "latent_image": [
+        "7",
+        0
+      ],
+      "denoise": 1.0
+    }
+  },
+
+  "9": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "8",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    }
+  },
+
+  "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "9",
+        0
+      ],
+      "filename_prefix": "krea2_local_test"
+    }
+  }
+}
