@@ -169,6 +169,7 @@ class KeyframeGenerator:
 
             # --------------------------------------------------
             # Identity + continuity prompt
+            # Positive & Negative prompts (Node 13 = Positive, Node 9 = Negative)
             # --------------------------------------------------
 
             workflow["9"]["inputs"]["prompt"] = (
@@ -176,6 +177,11 @@ class KeyframeGenerator:
                 "eye color, skin appearance, body build, and identity of each "
                 "character from their respective reference image. "
                 "Maintain background environment and scene layout from Image 1."
+                "Do NOT render female clothing (bras, sports tops, lingerie, skirts, bikinis) on male characters. "
+                "Do NOT swap clothing items or outfits between characters. "
+                "Do NOT render extra people, extra phantom legs, extra arms, duplicate bodies, or ghost limbs from Image 1. "
+                "Do NOT distort character torsos, merge body parts, twist limbs unphysically, or create split screen / collages. "
+                "No text, no watermarks, no subtitles, no bad anatomy, no extra legs on the bed."
             )
 
             workflow["13"]["inputs"]["prompt"] = prompt

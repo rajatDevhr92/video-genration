@@ -431,30 +431,28 @@ Optionally include:
 Do NOT make these fields unnecessarily long.
 
 ============================================================
-SCENE DESCRIPTION
+SCENE DESCRIPTION & ACTION TRANSITIONS
 ============================================================
 
 Describe only what is physically visible.
 
-Keep each scene description concise. 
+Keep each scene description concise (approximately 80 words).
 
-Maximum target:
+If characters change body posture or spatial position between scenes (e.g. moving from standing to lying down, turning around, crawling over each other, or rotating position), state their exact new body orientation clearly so keyframe and animation pipelines maintain body integrity and smooth motion.
 
-approximately 80 words.
-
-If the scene is sexual, describe the sexual action explicitly
+If the scene is sexual, describe the sexual action explicitly.
 
 ============================================================
 ACTION
 ============================================================
 
-Describe the main visible action.
+Describe the main visible action clearly and continuously.
 
 Maximum target:
 
 approximately 50 words.
 
-If the scene is sexual, describe the sexual action explicitly
+If the scene is sexual, describe the sexual action explicitly.
 
 ============================================================
 CAMERA

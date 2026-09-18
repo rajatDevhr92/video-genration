@@ -212,8 +212,57 @@ Do not change the location.
 Do not introduce additional characters.
 Do not create a different scene.
 Do not create a collage or split screen.
+
+STRICT ANATOMICAL STABILITY & MOTION RULES:
+- Maintain complete anatomical integrity: realistic skeletal joint motion, correct body proportions, and intact human anatomy.
+- No unphysical torso twisting, no detached or duplicate limbs, no ghosting or merging of character bodies.
+- Animate character physical interactions with realistic weight, smooth transitions, and natural skin contact.
 """
         return base
+
+    @staticmethod
+    def detect_pose_or_angle_transition(
+        scene,
+        previous_scene_state=None,
+        previous_character_states=None,
+    ):
+        """
+        Detects if the scene involves a significant body pose, spatial orientation, or camera shot transition
+        that requires elevated denoise (0.65) to prevent ghosting or posture distortion.
+        """
+        if not previous_scene_state:
+            return False
+
+        action_text = f"{scene.get('description', '')} {scene.get('action', '')} {scene.get('camera', '')}".lower()
+
+        # Keywords indicating posture / physical orientation changes
+        pose_keywords = [
+            "roll", "crawl", "turn", "straddle", "lie down", "lying", "climb", "rotate",
+            "flip", "mount", "kneel", "kneeling", "on back", "behind", "shift", "reposition",
+            "spin", "swap", "over", "under", "across", "sideways", "standing up", "sit up",
+            "lay down", "doggy", "missionary", "cowgirl", "69", "spooning", "cradled", "bent over"
+        ]
+
+        # Camera angle change keywords that alter perspective significantly
+        camera_keywords = [
+            "overhead", "close-up", "wide shot", "side view", "reverse angle", "angle shift",
+            "high angle", "low angle", "pan around", "zoom in", "tracking shot"
+        ]
+
+        if any(kw in action_text for kw in pose_keywords + camera_keywords):
+            return True
+
+        # Check explicit continuity pose diff if available
+        current_continuity = scene.get("continuity", {})
+        if isinstance(current_continuity, dict) and previous_character_states:
+            for char_id, curr_char_data in current_continuity.items():
+                if isinstance(curr_char_data, dict):
+                    curr_pose = curr_char_data.get("pose", "").lower()
+                    prev_pose = previous_character_states.get(char_id, {}).get("current_pose", "").lower()
+                    if curr_pose and prev_pose and curr_pose != prev_pose:
+                        return True
+
+        return False
 
     @staticmethod
     def build_scene_state(
@@ -373,6 +422,12 @@ Do not create a collage or split screen.
             prev_loc = previous_scene_state.get("location") if previous_scene_state else None
             curr_loc = location_id
 
+            has_pose_transition = self.detect_pose_or_angle_transition(
+                scene=scene,
+                previous_scene_state=previous_scene_state,
+                previous_character_states=previous_character_states,
+            )
+
             if previous_last_frame is None:
                 # Opening scene
                 active_denoise = 0.70
@@ -392,15 +447,20 @@ Do not create a collage or split screen.
             else:
                 # Subsequent scene
                 if prev_loc and curr_loc and prev_loc == curr_loc:
-                    # Same location -> preserve room background & layout
-                    active_denoise = 0.50
+                    if has_pose_transition:
+                        active_denoise = 0.65
+                        logger.info(
+                            f"[DENOISE] Same location but pose/angle transition detected in scene {order} -> boosted denoise to {active_denoise}"
+                        )
+                    else:
+                        active_denoise = 0.50
                 else:
                     # New location -> allow room transition
                     active_denoise = 0.65
 
                 print()
                 print("=" * 80)
-                print(f"SCENE {order}: USING PREVIOUS VIDEO LAST FRAME (denoise={active_denoise})")
+                print(f"SCENE {order}: USING PREVIOUS VIDEO LAST FRAME (denoise={active_denoise}, pose_transition={has_pose_transition})")
                 print("=" * 80)
                 print("Previous last frame:", previous_last_frame)
 
@@ -422,15 +482,45 @@ Do not create a collage or split screen.
                 char_obj = character_map.get(char_id, {})
                 c_name = char_obj.get("name", char_id)
                 c_anchor = char_obj.get("visual_anchor", char_obj.get("appearance", ""))
+                c_gender = "male" if "man" in c_anchor.lower() or "male" in c_anchor.lower() else ("female" if "woman" in c_anchor.lower() or "female" in c_anchor.lower() else "person")
                 slot_num = idx + 1
                 image_mapping_lines.append(
                     f"Image {slot_num}: Reference image authority for character '{c_name}' (ID: {char_id})."
+                    f"Image {slot_num}: Reference image authority for character '{c_name}' (ID: {char_id}, Gender: {c_gender.upper()})."
                 )
                 image_mapping_lines.append(
                     f"  -> Copy {c_name}'s face, eyes, hair, facial structure, skin tone, and body build strictly from Image {slot_num}."
+                    f"  -> Copy {c_name}'s face, eyes, hair, facial structure, skin tone, gender ({c_gender}), and body build strictly from Image {slot_num}."
+                )
+                image_mapping_lines.append(
+                    f"  -> CRITICAL: Keep {c_name}'s upper body anatomy and clothing state appropriate for {c_name} ({c_gender}). Do NOT render female sports tops, bras, or lingerie on male characters!"
                 )
 
             image_mapping_block = "\n".join(image_mapping_lines)
+
+            # Build human count & phantom limb elimination block
+            char_names_str = ", ".join([character_map.get(cid, {}).get("name", cid) for cid in scene_character_ids])
+            human_count_block = f"""
+=========================================================
+STRICT HUMAN COUNT & PHANTOM LIMB ELIMINATION
+=========================================================
+- EXACTLY {len(scene_character_ids)} PERSON(S) IN THIS SCENE: {char_names_str}.
+- DO NOT render a 3rd person, phantom extra legs on the bed, extra arms, or duplicate bodies from Image 1.
+- Fully overwrite and erase any old character body positions or legs on the bed/furniture from Image 1.
+"""
+
+            # Build pose transition guidance block if pose shift is detected
+            pose_transition_instruction = ""
+            if has_pose_transition and previous_last_frame:
+                pose_transition_instruction = """
+=========================================================
+POSE & POSITION TRANSITION INSTRUCTION
+=========================================================
+- THIS SCENE INVOLVES A CHARACTER POSE OR POSITION TRANSITION.
+- Completely redraft character body postures, limbs, and spatial orientations as requested in the new scene description.
+- DO NOT ghost or blend the new poses on top of old body shapes from Image 1. Re-render clean, anatomically perfect character bodies in their new positions.
+- Retain room architecture, background layout, and lighting from Image 1, but rebuild character body postures cleanly.
+"""
 
             # Stage 2: Keyframe Generation
             print()
@@ -442,7 +532,7 @@ Do not create a collage or split screen.
                 continuity_instruction = f"""
 This scene continues from the previous video last frame (Image 1).
 Preserve the exact room layout, furniture, background architecture, and lighting from Image 1.
-Preserve character poses and clothing states from the previous scene unless the NEW scene description explicitly requires a change.
+Preserve character clothing states from the previous scene unless the NEW scene description explicitly requires a change.
 Advance the scene action smoothly while maintaining character identity from the reference images.
 """
             else:
@@ -456,6 +546,8 @@ Create ONE SINGLE photorealistic cinematic frame
 that represents the exact story moment described below.
 
 {image_mapping_block}
+
+{human_count_block}
 
 =========================================================
 STORY MOMENT
@@ -483,7 +575,7 @@ Time of day:
 CONTINUITY INSTRUCTIONS
 =========================================================
 {continuity_instruction}
-
+{pose_transition_instruction}
 Per-Character Continuity State:
 {json.dumps(scene_state.get("character_current_states", {}), ensure_ascii=False, indent=2)}
 
@@ -491,6 +583,8 @@ Per-Character Continuity State:
 - Place the characters in the scene and render their faces strictly matching their corresponding reference images (Image 2, Image 3, etc.).
 - Do NOT swap character faces between characters.
 - Do NOT introduce unscripted people or background faces.
+- Do NOT swap character faces or clothing between characters.
+- Do NOT introduce unscripted people, extra legs, or background faces.
 
 ============================================================
 STRICT IMAGE RULES
