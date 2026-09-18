@@ -1,0 +1,57 @@
+{
+  "scene_id": "scene_004",
+  "order": 4,
+  "character_ids": [
+    "character_001"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_59e37d9dabeb/references/characters/elena_character_001.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_004/composition.png",
+  "composition_source": "previous_video_last_frame",
+  "keyframe": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_004/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_004/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_004/last_frame.png",
+  "previous_last_frame": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_003/last_frame.png",
+  "composition_prompt_id": null,
+  "keyframe_prompt_id": "0a81565c-c4f3-4fa2-a298-dbbab7987a12",
+  "video_prompt_id": "6bc51c98-cc60-4c15-aeb9-c314da579a74",
+  "video_generation_time_seconds": 82.12280058860779,
+  "scene_state": {
+    "scene_id": "scene_004",
+    "order": 4,
+    "location": "location_001",
+    "characters": [
+      "character_001"
+    ],
+    "weather": null,
+    "lighting": "Soft amber glow, with highlights on her nipples and the curve of her breast, shadows deepening under her arms.",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {
+        "current_clothing_state": "nude",
+        "current_pose": "standing upright, hands at waist"
+      }
+    },
+    "time_of_day": null,
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.65,
+  "story_id": "story_59e37d9dabeb",
+  "scene_segment": "Elena cups her left breast, pinching the nipple between her thumb and forefinger",
+  "characters_used": [
+    "character_001"
+  ],
+  "location": "location_001",
+  "action": "Her right hand cups her left breast, fingers circling the nipple, then pinching it with increasing pressure. She moans, her back arching, hips rolling. Her left hand travels down her stomach, nails lightly scratching her skin.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nIMAGE SLOT ASSIGNMENT & IDENTITY AU",
+  "generated_video": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_004/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_004/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_004/video_with_audio.mp4"
+}

@@ -1,0 +1,57 @@
+{
+  "scene_id": "scene_012",
+  "order": 12,
+  "character_ids": [
+    "character_001"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_59e37d9dabeb/references/characters/elena_character_001.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_012/composition.png",
+  "composition_source": "previous_video_last_frame",
+  "keyframe": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_012/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_012/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_012/last_frame.png",
+  "previous_last_frame": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_011/last_frame.png",
+  "composition_prompt_id": null,
+  "keyframe_prompt_id": "36f9c41a-ec22-42fb-bc73-010b358fe1ec",
+  "video_prompt_id": "df139835-a13a-45e5-8b80-56b94865d7b6",
+  "video_generation_time_seconds": 82.3011462688446,
+  "scene_state": {
+    "scene_id": "scene_012",
+    "order": 12,
+    "location": "location_001",
+    "characters": [
+      "character_001"
+    ],
+    "weather": null,
+    "lighting": "Warm amber light, soft and gentle, highlighting the sweat and the wetness on her fingers.",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {
+        "current_clothing_state": "nude",
+        "current_pose": "standing upright, hands at waist"
+      }
+    },
+    "time_of_day": null,
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.65,
+  "story_id": "story_59e37d9dabeb",
+  "scene_segment": "She slowly withdraws her hand, the wet suction pop filling the room. She collaps",
+  "characters_used": [
+    "character_001"
+  ],
+  "location": "location_001",
+  "action": "She slowly pulls her fingers out of her pussy, the wet suction pop echoing. She collapses back, chest heaving. She brings her fingers to her lips, licking them slowly.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nIMAGE SLOT ASSIGNMENT & IDENTITY AU",
+  "generated_video": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_012/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_012/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_012/video_with_audio.mp4"
+}

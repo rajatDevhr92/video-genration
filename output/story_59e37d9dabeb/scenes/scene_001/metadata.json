@@ -1,0 +1,57 @@
+{
+  "scene_id": "scene_001",
+  "order": 1,
+  "character_ids": [
+    "character_001"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_59e37d9dabeb/references/characters/elena_character_001.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_001/composition.png",
+  "composition_source": "qwen_t2i",
+  "keyframe": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_001/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_001/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_001/last_frame.png",
+  "previous_last_frame": null,
+  "composition_prompt_id": "d1904ea4-5bb5-43cb-8dbe-3a2f3bfc38bb",
+  "keyframe_prompt_id": "12cfb661-31b5-48de-b0af-a00235a08a90",
+  "video_prompt_id": "0bae1a00-01cb-4478-8783-7c0ee6d205d5",
+  "video_generation_time_seconds": 110.19664740562439,
+  "scene_state": {
+    "scene_id": "scene_001",
+    "order": 1,
+    "location": "location_001",
+    "characters": [
+      "character_001"
+    ],
+    "weather": null,
+    "lighting": "Soft amber glow from the bedside lamp, casting gentle shadows on her skin, highlighting her curves and the flush on her cheeks.",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {
+        "current_clothing_state": "nude",
+        "current_pose": "standing upright, hands at waist"
+      }
+    },
+    "time_of_day": null,
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.7,
+  "story_id": "story_59e37d9dabeb",
+  "scene_segment": "Elena stands before the full-length mirror in her bedroom, the amber light casti",
+  "characters_used": [
+    "character_001"
+  ],
+  "location": "location_001",
+  "action": "Elena lifts her blouse over her head, the fabric sliding off her body and falling to the floor. Her breasts sway with the motion, nipples tightening in the cool air. She unbuttons her jeans and pulls them down, stepping out of them and kicking them aside.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nIMAGE SLOT ASSIGNMENT & IDENTITY AU",
+  "generated_video": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_001/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_001/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_59e37d9dabeb/scenes/scene_001/video_with_audio.mp4"
+}
