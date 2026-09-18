@@ -57,7 +57,6 @@ class KeyframeGenerator:
         try:
             # --------------------------------------------------
             # Base image:
-            #
             # Scene 1  -> T2I composition
             # Scene 2+ -> previous video's last frame
             # --------------------------------------------------
@@ -81,9 +80,7 @@ class KeyframeGenerator:
                 base_name
             )
 
-            workflow["1000"]["inputs"]["image"] = (
-                base_name
-            )
+            workflow["1000"]["inputs"]["image"] = base_name
 
             workflow["16"]["inputs"]["image"] = [
                 "1000",
@@ -101,7 +98,6 @@ class KeyframeGenerator:
             ]
 
             # --------------------------------------------------
-            # Character references
             # Character references (mapped to Image 2, Image 3, Image 4)
             # --------------------------------------------------
 
@@ -113,8 +109,7 @@ class KeyframeGenerator:
 
                 if not reference.exists():
                     raise FileNotFoundError(
-                        f"Character reference not found: "
-                        f"{reference}"
+                        f"Character reference not found: {reference}"
                     )
 
                 ref_name = (
@@ -123,18 +118,14 @@ class KeyframeGenerator:
                     f"{reference.suffix.lower()}"
                 )
 
-                ref_target = (
-                    self.input_dir / ref_name
-                )
+                ref_target = self.input_dir / ref_name
 
                 shutil.copy2(
                     reference,
                     ref_target,
                 )
 
-                temporary_files.append(
-                    ref_name
-                )
+                temporary_files.append(ref_name)
 
                 node_id = str(1001 + index)
 
@@ -145,39 +136,25 @@ class KeyframeGenerator:
                     }
                 }
 
-                input_name = (
-                    f"image{index}"
-                )
                 # Image slot index: Image 2 for char 1, Image 3 for char 2, Image 4 for char 3
                 ref_slot = index + 1
                 input_name = f"image{ref_slot}"
 
-                workflow["9"]["inputs"][
-                    input_name
-                ] = [
                 workflow["9"]["inputs"][input_name] = [
                     node_id,
                     0,
                 ]
 
-                workflow["13"]["inputs"][
-                    input_name
-                ] = [
                 workflow["13"]["inputs"][input_name] = [
                     node_id,
                     0,
                 ]
 
-            # Remove any unused optional references.
-            for index in range(
-                len(character_references) + 1,
-                4,
             # Remove any unused optional reference slots.
             for ref_slot in range(
                 len(character_references) + 2,
                 6,
             ):
-                input_name = f"image{index}"
                 input_name = f"image{ref_slot}"
 
                 workflow["9"]["inputs"].pop(
@@ -191,16 +168,10 @@ class KeyframeGenerator:
                 )
 
             # --------------------------------------------------
-            # Identity + continuity
             # Identity + continuity prompt
             # --------------------------------------------------
 
             workflow["9"]["inputs"]["prompt"] = (
-                "Preserve the exact identity, facial structure, "
-                "hairstyle, body proportions and clothing of "
-                "all provided character reference images. "
-                "Do not redesign, replace, duplicate or "
-                "combine characters."
                 "Preserve the exact facial structure, hairstyle, hair color, "
                 "eye color, skin appearance, body build, and identity of each "
                 "character from their respective reference image. "
@@ -210,7 +181,6 @@ class KeyframeGenerator:
             workflow["13"]["inputs"]["prompt"] = prompt
 
             # --------------------------------------------------
-            # Sampling
             # Sampling & Adaptive Denoise
             # --------------------------------------------------
 
@@ -221,31 +191,21 @@ class KeyframeGenerator:
             workflow["15"]["inputs"]["cfg"] = 4.0
             workflow["15"]["inputs"]["sampler_name"] = "euler"
             workflow["15"]["inputs"]["scheduler"] = "simple"
-            workflow["15"]["inputs"]["denoise"] = (
-                KEYFRAME_DENOISE
-            )
             workflow["15"]["inputs"]["denoise"] = float(active_denoise)
 
             # --------------------------------------------------
             # Run
             # --------------------------------------------------
 
-            prompt_id, client_id = (
-                self.runner.submit(workflow)
-            )
+            prompt_id, client_id = self.runner.submit(workflow)
 
-            result = self.runner.wait(
-                prompt_id
-            )
+            result = self.runner.wait(prompt_id)
 
-            images = self.runner.find_images(
-                result
-            )
+            images = self.runner.find_images(result)
 
             if not images:
                 raise RuntimeError(
-                    "Qwen Image Edit completed "
-                    "without an image output."
+                    "Qwen Image Edit completed without an image output."
                 )
 
             self.runner.download_image(
@@ -259,17 +219,11 @@ class KeyframeGenerator:
                 "output": str(output_path),
                 "base_image": str(scene_image),
                 "character_references": [
-                    str(x)
-                    for x in character_references
+                    str(x) for x in character_references
                 ],
-                "denoise": KEYFRAME_DENOISE,
                 "denoise": active_denoise,
             }
 
         finally:
             for filename in temporary_files:
-                (
-                    self.input_dir / filename
-                ).unlink(
-                    missing_ok=True
-                )
+                (self.input_dir / filename).unlink(missing_ok=True)
