@@ -89,6 +89,15 @@ class AudioGenerator:
 
         return output_path
 
+    @staticmethod
+    def is_refusal_text(text: str) -> bool:
+        refusal_phrases = [
+            "i'm sorry", "i cannot", "i can't assist", "as an ai",
+            "cannot fulfill", "safety guidelines", "policy", "cannot generate"
+        ]
+        text_lower = text.lower()
+        return any(phrase in text_lower for phrase in refusal_phrases)
+
     def create_scene_audio(
         self,
         audio_plan,
@@ -128,7 +137,7 @@ class AudioGenerator:
                     item.get("text", "")
                 ).strip()
 
-                if not text:
+                if not text or self.is_refusal_text(text):
                     continue
 
                 voice = item.get(
@@ -161,7 +170,7 @@ class AudioGenerator:
                     item.get("text", "")
                 ).strip()
 
-                if not text:
+                if not text or self.is_refusal_text(text):
                     continue
 
                 character_id = item.get(
