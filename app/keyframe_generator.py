@@ -23,6 +23,7 @@ class KeyframeGenerator:
         prompt,
         output_path,
         seed,
+        denoise=None,
     ):
         scene_image = Path(scene_image)
         output_path = Path(output_path)
@@ -89,8 +90,19 @@ class KeyframeGenerator:
                 0,
             ]
 
+            # CRITICAL: Image 1 in Qwen Edit Plus MUST ALWAYS BE base_image (Node 16)
+            workflow["9"]["inputs"]["image1"] = [
+                "16",
+                0,
+            ]
+            workflow["13"]["inputs"]["image1"] = [
+                "16",
+                0,
+            ]
+
             # --------------------------------------------------
             # Character references
+            # Character references (mapped to Image 2, Image 3, Image 4)
             # --------------------------------------------------
 
             for index, reference in enumerate(
@@ -136,10 +148,14 @@ class KeyframeGenerator:
                 input_name = (
                     f"image{index}"
                 )
+                # Image slot index: Image 2 for char 1, Image 3 for char 2, Image 4 for char 3
+                ref_slot = index + 1
+                input_name = f"image{ref_slot}"
 
                 workflow["9"]["inputs"][
                     input_name
                 ] = [
+                workflow["9"]["inputs"][input_name] = [
                     node_id,
                     0,
                 ]
@@ -147,6 +163,7 @@ class KeyframeGenerator:
                 workflow["13"]["inputs"][
                     input_name
                 ] = [
+                workflow["13"]["inputs"][input_name] = [
                     node_id,
                     0,
                 ]
@@ -155,8 +172,13 @@ class KeyframeGenerator:
             for index in range(
                 len(character_references) + 1,
                 4,
+            # Remove any unused optional reference slots.
+            for ref_slot in range(
+                len(character_references) + 2,
+                6,
             ):
                 input_name = f"image{index}"
+                input_name = f"image{ref_slot}"
 
                 workflow["9"]["inputs"].pop(
                     input_name,
@@ -170,6 +192,7 @@ class KeyframeGenerator:
 
             # --------------------------------------------------
             # Identity + continuity
+            # Identity + continuity prompt
             # --------------------------------------------------
 
             workflow["9"]["inputs"]["prompt"] = (
@@ -178,13 +201,20 @@ class KeyframeGenerator:
                 "all provided character reference images. "
                 "Do not redesign, replace, duplicate or "
                 "combine characters."
+                "Preserve the exact facial structure, hairstyle, hair color, "
+                "eye color, skin appearance, body build, and identity of each "
+                "character from their respective reference image. "
+                "Maintain background environment and scene layout from Image 1."
             )
 
             workflow["13"]["inputs"]["prompt"] = prompt
 
             # --------------------------------------------------
             # Sampling
+            # Sampling & Adaptive Denoise
             # --------------------------------------------------
+
+            active_denoise = denoise if denoise is not None else KEYFRAME_DENOISE
 
             workflow["15"]["inputs"]["seed"] = seed
             workflow["15"]["inputs"]["steps"] = 40
@@ -194,6 +224,7 @@ class KeyframeGenerator:
             workflow["15"]["inputs"]["denoise"] = (
                 KEYFRAME_DENOISE
             )
+            workflow["15"]["inputs"]["denoise"] = float(active_denoise)
 
             # --------------------------------------------------
             # Run
@@ -232,6 +263,7 @@ class KeyframeGenerator:
                     for x in character_references
                 ],
                 "denoise": KEYFRAME_DENOISE,
+                "denoise": active_denoise,
             }
 
         finally:
