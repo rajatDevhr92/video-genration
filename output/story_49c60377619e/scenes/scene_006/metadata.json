@@ -1,0 +1,65 @@
+{
+  "scene_id": "scene_006",
+  "order": 6,
+  "character_ids": [
+    "character_001",
+    "character_002"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_49c60377619e/references/characters/sarah_character_001.png",
+    "/workspace/story-video-engine/output/story_49c60377619e/references/characters/marcus_character_002.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_006/composition.png",
+  "composition_source": "previous_video_last_frame",
+  "keyframe": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_006/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_006/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_006/last_frame.png",
+  "previous_last_frame": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_005/last_frame.png",
+  "composition_prompt_id": null,
+  "keyframe_prompt_id": "38dad21d-ddf8-4116-ada6-da00bab37247",
+  "video_prompt_id": "9c2a0f53-5214-489b-a8d7-4568e2f570e3",
+  "video_generation_time_seconds": 80.14824938774109,
+  "scene_state": {
+    "scene_id": "scene_006",
+    "order": 6,
+    "location": "location_001",
+    "characters": [
+      "character_001",
+      "character_002"
+    ],
+    "weather": null,
+    "lighting": "Moonlight glints off the wetness on their skin and the cum mixing inside her.",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {
+        "current_clothing_state": "",
+        "current_pose": ""
+      },
+      "character_002": {
+        "current_clothing_state": "",
+        "current_pose": ""
+      }
+    },
+    "time_of_day": null,
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.5,
+  "story_id": "story_49c60377619e",
+  "scene_segment": "Marcus roars as he releases, his cock pulsing with thick spurts deep inside Sara",
+  "characters_used": [
+    "character_001",
+    "character_002"
+  ],
+  "location": "location_001",
+  "action": "Marcus groans, his body tensing, then erupts with thick spurts of cum deep inside Sarah. Sarah screams, her body convulsing as she orgasms, her pussy milking his cock.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nIMAGE SLOT ASSIGNMENT & IDENTITY AU",
+  "generated_video": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_006/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_006/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_006/video_with_audio.mp4"
+}

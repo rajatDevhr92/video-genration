@@ -1,0 +1,65 @@
+{
+  "scene_id": "scene_001",
+  "order": 1,
+  "character_ids": [
+    "character_001",
+    "character_002"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_49c60377619e/references/characters/sarah_character_001.png",
+    "/workspace/story-video-engine/output/story_49c60377619e/references/characters/marcus_character_002.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_001/composition.png",
+  "composition_source": "qwen_t2i",
+  "keyframe": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_001/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_001/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_001/last_frame.png",
+  "previous_last_frame": null,
+  "composition_prompt_id": "df2b4bdf-03f3-4d44-82dd-0c61d47b4f62",
+  "keyframe_prompt_id": "04a2f4e8-bc43-41b2-9ea6-d8e5ec75af60",
+  "video_prompt_id": "7898a632-7e7c-4136-8b3d-38f7b7e916bf",
+  "video_generation_time_seconds": 104.16475629806519,
+  "scene_state": {
+    "scene_id": "scene_001",
+    "order": 1,
+    "location": "location_001",
+    "characters": [
+      "character_001",
+      "character_002"
+    ],
+    "weather": null,
+    "lighting": "Soft moonlight from the window, casting silver highlights on skin, deep shadows in corners, subtle rim light on Sarah's silhouette.",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {
+        "current_clothing_state": "",
+        "current_pose": ""
+      },
+      "character_002": {
+        "current_clothing_state": "",
+        "current_pose": ""
+      }
+    },
+    "time_of_day": null,
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.7,
+  "story_id": "story_49c60377619e",
+  "scene_segment": "Moonlight filters through sheer curtains, illuminating Sarah standing nude in th",
+  "characters_used": [
+    "character_001",
+    "character_002"
+  ],
+  "location": "location_001",
+  "action": "Sarah slowly steps out of her black lace dress, letting it fall to the floor. Marcus walks toward her, his bare feet silent on the hardwood, his cock swinging with each step.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nIMAGE SLOT ASSIGNMENT & IDENTITY AU",
+  "generated_video": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_001/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_001/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_001/video_with_audio.mp4"
+}

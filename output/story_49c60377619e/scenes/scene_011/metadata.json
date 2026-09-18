@@ -1,0 +1,65 @@
+{
+  "scene_id": "scene_011",
+  "order": 11,
+  "character_ids": [
+    "character_001",
+    "character_002"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_49c60377619e/references/characters/sarah_character_001.png",
+    "/workspace/story-video-engine/output/story_49c60377619e/references/characters/marcus_character_002.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_011/composition.png",
+  "composition_source": "previous_video_last_frame",
+  "keyframe": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_011/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_011/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_011/last_frame.png",
+  "previous_last_frame": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_010/last_frame.png",
+  "composition_prompt_id": null,
+  "keyframe_prompt_id": "2bb95193-9ccd-4897-b314-4868f66a34fc",
+  "video_prompt_id": "42f45907-70a7-4f3a-96b6-62f6a34d147d",
+  "video_generation_time_seconds": 80.0754873752594,
+  "scene_state": {
+    "scene_id": "scene_011",
+    "order": 11,
+    "location": "location_001",
+    "characters": [
+      "character_001",
+      "character_002"
+    ],
+    "weather": null,
+    "lighting": "Moonlight casts a soft glow on their wet, sweaty bodies.",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {
+        "current_clothing_state": "",
+        "current_pose": ""
+      },
+      "character_002": {
+        "current_clothing_state": "",
+        "current_pose": ""
+      }
+    },
+    "time_of_day": null,
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.5,
+  "story_id": "story_49c60377619e",
+  "scene_segment": "Sarah crawls up Marcus's body, their skin sliding together with wet sounds. She ",
+  "characters_used": [
+    "character_001",
+    "character_002"
+  ],
+  "location": "location_001",
+  "action": "Sarah crawls up Marcus's body, their skin sliding. She kisses him, their mouths meeting in a messy, shared kiss.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nIMAGE SLOT ASSIGNMENT & IDENTITY AU",
+  "generated_video": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_011/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_011/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_49c60377619e/scenes/scene_011/video_with_audio.mp4"
+}
