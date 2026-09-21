@@ -1,0 +1,57 @@
+{
+  "scene_id": "scene_002",
+  "order": 2,
+  "character_ids": [
+    "character_001"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_7b813956d578/references/characters/lena_character_001.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_7b813956d578/scenes/scene_002/composition.png",
+  "composition_source": "previous_video_last_frame",
+  "keyframe": "/workspace/story-video-engine/output/story_7b813956d578/scenes/scene_002/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_7b813956d578/scenes/scene_002/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_7b813956d578/scenes/scene_002/last_frame.png",
+  "previous_last_frame": "/workspace/story-video-engine/output/story_7b813956d578/scenes/scene_001/last_frame.png",
+  "composition_prompt_id": null,
+  "keyframe_prompt_id": "e95dbd4e-9540-4846-96eb-9a9e1a7b8843",
+  "video_prompt_id": "24f62995-e408-4862-a36b-1e66cc7cb0e3",
+  "video_generation_time_seconds": 80.10028219223022,
+  "scene_state": {
+    "scene_id": "scene_002",
+    "order": 2,
+    "location": "location_001",
+    "characters": [
+      "character_001"
+    ],
+    "weather": null,
+    "lighting": "Golden morning light from the window, soft shadows under her breasts and hips, highlights on her wet fingers.",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {
+        "current_clothing_state": "",
+        "current_pose": "standing, legs slightly apart, arms at sides"
+      }
+    },
+    "time_of_day": null,
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.65,
+  "story_id": "story_7b813956d578",
+  "scene_segment": "Lena walks to the edge of the bed and sits, her legs spreading wider. She bites ",
+  "characters_used": [
+    "character_001"
+  ],
+  "location": "location_001",
+  "action": "Lena steps forward, sits on the edge of the bed, and spreads her legs. She bites her lip, eyes fluttering. Her right hand slides down her stomach, fingers circling her clit slowly. Wet sounds begin: 'shlck... shlck...'.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nIMAGE SLOT ASSIGNMENT & IDENTITY AU",
+  "generated_video": "/workspace/story-video-engine/output/story_7b813956d578/scenes/scene_002/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_7b813956d578/scenes/scene_002/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_7b813956d578/scenes/scene_002/video_with_audio.mp4"
+}

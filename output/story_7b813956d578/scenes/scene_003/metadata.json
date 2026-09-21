@@ -1,0 +1,57 @@
+{
+  "scene_id": "scene_003",
+  "order": 3,
+  "character_ids": [
+    "character_001"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_7b813956d578/references/characters/lena_character_001.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_7b813956d578/scenes/scene_003/composition.png",
+  "composition_source": "previous_video_last_frame",
+  "keyframe": "/workspace/story-video-engine/output/story_7b813956d578/scenes/scene_003/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_7b813956d578/scenes/scene_003/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_7b813956d578/scenes/scene_003/last_frame.png",
+  "previous_last_frame": "/workspace/story-video-engine/output/story_7b813956d578/scenes/scene_002/last_frame.png",
+  "composition_prompt_id": null,
+  "keyframe_prompt_id": "493a44d6-3732-4786-ba2d-401e132c8dc4",
+  "video_prompt_id": "6363072f-4d63-4fe0-ac66-5ce07f3658d3",
+  "video_generation_time_seconds": 80.09976530075073,
+  "scene_state": {
+    "scene_id": "scene_003",
+    "order": 3,
+    "location": "location_001",
+    "characters": [
+      "character_001"
+    ],
+    "weather": null,
+    "lighting": "Consistent golden morning light, highlights on wet fingers and glistening skin, soft shadows under her arms and hips.",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {
+        "current_clothing_state": "",
+        "current_pose": "standing, legs slightly apart, arms at sides"
+      }
+    },
+    "time_of_day": null,
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.65,
+  "story_id": "story_7b813956d578",
+  "scene_segment": "Two fingers push inside her wet folds. Her hips rock gently. Left hand cups and ",
+  "characters_used": [
+    "character_001"
+  ],
+  "location": "location_001",
+  "action": "Two fingers slide into her wet pussy. 'Squelch... ahhh...' Her hips rock forward. Left hand lifts to her breast, squeezes it, pinches the nipple. Camera circles around her in a slow 360-degree motion, showing her arching back, bouncing breasts, and juices coating her fingers.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nIMAGE SLOT ASSIGNMENT & IDENTITY AU",
+  "generated_video": "/workspace/story-video-engine/output/story_7b813956d578/scenes/scene_003/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_7b813956d578/scenes/scene_003/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_7b813956d578/scenes/scene_003/video_with_audio.mp4"
+}
