@@ -452,8 +452,16 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                 base_source = "qwen_t2i"
             else:
                 # Subsequent scene
+                cam_text = f"{scene.get('camera', '')} {scene.get('description', '')}".lower()
+                is_close_up = any(w in cam_text for w in ["close-up", "close up", "extreme close-up", "macro", "tight shot"])
+
                 if prev_loc and curr_loc and prev_loc == curr_loc:
-                    if has_pose_transition:
+                    if is_close_up:
+                        active_denoise = 0.85
+                        logger.info(
+                            f"[DENOISE] Close-up camera shift detected in scene {order} -> boosted denoise to {active_denoise} for camera cut"
+                        )
+                    elif has_pose_transition:
                         active_denoise = 0.65
                         logger.info(
                             f"[DENOISE] Same location but pose/angle transition detected in scene {order} -> boosted denoise to {active_denoise}"
@@ -462,7 +470,7 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                         active_denoise = 0.50
                 else:
                     # New location -> allow room transition
-                    active_denoise = 0.65
+                    active_denoise = 0.70 if is_close_up else 0.65
 
                 print()
                 print("=" * 80)

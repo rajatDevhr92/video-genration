@@ -323,11 +323,11 @@ NEVER write:
 
 "X when outside and Y indoors"
 
-If the story contains multiple clothing states, choose ONE
-representative outfit for the character-reference image.
-
-The chosen outfit should be the character's most visually
-important or most frequently used outfit in the story.
+CRITICAL NUDITY & CLOTHING RULE:
+- IF THE CHARACTER IS NUDE, UNCLOTHED, OR NAKED IN THE STORY, YOU MUST SET "clothing": "Fully nude, completely unclothed, bare skin".
+- DO NOT invent bras, lingerie, thongs, underwear, swimwear, or casual clothes when the story specifies the character is nude or unclothed!
+- If the character wears an outfit for most of the story, set "clothing" to that ONE canonical outfit.
+- If the story contains multiple clothing states, choose ONE representative outfit (or "Fully nude, completely unclothed" if nude).
 
 ALL OTHER CLOTHING CHANGES MUST EXIST ONLY IN SCENE DATA.
 
@@ -337,6 +337,9 @@ The character object's clothing field should be short,
 specific and visually unambiguous.
 
 Examples:
+
+GOOD (for nude story):
+"Fully nude, completely unclothed, bare skin"
 
 GOOD:
 "Black swim trunks"
@@ -679,7 +682,7 @@ IMPORTANT:
 - ONE character object represents ONE adult person.
 - ALL characters must be adults.
 - Do not create minor or teenage characters.
-- Each character's "clothing" field must contain ONE canonical outfit only.
+- Each character's "clothing" field must contain ONE canonical outfit only (or "Fully nude, completely unclothed, bare skin" if nude/naked in story). Never invent bras or thongs when nude.
 - Never put outfit changes inside the character's "clothing" field.
 - Never use "initially", "later", "eventually", "then changes to",
   or similar transition language inside character clothing.
