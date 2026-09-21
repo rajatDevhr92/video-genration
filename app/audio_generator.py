@@ -11,6 +11,13 @@ PROJECT_ROOT = Path("/workspace/story-video-engine")
 load_dotenv(PROJECT_ROOT / ".env")
 
 
+__all__ = [
+    "AudioGenerator",
+    "generate_story_audio",
+    "resolve_character_voice",
+]
+
+
 FEMALE_VOICES = ["nova", "coral", "shimmer"]
 MALE_VOICES = ["onyx", "echo", "ash"]
 

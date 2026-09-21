@@ -2,7 +2,10 @@ import argparse
 import json
 from pathlib import Path
 
-from app.audio_generator import AudioGenerator
+try:
+    from app.audio_generator import AudioGenerator
+except ImportError:
+    from app import AudioGenerator
 
 
 def main():
