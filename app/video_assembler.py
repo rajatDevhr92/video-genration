@@ -91,3 +91,7 @@ class VideoAssembler:
             "output": str(output_path),
             "scene_count": len(scene_videos),
         }
+
+
+def assemble_story_video(job_dir, output_path):
+    return VideoAssembler.assemble(job_dir, output_path)

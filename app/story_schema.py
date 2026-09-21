@@ -112,3 +112,7 @@ class StoryPlan:
                 for s in self.scenes
             ],
         }
+
+
+StoryPlanSchema = StoryPlan
+

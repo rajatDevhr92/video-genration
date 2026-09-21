@@ -312,10 +312,13 @@ Generate the exact cinematic story moment.
 
         workflow["6"]["inputs"]["text"] = (
             "low quality, blurry, distorted anatomy, deformed hands, "
+            "acne, pimples, skin blemishes, skin spots, rough skin, "
+            "character merging, merged bodies, fused limbs, body clipping, "
             "extra limbs, duplicate people, duplicated characters, "
             "unwanted people, collage, split screen, storyboard, "
             "comic panels, multiple panels, multiple views, "
             "multiple camera angles, double exposure, mirrored image, "
+            "censorship blur, mosaic, pixelation, censor bars, unwanted underwear, "
             "text, subtitles, captions, watermark, logo"
         )
 

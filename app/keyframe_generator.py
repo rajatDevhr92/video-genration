@@ -176,11 +176,13 @@ class KeyframeGenerator:
                 "Preserve the exact facial structure, hairstyle, hair color, "
                 "eye color, skin appearance, body build, and identity of each "
                 "character from their respective reference image. "
-                "Maintain background environment and scene layout from Image 1."
+                "Maintain background environment and scene layout from Image 1. "
                 "Do NOT render female clothing (bras, sports tops, lingerie, skirts, bikinis) on male characters. "
                 "Do NOT swap clothing items or outfits between characters. "
                 "Do NOT render extra people, extra phantom legs, extra arms, duplicate bodies, or ghost limbs from Image 1. "
-                "Do NOT distort character torsos, merge body parts, twist limbs unphysically, or create split screen / collages. "
+                "Do NOT distort character torsos, merge body parts into one mass, fuse character limbs, twist limbs unphysically, or create split screen / collages. "
+                "Do NOT render acne, pimples, skin blemishes, skin spots, rough skin, or skin lesions. Render flawless smooth skin. "
+                "Do NOT render censorship blur, mosaic, pixelation, censor bars, or unwanted underwear when unclothed. "
                 "No text, no watermarks, no subtitles, no bad anatomy, no extra legs on the bed."
             )
 

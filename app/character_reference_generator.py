@@ -184,6 +184,7 @@ ONE PHOTOGRAPH.
             "duplicate person, duplicate body, duplicate face, "
             "extra head, extra face, extra body, "
             "extra arms, extra legs, extra hands, "
+            "acne, pimples, skin blemishes, skin spots, rough skin texture, "
             "inset portrait, surrounding portrait, "
             "additional photograph, additional figure, "
             "multiple images, multiple photographs, "

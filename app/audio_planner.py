@@ -68,12 +68,11 @@ IMPORTANT:
 - Do not invent major plot information.
 - Keep the same voice assigned to a character across scenes.
 
-VOICE MAPPING:
+VOICE MAPPING RULES:
 - Narrator: alloy
-- character_001: onyx
-- character_002: coral
-- character_003: echo
-- character_004: nova
+- Female characters: nova (or coral/shimmer)
+- Male characters: onyx (or echo/ash)
+- ALWAYS match the character's voice to their gender (e.g. use female voices nova/coral for women, use male voices onyx/echo for men). Never assign male voices to female characters.
 
 For every scene create:
 
@@ -123,7 +122,7 @@ Return exactly:
         {{
           "character_id": "character_001",
           "text": "short spoken line",
-          "voice": "onyx"
+          "voice": "nova"
         }}
       ],
 

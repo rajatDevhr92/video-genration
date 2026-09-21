@@ -14,10 +14,15 @@ logger = logging.getLogger(__name__)
 
 class SceneManager:
 
-    def __init__(self):
-        self.composition_generator = CompositionGenerator()
-        self.keyframe_generator = KeyframeGenerator()
-        self.video_generator = VideoGenerator()
+    def __init__(
+        self,
+        composition_generator=None,
+        keyframe_generator=None,
+        video_generator=None,
+    ):
+        self.composition_generator = composition_generator or CompositionGenerator()
+        self.keyframe_generator = keyframe_generator or KeyframeGenerator()
+        self.video_generator = video_generator or VideoGenerator()
 
     @staticmethod
     def validate_scene(
@@ -184,17 +189,17 @@ Environment continuity:
         if is_sexual:
             base += """
 This is an explicit adult sexual scene. 
-Animate the exact sexual action visible in the keyframe with realistic, continuous motion:
-- Clear thrusting / penetration / oral / stroking motion
+Animate the exact sexual action visible in the keyframe with realistic, smooth, continuous motion:
+- Clear, fluid thrusting / penetration / oral / stroking motion with natural body pacing
 - Natural body movement, hip motion, and muscle tension
-- Realistic movement of breasts, genitals, and any remaining clothing
-- Visible wetness and skin contact
-- Facial expressions of pleasure
+- Realistic movement of breasts, buttocks, genitals, and any remaining clothing
+- Flawless, smooth skin texture without acne, pimples, blemishes, or skin spots
+- Highly detailed, photorealistic adult anatomical features (breasts, nipples, vagina, penis/dick, buttocks)
+- Visible wetness, skin contact, and facial expressions of pleasure
 Do not stop the sexual activity.
-Do not add clothing.
-Do not fade to black.
-Do not change the sexual act into something non-sexual.
-Keep the motion physically believable and continuous for the full duration.
+Do not add clothing or underwear.
+Do not fade to black or apply censorship blur/mosaic.
+Keep the motion physically believable, smooth, and continuous for the full duration.
 """
         else:
             base += """
@@ -213,9 +218,10 @@ Do not introduce additional characters.
 Do not create a different scene.
 Do not create a collage or split screen.
 
-STRICT ANATOMICAL STABILITY & MOTION RULES:
+STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
 - Maintain complete anatomical integrity: realistic skeletal joint motion, correct body proportions, and intact human anatomy.
-- No unphysical torso twisting, no detached or duplicate limbs, no ghosting or merging of character bodies.
+- CHARACTER BODY SEPARATION: Maintain distinct, separate physical body meshes for each character. Do NOT merge, clip, overlap into one mass, or melt character limbs, torsos, or skin into a single combined mass during movement.
+- SMOOTH FLUID MOTION: Ensure smooth frame-to-frame motion transitions without sudden body pops, flickering, or temporal distortion between consecutive frames.
 - Animate character physical interactions with realistic weight, smooth transitions, and natural skin contact.
 """
         return base
@@ -485,11 +491,9 @@ STRICT ANATOMICAL STABILITY & MOTION RULES:
                 c_gender = "male" if "man" in c_anchor.lower() or "male" in c_anchor.lower() else ("female" if "woman" in c_anchor.lower() or "female" in c_anchor.lower() else "person")
                 slot_num = idx + 1
                 image_mapping_lines.append(
-                    f"Image {slot_num}: Reference image authority for character '{c_name}' (ID: {char_id})."
                     f"Image {slot_num}: Reference image authority for character '{c_name}' (ID: {char_id}, Gender: {c_gender.upper()})."
                 )
                 image_mapping_lines.append(
-                    f"  -> Copy {c_name}'s face, eyes, hair, facial structure, skin tone, and body build strictly from Image {slot_num}."
                     f"  -> Copy {c_name}'s face, eyes, hair, facial structure, skin tone, gender ({c_gender}), and body build strictly from Image {slot_num}."
                 )
                 image_mapping_lines.append(
@@ -497,6 +501,27 @@ STRICT ANATOMICAL STABILITY & MOTION RULES:
                 )
 
             image_mapping_block = "\n".join(image_mapping_lines)
+
+            # Check for explicit Nudity directive in scene description or continuity
+            is_nude_scene = False
+            desc_text = f"{scene.get('description', '')} {scene.get('action', '')}".lower()
+            char_current = scene_state.get("character_current_states", {})
+            for char_id, cstate in char_current.items():
+                if isinstance(cstate, dict) and "nude" in str(cstate.get("current_clothing_state", "")).lower():
+                    is_nude_scene = True
+            if any(w in desc_text for w in ["nude", "undress", "strips", "naked", "bare breast"]):
+                is_nude_scene = True
+
+            nudity_instruction = ""
+            if is_nude_scene:
+                nudity_instruction = """
+=========================================================
+EXPLICIT NUDITY & UNCLOTHED DIRECTIVE
+=========================================================
+- THIS SCENE REQUIRES NUDITY / UNCLOTHED CHARACTERS.
+- Fully remove bras, tops, lingerie, panties, or clothing on the nude character(s) as requested in the scene action.
+- DO NOT render arbitrary white tops, sports bras, wrist wraps, or unwanted underwear when the character is nude on the bed.
+"""
 
             # Build human count & phantom limb elimination block
             char_names_str = ", ".join([character_map.get(cid, {}).get("name", cid) for cid in scene_character_ids])
@@ -507,6 +532,7 @@ STRICT HUMAN COUNT & PHANTOM LIMB ELIMINATION
 - EXACTLY {len(scene_character_ids)} PERSON(S) IN THIS SCENE: {char_names_str}.
 - DO NOT render a 3rd person, phantom extra legs on the bed, extra arms, or duplicate bodies from Image 1.
 - Fully overwrite and erase any old character body positions or legs on the bed/furniture from Image 1.
+- No duplicate mirror reflection clones or second person standing in mirror background.
 """
 
             # Build pose transition guidance block if pose shift is detected
@@ -575,6 +601,7 @@ Time of day:
 CONTINUITY INSTRUCTIONS
 =========================================================
 {continuity_instruction}
+{nudity_instruction}
 {pose_transition_instruction}
 Per-Character Continuity State:
 {json.dumps(scene_state.get("character_current_states", {}), ensure_ascii=False, indent=2)}

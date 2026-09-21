@@ -16,6 +16,7 @@ COMFY_URL = os.getenv(
     "COMFY_URL",
     "http://127.0.0.1:8188",
 )
+COMFYUI_URL = COMFY_URL
 
 STORY_PLANNER_MODEL = os.getenv(
     "STORY_PLANNER_MODEL",

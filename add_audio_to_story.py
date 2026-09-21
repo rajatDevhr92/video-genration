@@ -121,9 +121,14 @@ def main():
                 f"Expected object, got {type(audio_plan).__name__}."
             )
 
+        character_map = {
+            c["id"]: c for c in plan.get("characters", [])
+        }
+
         generator.create_scene_audio(
             audio_plan=audio_plan,
             output_path=audio,
+            character_map=character_map,
         )
 
         generator.mux_video_audio(
