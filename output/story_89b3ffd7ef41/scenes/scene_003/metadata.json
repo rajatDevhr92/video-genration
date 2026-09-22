@@ -1,0 +1,60 @@
+{
+  "scene_id": "scene_003",
+  "order": 3,
+  "character_ids": [
+    "character_001",
+    "character_002"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_89b3ffd7ef41/references/characters/woman_character_001.png",
+    "/workspace/story-video-engine/output/story_89b3ffd7ef41/references/characters/man_character_002.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_89b3ffd7ef41/scenes/scene_003/composition.png",
+  "composition_source": "previous_video_last_frame",
+  "keyframe": "/workspace/story-video-engine/output/story_89b3ffd7ef41/scenes/scene_003/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_89b3ffd7ef41/scenes/scene_003/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_89b3ffd7ef41/scenes/scene_003/last_frame.png",
+  "previous_last_frame": "/workspace/story-video-engine/output/story_89b3ffd7ef41/scenes/scene_002/last_frame.png",
+  "composition_prompt_id": null,
+  "keyframe_prompt_id": "ce47e47c-3c88-4d1c-a34e-a44a3aa3fa3a",
+  "video_prompt_id": "1f065a20-04bf-4a67-a361-f17f60215a62",
+  "video_generation_time_seconds": 80.0645980834961,
+  "scene_state": {
+    "scene_id": "scene_003",
+    "order": 3,
+    "location": "location_001",
+    "characters": [
+      "character_001",
+      "character_002"
+    ],
+    "weather": null,
+    "lighting": "Warm, soft glow from the bedside lamp, casting gentle highlights on the sweat-slicked skin and the motion of the bodies.",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {},
+      "character_002": {}
+    },
+    "time_of_day": null,
+    "master_lighting": "Soft, warm ambient light from a bedside lamp, casting gentle shadows on the bed and bodies, highlighting skin texture and contours.",
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.65,
+  "story_id": "story_89b3ffd7ef41",
+  "scene_segment": "The man thrusts steadily into her ass with rhythmic hip movements. She pushes ba",
+  "characters_used": [
+    "character_001",
+    "character_002"
+  ],
+  "location": "location_001",
+  "action": "The man rhythmically thrusts his hips forward and back, his cock sliding in and out of her anus. She matches his motion, pushing her hips back with each stroke, her body swaying with the rhythm.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nCRITICAL GENITAL & BODY PART IDENTI",
+  "generated_video": "/workspace/story-video-engine/output/story_89b3ffd7ef41/scenes/scene_003/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_89b3ffd7ef41/scenes/scene_003/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_89b3ffd7ef41/scenes/scene_003/video_with_audio.mp4"
+}

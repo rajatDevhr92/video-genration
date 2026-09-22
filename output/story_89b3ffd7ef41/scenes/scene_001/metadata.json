@@ -1,0 +1,60 @@
+{
+  "scene_id": "scene_001",
+  "order": 1,
+  "character_ids": [
+    "character_001",
+    "character_002"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_89b3ffd7ef41/references/characters/woman_character_001.png",
+    "/workspace/story-video-engine/output/story_89b3ffd7ef41/references/characters/man_character_002.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_89b3ffd7ef41/scenes/scene_001/composition.png",
+  "composition_source": "qwen_t2i",
+  "keyframe": "/workspace/story-video-engine/output/story_89b3ffd7ef41/scenes/scene_001/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_89b3ffd7ef41/scenes/scene_001/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_89b3ffd7ef41/scenes/scene_001/last_frame.png",
+  "previous_last_frame": null,
+  "composition_prompt_id": "5d065b2d-0d22-4963-916d-9997af736f7d",
+  "keyframe_prompt_id": "bf7a8a85-8215-4309-b99f-ef034805e7e7",
+  "video_prompt_id": "dd09db9d-e00d-4170-aa63-fa8e4e61a199",
+  "video_generation_time_seconds": 104.24853372573853,
+  "scene_state": {
+    "scene_id": "scene_001",
+    "order": 1,
+    "location": "location_001",
+    "characters": [
+      "character_001",
+      "character_002"
+    ],
+    "weather": null,
+    "lighting": "Soft, warm ambient light from a bedside lamp, casting gentle shadows on the bed and bodies, highlighting skin texture and contours.",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {},
+      "character_002": {}
+    },
+    "time_of_day": null,
+    "master_lighting": "Soft, warm ambient light from a bedside lamp, casting gentle shadows on the bed and bodies, highlighting skin texture and contours.",
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.7,
+  "story_id": "story_89b3ffd7ef41",
+  "scene_segment": "Soft bedroom light illuminates the scene. The woman is on all fours on the bed, ",
+  "characters_used": [
+    "character_001",
+    "character_002"
+  ],
+  "location": "location_001",
+  "action": "The man slowly grinds his cock against the woman's ass, his hands firmly holding her hips. She remains on all fours, her body relaxed yet alert, her back slightly arched.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nCRITICAL GENITAL & BODY PART IDENTI",
+  "generated_video": "/workspace/story-video-engine/output/story_89b3ffd7ef41/scenes/scene_001/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_89b3ffd7ef41/scenes/scene_001/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_89b3ffd7ef41/scenes/scene_001/video_with_audio.mp4"
+}
