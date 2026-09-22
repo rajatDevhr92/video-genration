@@ -1,6 +1,16 @@
 from pathlib import Path
 
 from .config import WORKFLOWS_DIR
+from .config import (
+    WORKFLOWS_DIR,
+    IMAGE_GENERATOR_MODEL,
+    JUGGERNAUT_XL_WORKFLOW,
+    JUGGERNAUT_CHECKPOINT,
+    JUGGERNAUT_STEPS,
+    JUGGERNAUT_CFG,
+    JUGGERNAUT_SAMPLER,
+    JUGGERNAUT_SCHEDULER,
+)
 from .workflow_runner import WorkflowRunner
 
 
@@ -326,6 +336,7 @@ Generate the exact cinematic story moment.
         # --------------------------------------------------
 
         workflow["6"]["inputs"]["text"] = (
+        negative_prompt = (
             "low quality, blurry, distorted anatomy, deformed hands, "
             "acne, pimples, skin blemishes, skin spots, rough skin, "
             "character merging, merged bodies, fused limbs, body clipping, "
@@ -343,13 +354,46 @@ Generate the exact cinematic story moment.
         # --------------------------------------------------
         # Output
         # --------------------------------------------------
+        use_juggernaut = str(IMAGE_GENERATOR_MODEL).lower() in ["juggernaut_xl_v9", "juggernaut", "juggernaut_xl", "sdxl"]
 
         workflow["10"]["inputs"]["filename_prefix"] = (
             "story_compositions/scene"
         )
+        if use_juggernaut:
+            workflow = self.runner.load_workflow(JUGGERNAUT_XL_WORKFLOW)
+            workflow["4"]["inputs"]["ckpt_name"] = JUGGERNAUT_CHECKPOINT
+            workflow["5"]["inputs"]["text"] = prompt
+            workflow["6"]["inputs"]["text"] = negative_prompt
+            workflow["7"]["inputs"]["width"] = 1280
+            workflow["7"]["inputs"]["height"] = 720
+            workflow["7"]["inputs"]["batch_size"] = 1
+            workflow["8"]["inputs"]["seed"] = seed
+            workflow["8"]["inputs"]["steps"] = JUGGERNAUT_STEPS
+            workflow["8"]["inputs"]["cfg"] = JUGGERNAUT_CFG
+            workflow["8"]["inputs"]["sampler_name"] = JUGGERNAUT_SAMPLER
+            workflow["8"]["inputs"]["scheduler"] = JUGGERNAUT_SCHEDULER
+            workflow["8"]["inputs"]["denoise"] = 1.0
+            workflow["10"]["inputs"]["filename_prefix"] = "story_compositions/scene"
+            model_tag = "JUGGERNAUT_XL"
+        else:
+            workflow = self.runner.load_workflow(self.WORKFLOW)
+            workflow["5"]["inputs"]["text"] = prompt
+            workflow["6"]["inputs"]["text"] = negative_prompt
+            workflow["7"]["inputs"]["width"] = 1280
+            workflow["7"]["inputs"]["height"] = 720
+            workflow["7"]["inputs"]["batch_size"] = 1
+            workflow["8"]["inputs"]["seed"] = seed
+            workflow["8"]["inputs"]["steps"] = 6
+            workflow["8"]["inputs"]["cfg"] = 1.0
+            workflow["8"]["inputs"]["sampler_name"] = "euler"
+            workflow["8"]["inputs"]["scheduler"] = "beta"
+            workflow["8"]["inputs"]["denoise"] = 1.0
+            workflow["10"]["inputs"]["filename_prefix"] = "story_compositions/scene"
+            model_tag = "KREA2"
 
         print(
             f"[KREA2] Generating composition "
+            f"[{model_tag}] Generating composition "
             f"seed={seed} "
             f"output={output_path}"
         )
@@ -357,6 +401,9 @@ Generate the exact cinematic story moment.
         prompt_id, client_id = (
             self.runner.submit(workflow)
         )
+        prompt_id, client_id = self.runner.submit(workflow)
+        result = self.runner.wait(prompt_id)
+        images = self.runner.find_images(result)
 
         result = self.runner.wait(
             prompt_id
@@ -369,6 +416,7 @@ Generate the exact cinematic story moment.
         if not images:
             raise RuntimeError(
                 "Krea 2 composition generation "
+                f"{model_tag} composition generation "
                 "completed without an image output."
             )
 
@@ -379,6 +427,7 @@ Generate the exact cinematic story moment.
 
         print(
             f"[KREA2] Composition generated: "
+            f"[{model_tag}] Composition generated: "
             f"{output_path}"
         )
 
@@ -387,4 +436,5 @@ Generate the exact cinematic story moment.
             "client_id": client_id,
             "output": str(output_path),
             "prompt": prompt,
+            "model": model_tag,
         }

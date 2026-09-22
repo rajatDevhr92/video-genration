@@ -44,6 +44,14 @@ WAN_T2V_WORKFLOW = (
     "wan2.2_t2v_14b_api.json"
 )
 QWEN_IMAGE_WORKFLOW = WORKFLOWS_DIR / "qwen_image_2512_api.json"
+JUGGERNAUT_XL_WORKFLOW = WORKFLOWS_DIR / "juggernaut_xl_t2i_api.json"
+
+IMAGE_GENERATOR_MODEL = os.getenv("IMAGE_GENERATOR_MODEL", "juggernaut_xl_v9")
+JUGGERNAUT_CHECKPOINT = os.getenv("JUGGERNAUT_CHECKPOINT", "Juggernaut-XL_v9.safetensors")
+JUGGERNAUT_STEPS = int(os.getenv("JUGGERNAUT_STEPS", "35"))
+JUGGERNAUT_CFG = float(os.getenv("JUGGERNAUT_CFG", "5.0"))
+JUGGERNAUT_SAMPLER = os.getenv("JUGGERNAUT_SAMPLER", "dpmpp_2m")
+JUGGERNAUT_SCHEDULER = os.getenv("JUGGERNAUT_SCHEDULER", "karras")
 
 KEYFRAME_DENOISE = float(
     os.getenv("KEYFRAME_DENOISE", "0.70")

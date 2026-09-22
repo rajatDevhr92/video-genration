@@ -522,7 +522,14 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                 char_obj = character_map.get(char_id, {})
                 c_name = char_obj.get("name", char_id)
                 c_anchor = char_obj.get("visual_anchor", char_obj.get("appearance", ""))
-                c_gender = "male" if "man" in c_anchor.lower() or "male" in c_anchor.lower() else ("female" if "woman" in c_anchor.lower() or "female" in c_anchor.lower() else "person")
+                anchor_lower = c_anchor.lower()
+                if "female" in anchor_lower or "woman" in anchor_lower:
+                    c_gender = "female"
+                elif "male" in anchor_lower or "man" in anchor_lower.split():
+                    c_gender = "male"
+                else:
+                    c_gender = "person"
+
                 slot_num = idx + 1
                 image_mapping_lines.append(
                     f"Image {slot_num}: Reference image authority for character '{c_name}' (ID: {char_id}, Gender: {c_gender.upper()})."
@@ -531,7 +538,7 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                     f"  -> Copy {c_name}'s face, eyes, hair, facial structure, skin tone, gender ({c_gender}), and body build strictly from Image {slot_num}."
                 )
                 image_mapping_lines.append(
-                    f"  -> CRITICAL: Keep {c_name}'s upper body anatomy and clothing state appropriate for {c_name} ({c_gender}). Do NOT render female sports tops, bras, or lingerie on male characters!"
+                    f"  -> CRITICAL: Keep {c_name}'s body anatomy and appearance strictly appropriate for {c_name} ({c_gender})."
                 )
 
             image_mapping_block = "\n".join(image_mapping_lines)
