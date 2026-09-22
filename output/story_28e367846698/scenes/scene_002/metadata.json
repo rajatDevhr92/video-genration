@@ -1,0 +1,57 @@
+{
+  "scene_id": "scene_002",
+  "order": 2,
+  "character_ids": [
+    "character_001"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_28e367846698/references/characters/lena_character_001.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_28e367846698/scenes/scene_002/composition.png",
+  "composition_source": "previous_video_last_frame",
+  "keyframe": "/workspace/story-video-engine/output/story_28e367846698/scenes/scene_002/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_28e367846698/scenes/scene_002/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_28e367846698/scenes/scene_002/last_frame.png",
+  "previous_last_frame": "/workspace/story-video-engine/output/story_28e367846698/scenes/scene_001/last_frame.png",
+  "composition_prompt_id": null,
+  "keyframe_prompt_id": "11eacccc-2879-4ccd-a35d-888b67bf7fa1",
+  "video_prompt_id": "34dc56b8-df20-4498-8221-2df501415795",
+  "video_generation_time_seconds": 80.11496424674988,
+  "scene_state": {
+    "scene_id": "scene_002",
+    "order": 2,
+    "location": "location_001",
+    "characters": [
+      "character_001"
+    ],
+    "weather": null,
+    "lighting": "Soft morning light from the window, highlighting the contours of her body and the subtle sheen on her skin.",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {
+        "current_pose": "standing"
+      }
+    },
+    "time_of_day": null,
+    "master_lighting": "Soft morning sunlight streaming through sheer curtains, creating gentle highlights on her skin and casting subtle shadows across her body.",
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.65,
+  "story_id": "story_28e367846698",
+  "scene_segment": "The woman sits on the edge of the bed, fully unclothed, bare skin exposed. She s",
+  "characters_used": [
+    "character_001"
+  ],
+  "location": "location_001",
+  "action": "She lowers herself onto the bed edge, legs spreading wide apart. Right hand moves down her abdomen, fingers brushing over her pubic mound, then circling the outer lips of her pussy with slow, deliberate motion.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nCRITICAL GENITAL & BODY PART IDENTI",
+  "generated_video": "/workspace/story-video-engine/output/story_28e367846698/scenes/scene_002/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_28e367846698/scenes/scene_002/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_28e367846698/scenes/scene_002/video_with_audio.mp4"
+}

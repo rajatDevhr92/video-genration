@@ -1,0 +1,57 @@
+{
+  "scene_id": "scene_006",
+  "order": 6,
+  "character_ids": [
+    "character_001"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_28e367846698/references/characters/lena_character_001.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_28e367846698/scenes/scene_006/composition.png",
+  "composition_source": "previous_video_last_frame",
+  "keyframe": "/workspace/story-video-engine/output/story_28e367846698/scenes/scene_006/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_28e367846698/scenes/scene_006/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_28e367846698/scenes/scene_006/last_frame.png",
+  "previous_last_frame": "/workspace/story-video-engine/output/story_28e367846698/scenes/scene_005/last_frame.png",
+  "composition_prompt_id": null,
+  "keyframe_prompt_id": "2a7dade7-14a2-4957-a0d8-d3e188c463da",
+  "video_prompt_id": "5704931c-7a34-40fc-98b1-1594a3be6027",
+  "video_generation_time_seconds": 80.07794284820557,
+  "scene_state": {
+    "scene_id": "scene_006",
+    "order": 6,
+    "location": "location_001",
+    "characters": [
+      "character_001"
+    ],
+    "weather": null,
+    "lighting": "Soft morning light, warm and gentle, casting long shadows across her relaxed body, highlighting the sheen on her skin.",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {
+        "current_pose": "standing"
+      }
+    },
+    "time_of_day": null,
+    "master_lighting": "Soft morning sunlight streaming through sheer curtains, creating gentle highlights on her skin and casting subtle shadows across her body.",
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.85,
+  "story_id": "story_28e367846698",
+  "scene_segment": "She shudders hard on the bed, knees still spread wide. Fingers slow inside her p",
+  "characters_used": [
+    "character_001"
+  ],
+  "location": "location_001",
+  "action": "Her body convulses in a series of deep shudders. Fingers withdraw slowly from her pussy, now pulsing with wetness. She lies back, legs still spread, chest heaving, eyes closed, skin glistening with sweat and moisture.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nCRITICAL GENITAL & BODY PART IDENTI",
+  "generated_video": "/workspace/story-video-engine/output/story_28e367846698/scenes/scene_006/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_28e367846698/scenes/scene_006/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_28e367846698/scenes/scene_006/video_with_audio.mp4"
+}
