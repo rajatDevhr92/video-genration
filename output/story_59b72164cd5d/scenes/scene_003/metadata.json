@@ -1,0 +1,57 @@
+{
+  "scene_id": "scene_003",
+  "order": 3,
+  "character_ids": [
+    "character_001"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_59b72164cd5d/references/characters/lena_character_001.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_003/composition.png",
+  "composition_source": "previous_video_last_frame",
+  "keyframe": "/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_003/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_003/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_003/last_frame.png",
+  "previous_last_frame": "/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_002/last_frame.png",
+  "composition_prompt_id": null,
+  "keyframe_prompt_id": "5f486388-68cb-4d5b-ac08-5321e6bcaa0a",
+  "video_prompt_id": "51d35f09-eaad-49ac-91d4-975fa004cdc9",
+  "video_generation_time_seconds": 80.2163782119751,
+  "scene_state": {
+    "scene_id": "scene_003",
+    "order": 3,
+    "location": "location_001",
+    "characters": [
+      "character_001"
+    ],
+    "weather": null,
+    "lighting": "Warm morning light, soft highlights on her skin, subtle shadows under her breasts and pelvis.",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {
+        "current_clothing_state": "",
+        "current_pose": "standing upright, facing forward, walking toward bed"
+      }
+    },
+    "time_of_day": null,
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.65,
+  "story_id": "story_59b72164cd5d",
+  "scene_segment": "Fully unclothed, bare skin, two fingers slide deep into her wet pussy in steady,",
+  "characters_used": [
+    "character_001"
+  ],
+  "location": "location_001",
+  "action": "Two fingers plunge deep into her pussy with steady, rhythmic thrusts. Left hand grips her breast, thumb and forefinger pinching the erect nipple. Her hips rock forward with each thrust, breasts rising and falling with her breath.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nIMAGE SLOT ASSIGNMENT & IDENTITY AU",
+  "generated_video": "/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_003/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_003/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_003/video_with_audio.mp4"
+}

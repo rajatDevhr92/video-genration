@@ -1,0 +1,57 @@
+{
+  "scene_id": "scene_001",
+  "order": 1,
+  "character_ids": [
+    "character_001"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_59b72164cd5d/references/characters/lena_character_001.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_001/composition.png",
+  "composition_source": "qwen_t2i",
+  "keyframe": "/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_001/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_001/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_001/last_frame.png",
+  "previous_last_frame": null,
+  "composition_prompt_id": "a9060e42-49c4-48fc-a444-b1a6d74eb52b",
+  "keyframe_prompt_id": "5f6579d4-71c2-4c79-9708-748401f715db",
+  "video_prompt_id": "6c03b4e2-b0ba-4a08-b5c5-c13ca96ec973",
+  "video_generation_time_seconds": 106.15491604804993,
+  "scene_state": {
+    "scene_id": "scene_001",
+    "order": 1,
+    "location": "location_001",
+    "characters": [
+      "character_001"
+    ],
+    "weather": null,
+    "lighting": "Soft morning sunlight streaming through sheer curtains, creating gentle highlights on her skin and casting subtle shadows across her body.",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {
+        "current_clothing_state": "",
+        "current_pose": "standing upright, facing forward, walking toward bed"
+      }
+    },
+    "time_of_day": null,
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.7,
+  "story_id": "story_59b72164cd5d",
+  "scene_segment": "A fully unclothed woman stands centered in a sunlit bedroom, her bare skin glowi",
+  "characters_used": [
+    "character_001"
+  ],
+  "location": "location_001",
+  "action": "The woman walks forward with a slow, deliberate gait, hips swaying side to side, bare feet gliding across the wooden floor. Her arms hang loosely at her sides, body fully exposed.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nIMAGE SLOT ASSIGNMENT & IDENTITY AU",
+  "generated_video": "/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_001/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_001/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_001/video_with_audio.mp4"
+}

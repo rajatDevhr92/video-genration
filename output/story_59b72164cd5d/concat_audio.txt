@@ -1,0 +1,6 @@
+file '/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_001/video_with_audio.mp4'
+file '/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_002/video_with_audio.mp4'
+file '/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_003/video_with_audio.mp4'
+file '/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_004/video_with_audio.mp4'
+file '/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_005/video_with_audio.mp4'
+file '/workspace/story-video-engine/output/story_59b72164cd5d/scenes/scene_006/video_with_audio.mp4'
