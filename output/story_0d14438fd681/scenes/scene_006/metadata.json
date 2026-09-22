@@ -1,0 +1,59 @@
+{
+  "scene_id": "scene_006",
+  "order": 6,
+  "character_ids": [
+    "character_001",
+    "character_002"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_0d14438fd681/references/characters/milf_woman_character_001.png",
+    "/workspace/story-video-engine/output/story_0d14438fd681/references/characters/man_character_002.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_0d14438fd681/scenes/scene_006/composition.png",
+  "composition_source": "previous_video_last_frame",
+  "keyframe": "/workspace/story-video-engine/output/story_0d14438fd681/scenes/scene_006/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_0d14438fd681/scenes/scene_006/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_0d14438fd681/scenes/scene_006/last_frame.png",
+  "previous_last_frame": "/workspace/story-video-engine/output/story_0d14438fd681/scenes/scene_005/last_frame.png",
+  "composition_prompt_id": null,
+  "keyframe_prompt_id": "f1641f61-bec8-4a02-8e6c-ff92b5ff75e7",
+  "video_prompt_id": "4f8dc0f4-f9c7-4939-bc68-ea7f6ce874c4",
+  "video_generation_time_seconds": 80.11585879325867,
+  "scene_state": {
+    "scene_id": "scene_006",
+    "order": 6,
+    "location": "location_001",
+    "characters": [
+      "character_001",
+      "character_002"
+    ],
+    "weather": null,
+    "lighting": "Soft, warm ambient light, gentle shadows, no harsh contrasts, emphasizing stillness and intimacy.",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {},
+      "character_002": {}
+    },
+    "time_of_day": null,
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.85,
+  "story_id": "story_0d14438fd681",
+  "scene_segment": "Medium full shot. The man is locked deep inside her pussy, hips pressed flush ag",
+  "characters_used": [
+    "character_001",
+    "character_002"
+  ],
+  "location": "location_001",
+  "action": "The man remains motionless, fully inside her. Her legs are still wrapped around him, both bodies relaxed but still connected.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nIMAGE SLOT ASSIGNMENT & IDENTITY AU",
+  "generated_video": "/workspace/story-video-engine/output/story_0d14438fd681/scenes/scene_006/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_0d14438fd681/scenes/scene_006/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_0d14438fd681/scenes/scene_006/video_with_audio.mp4"
+}
