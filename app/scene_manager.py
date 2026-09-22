@@ -297,16 +297,19 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
             previous_state.get("character_current_states", {})
         )
 
-        continuity = scene.get("continuity")
-        if isinstance(continuity, dict):
-            for char_id in continuity:
-                if char_id in scene.get("character_ids", []):
-                    char_continuity = continuity.get(char_id, {})
-                    if isinstance(char_continuity, dict):
-                        state["character_current_states"][char_id] = {
-                            "current_clothing_state": char_continuity.get("clothing", ""),
-                            "current_pose": char_continuity.get("pose", ""),
-                        }
+        for char_id in scene.get("character_ids", []):
+            if char_id not in state["character_current_states"]:
+                state["character_current_states"][char_id] = {}
+            
+            curr_cstate = state["character_current_states"][char_id]
+            if not curr_cstate.get("current_pose"):
+                text_context = f"{scene.get('description', '')} {scene.get('action', '')}".lower()
+                if any(w in text_context for w in ["lying", "lies back", "shudders on the bed", "reclining"]):
+                    curr_cstate["current_pose"] = "lying down on bed"
+                elif any(w in text_context for w in ["sitting", "sits"]):
+                    curr_cstate["current_pose"] = "sitting on edge of bed"
+                elif any(w in text_context for w in ["standing", "stands"]):
+                    curr_cstate["current_pose"] = "standing"
 
         for char_id, cs in character_states.items():
             if char_id in state["character_current_states"]:
@@ -454,12 +457,20 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                 # Subsequent scene
                 cam_text = f"{scene.get('camera', '')} {scene.get('description', '')}".lower()
                 is_close_up = any(w in cam_text for w in ["close-up", "close up", "extreme close-up", "macro", "tight shot"])
+                is_wide_or_full = any(w in cam_text for w in ["wide shot", "wide angle", "full shot", "medium full shot", "full-body frame", "full body shot"])
+
+                # Check if previous scene was a close-up
+                prev_cam_text = ""
+                if order > 1 and len(scenes) >= (order - 1):
+                    prev_scene_obj = scenes[order - 2]
+                    prev_cam_text = f"{prev_scene_obj.get('camera', '')} {prev_scene_obj.get('description', '')}".lower()
+                prev_was_close_up = any(w in prev_cam_text for w in ["close-up", "close up", "extreme close-up", "macro", "tight shot"])
 
                 if prev_loc and curr_loc and prev_loc == curr_loc:
-                    if is_close_up:
+                    if is_close_up or (is_wide_or_full and prev_was_close_up):
                         active_denoise = 0.85
                         logger.info(
-                            f"[DENOISE] Close-up camera shift detected in scene {order} -> boosted denoise to {active_denoise} for camera cut"
+                            f"[DENOISE] Camera cut/framing transition (is_close_up={is_close_up}, prev_was_close_up={prev_was_close_up}) in scene {order} -> boosted denoise to {active_denoise}"
                         )
                     elif has_pose_transition:
                         active_denoise = 0.65
@@ -470,7 +481,7 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                         active_denoise = 0.50
                 else:
                     # New location -> allow room transition
-                    active_denoise = 0.70 if is_close_up else 0.65
+                    active_denoise = 0.85 if (is_close_up or is_wide_or_full) else 0.65
 
                 print()
                 print("=" * 80)
