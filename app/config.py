@@ -47,7 +47,12 @@ QWEN_IMAGE_WORKFLOW = WORKFLOWS_DIR / "qwen_image_2512_api.json"
 JUGGERNAUT_XL_WORKFLOW = WORKFLOWS_DIR / "juggernaut_xl_t2i_api.json"
 
 IMAGE_GENERATOR_MODEL = os.getenv("IMAGE_GENERATOR_MODEL", "juggernaut_xl_v9")
-JUGGERNAUT_CHECKPOINT = os.getenv("JUGGERNAUT_CHECKPOINT", "Juggernaut-XL_v9.safetensors")
+_env_ckpt = os.getenv("JUGGERNAUT_CHECKPOINT", "Juggernaut-XL_v9.safetensors")
+if "Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors" in _env_ckpt:
+    JUGGERNAUT_CHECKPOINT = "Juggernaut-XL_v9.safetensors"
+else:
+    JUGGERNAUT_CHECKPOINT = _env_ckpt
+
 JUGGERNAUT_STEPS = int(os.getenv("JUGGERNAUT_STEPS", "35"))
 JUGGERNAUT_CFG = float(os.getenv("JUGGERNAUT_CFG", "5.0"))
 JUGGERNAUT_SAMPLER = os.getenv("JUGGERNAUT_SAMPLER", "dpmpp_2m")
