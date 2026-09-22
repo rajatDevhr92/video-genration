@@ -481,32 +481,49 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                     prev_cam_text = f"{prev_scene_obj.get('camera', '')} {prev_scene_obj.get('description', '')}".lower()
                 prev_was_close_up = any(w in prev_cam_text for w in ["close-up", "close up", "extreme close-up", "macro", "tight shot"])
 
+                # Check if returning to wide shot from a close-up
+                opening_composition = job_dir / "scenes" / scenes[0].get("id", "scene_001") / "composition.png"
+
                 if prev_loc and curr_loc and prev_loc == curr_loc:
-                    if is_close_up or (is_wide_or_full and prev_was_close_up):
+                    if is_wide_or_full and prev_was_close_up and opening_composition.exists():
                         active_denoise = 0.85
+                        base_image = opening_composition
+                        base_source = "opening_wide_composition"
+                        logger.info(
+                            f"[FRAMING CUT] Zooming out from Close-Up to Wide Shot in scene {order} -> using opening wide composition as base_image with denoise={active_denoise}"
+                        )
+                    elif is_close_up or (is_wide_or_full and prev_was_close_up):
+                        active_denoise = 0.85
+                        base_image = composition_path
+                        base_source = "previous_video_last_frame"
                         logger.info(
                             f"[DENOISE] Camera cut/framing transition (is_close_up={is_close_up}, prev_was_close_up={prev_was_close_up}) in scene {order} -> boosted denoise to {active_denoise}"
                         )
                     elif has_pose_transition:
                         active_denoise = 0.65
+                        base_image = composition_path
+                        base_source = "previous_video_last_frame"
                         logger.info(
                             f"[DENOISE] Same location but pose/angle transition detected in scene {order} -> boosted denoise to {active_denoise}"
                         )
                     else:
                         active_denoise = 0.50
+                        base_image = composition_path
+                        base_source = "previous_video_last_frame"
                 else:
                     # New location -> allow room transition
                     active_denoise = 0.85 if (is_close_up or is_wide_or_full) else 0.65
+                    base_image = composition_path
+                    base_source = "previous_video_last_frame"
 
                 print()
                 print("=" * 80)
-                print(f"SCENE {order}: USING PREVIOUS VIDEO LAST FRAME (denoise={active_denoise}, pose_transition={has_pose_transition})")
+                print(f"SCENE {order}: USING BASE IMAGE ({base_source}, denoise={active_denoise}, pose_transition={has_pose_transition})")
                 print("=" * 80)
-                print("Previous last frame:", previous_last_frame)
+                print("Base image path:", base_image)
 
-                shutil.copy2(previous_last_frame, composition_path)
-                base_image = composition_path
-                base_source = "previous_video_last_frame"
+                if base_source != "opening_wide_composition":
+                    shutil.copy2(previous_last_frame, composition_path)
                 composition_result = {"prompt_id": None}
 
             # Build explicit Image slot assignment block for Qwen Edit Plus

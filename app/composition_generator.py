@@ -283,6 +283,26 @@ Generate the exact cinematic story moment.
 """
 
 
+    def build_sdxl_prompt(self, scene, characters):
+        char_descs = []
+        for c in characters:
+            name = c.get("name", "")
+            appearance = c.get("appearance", c.get("visual_anchor", ""))
+            clothing = c.get("clothing", "")
+            char_descs.append(f"{name} ({appearance}, {clothing})")
+        char_str = ". ".join(char_descs)
+
+        desc = scene.get("description", "")
+        action = scene.get("action", "")
+        camera = scene.get("camera", "")
+        lighting = scene.get("lighting", "")
+
+        return (
+            f"Cinematic photorealistic film still of {desc}. {action}. "
+            f"{char_str}. Camera: {camera}. Lighting: {lighting}. "
+            f"Realistic human skin texture, highly detailed, 8k resolution."
+        )
+
     def generate(
         self,
         scene,
@@ -296,6 +316,12 @@ Generate the exact cinematic story moment.
             scene,
             characters,
         )
+        use_juggernaut = str(IMAGE_GENERATOR_MODEL).lower() in ["juggernaut_xl_v9", "juggernaut", "juggernaut_xl", "sdxl"]
+
+        if use_juggernaut:
+            prompt = self.build_sdxl_prompt(scene, characters)
+        else:
+            prompt = self.build_prompt(scene, characters)
 
         negative_prompt = (
             "low quality, blurry, distorted anatomy, deformed hands, "
