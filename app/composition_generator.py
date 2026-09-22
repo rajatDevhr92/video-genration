@@ -117,6 +117,19 @@ Preserve for every character:
 Characters must remain visually believable and consistent.
 
 ============================================================
+ANATOMY & GENDER LOCK (CRITICAL)
+============================================================
+
+- Every character must keep correct biological sex anatomy.
+- Male characters must have a realistic human penis attached only to the male body.
+- Female characters must have a realistic human vagina only.
+- NEVER attach a penis to a female character.
+- NEVER attach a vagina to a male character.
+- Do not create floating genitals or extra genitals.
+- Keep body proportions, genital size, and shape consistent with the character description.
+- Realistic adult human anatomy only. No object morphing of body parts.
+
+============================================================
 ENVIRONMENT
 ============================================================
 
@@ -172,6 +185,8 @@ VISUAL STYLE
 Photorealistic human characters.
 
 Realistic anatomy.
+
+Realistic adult human genitals when the scene requires nudity. Correct gender anatomy only.
 
 Realistic skin texture.
 
@@ -319,7 +334,10 @@ Generate the exact cinematic story moment.
             "comic panels, multiple panels, multiple views, "
             "multiple camera angles, double exposure, mirrored image, "
             "censorship blur, mosaic, pixelation, censor bars, unwanted underwear, "
-            "text, subtitles, captions, watermark, logo"
+            "text, subtitles, captions, watermark, logo, "
+            "penis on woman, cock on female, dick on female body, "
+            "vagina on man, floating penis, extra penis, object instead of penis, "
+            "genitals turning into objects, wrong gender anatomy, swapped genitals"
         )
 
         # --------------------------------------------------

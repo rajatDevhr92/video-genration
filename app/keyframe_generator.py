@@ -183,10 +183,19 @@ class KeyframeGenerator:
                 "Do NOT distort character torsos, merge body parts into one mass, fuse character limbs, twist limbs unphysically, or create split screen / collages. "
                 "Do NOT render acne, pimples, skin blemishes, skin spots, rough skin, or skin lesions. Render flawless smooth skin. "
                 "Do NOT render censorship blur, mosaic, pixelation, censor bars, or unwanted underwear when unclothed. "
-                "No text, no watermarks, no subtitles, no bad anatomy, no extra legs on the bed."
+                "No text, no watermarks, no subtitles, no bad anatomy, no extra legs on the bed. "
+                "No penis on woman, no cock on female, no dick on female body, "
+                "no vagina on man, no floating penis, no extra penis, "
+                "no genitals turning into objects, no wrong gender anatomy, no swapped genitals, "
+                "no changing genital size, no morphing body parts into objects."
             )
-
-            workflow["13"]["inputs"]["prompt"] = prompt
+            # Optional: reinforce gender anatomy lock
+            workflow["13"]["inputs"]["prompt"] = (
+                prompt
+                + "\n\nCRITICAL: Male characters keep a realistic human penis. "
+                "Female characters keep a realistic human vagina only. "
+                "Never attach a penis to a female character. Keep genital size consistent."
+            )
 
             # --------------------------------------------------
             # Sampling & Adaptive Denoise

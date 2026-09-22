@@ -203,14 +203,15 @@ Do not fade to black or apply censorship blur/mosaic.
 Keep the motion physically believable, smooth, and continuous for the full duration.
 
 =========================================================
-CRITICAL ANATOMICAL LOCK (PREVENT OBJECT MORPHING)
+CRITICAL ANATOMICAL LOCK (PREVENT OBJECT + GENDER MORPHING)
 =========================================================
-- The penis / dick / cock must remain a realistic human penis at every frame. It must NEVER turn into an object, tool, bottle, dildo, candle, vegetable, or any non-human shape.
-- The vagina / pussy must remain a realistic human vagina at every frame. It must NEVER morph into another object.
-- Breasts, nipples, ass, and hands must keep correct human anatomy and never transform into other objects.
-- Do not replace any body part with an object.
-- Do not invent extra objects that replace genitals.
-- Maintain exact genital identity and proportions from the input keyframe throughout the entire animation.
+- Male character must keep a realistic human penis. The penis must stay attached only to the male body.
+- Female character must keep a realistic human vagina / pussy. NEVER attach a penis, dick, or cock to the female character.
+- Do NOT generate a floating penis, extra penis, or penis coming out of the woman’s body.
+- Do NOT swap genitals between characters.
+- Keep exact genital size, shape, color, and proportions from the input keyframe. Do not make the penis larger, smaller, thicker, or thinner during the animation.
+- Breasts, nipples, ass, and all other body parts must keep correct gender anatomy and never turn into objects.
+- Maintain perfect gender-correct anatomy at every single frame.
 """
         else:
             base += """
@@ -609,10 +610,12 @@ that represents the exact story moment described below.
 =========================================================
 CRITICAL GENITAL & BODY PART IDENTITY LOCK
 =========================================================
-- If a penis/dick is present, it must be rendered as a realistic human penis only. Never replace it with any object.
-- If a vagina/pussy is present, it must be rendered as a realistic human vagina only. Never replace it with any object.
-- Breasts, nipples, ass, hands, and all body parts must keep correct human anatomy.
-- Do not invent or substitute any body part with an object, tool, or prop.
+- Male characters must have a realistic human penis attached only to the male body.
+- Female characters must have a realistic human vagina only. NEVER render a penis on a female character.
+- Do not attach, float, or transfer a penis onto the woman.
+- Do not invent extra genitals.
+- Keep exact genital size and proportions consistent with the reference and previous frame.
+- Breasts, nipples, ass, hands and all body parts must keep correct human anatomy and never become objects.
 
 {image_mapping_block}
 
