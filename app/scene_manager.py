@@ -317,6 +317,7 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
 
         state["time_of_day"] = previous_state.get("time_of_day")
         state["weather"] = scene.get("weather") or previous_state.get("weather")
+        state["master_lighting"] = previous_state.get("master_lighting") or scene.get("lighting", "")
         state["lighting"] = scene.get("lighting") or previous_state.get("lighting")
         state["lighting_quality"] = previous_state.get("lighting_quality")
         state["important_objects"] = dict(previous_state.get("important_objects", {}))
@@ -586,6 +587,8 @@ This is the opening scene.
 Establish the visual world, characters, environment, and cinematic language of the story.
 """
 
+            master_lighting = scene_state.get("master_lighting") or scene.get("lighting", "")
+
             keyframe_prompt = f"""
 Create ONE SINGLE photorealistic cinematic frame
 that represents the exact story moment described below.
@@ -610,7 +613,10 @@ Action happening in this exact moment:
 Camera direction:
 {scene.get("camera", "")}
 
-Lighting:
+Master Lighting Authority (Room Ambient Glow):
+{master_lighting}
+
+Scene Lighting Details:
 {scene.get("lighting", "")}
 
 Time of day:
@@ -625,6 +631,7 @@ CONTINUITY INSTRUCTIONS
 Per-Character Continuity State:
 {json.dumps(scene_state.get("character_current_states", {}), ensure_ascii=False, indent=2)}
 
+- CRITICAL LIGHTING LOCK: Preserve the exact master room lighting ({master_lighting}) from Image 1. Maintain consistent color temperature, white balance, ambient exposure, and shadow balance across all scene cuts.
 - If continuing from Image 1, preserve the exact room architecture, furniture, and environmental lighting from Image 1.
 - Place the characters in the scene and render their faces strictly matching their corresponding reference images (Image 2, Image 3, etc.).
 - Do NOT swap character faces between characters.
