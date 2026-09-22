@@ -633,11 +633,10 @@ Per-Character Continuity State:
 
 - CRITICAL LIGHTING LOCK: Preserve the exact master room lighting ({master_lighting}) from Image 1. Maintain consistent color temperature, white balance, ambient exposure, and shadow balance across all scene cuts.
 - If continuing from Image 1, preserve the exact room architecture, furniture, and environmental lighting from Image 1.
-- Place the characters in the scene and render their faces strictly matching their corresponding reference images (Image 2, Image 3, etc.).
-- Do NOT swap character faces between characters.
-- Do NOT introduce unscripted people or background faces.
-- Do NOT swap character faces or clothing between characters.
-- Do NOT introduce unscripted people, extra legs, or background faces.
+- CHARACTER IDENTITY & BODY CONSISTENCY: Maintain exact facial features, hair color, skin tone, gender traits, and body proportions for each character based on their respective reference images (Image 2, Image 3, etc.).
+- Do NOT swap character faces or body features between characters.
+- Do NOT alter character physical builds or introduce unwanted objects/artifacts onto characters.
+- Do NOT introduce unscripted extra people, extra limbs, or duplicate bodies.
 
 ============================================================
 STRICT IMAGE RULES
