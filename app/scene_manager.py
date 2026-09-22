@@ -152,7 +152,8 @@ class SceneManager:
         sexual_keywords = [
             "sex", "fuck", "penetrat", "oral", "blowjob", "cunnilingus",
             "handjob", "masturbat", "nude", "naked", "breast", "pussy",
-            "cock", "penis", "vagina", "orgasm", "cum", "thrust", "moan"
+            "cock", "penis", "dick", "vagina", "orgasm", "cum", "thrust", "moan",
+            "ass", "butt", "nipple"
         ]
         is_sexual = any(kw in (description + action).lower() for kw in sexual_keywords)
 
@@ -200,6 +201,16 @@ Do not stop the sexual activity.
 Do not add clothing or underwear.
 Do not fade to black or apply censorship blur/mosaic.
 Keep the motion physically believable, smooth, and continuous for the full duration.
+
+=========================================================
+CRITICAL ANATOMICAL LOCK (PREVENT OBJECT MORPHING)
+=========================================================
+- The penis / dick / cock must remain a realistic human penis at every frame. It must NEVER turn into an object, tool, bottle, dildo, candle, vegetable, or any non-human shape.
+- The vagina / pussy must remain a realistic human vagina at every frame. It must NEVER morph into another object.
+- Breasts, nipples, ass, and hands must keep correct human anatomy and never transform into other objects.
+- Do not replace any body part with an object.
+- Do not invent extra objects that replace genitals.
+- Maintain exact genital identity and proportions from the input keyframe throughout the entire animation.
 """
         else:
             base += """
@@ -223,6 +234,8 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
 - CHARACTER BODY SEPARATION: Maintain distinct, separate physical body meshes for each character. Do NOT merge, clip, overlap into one mass, or melt character limbs, torsos, or skin into a single combined mass during movement.
 - SMOOTH FLUID MOTION: Ensure smooth frame-to-frame motion transitions without sudden body pops, flickering, or temporal distortion between consecutive frames.
 - Animate character physical interactions with realistic weight, smooth transitions, and natural skin contact.
+- Genitals, breasts, and body parts must stay anatomically correct and never morph into objects.
+
 """
         return base
 
@@ -592,6 +605,14 @@ Establish the visual world, characters, environment, and cinematic language of t
             keyframe_prompt = f"""
 Create ONE SINGLE photorealistic cinematic frame
 that represents the exact story moment described below.
+
+=========================================================
+CRITICAL GENITAL & BODY PART IDENTITY LOCK
+=========================================================
+- If a penis/dick is present, it must be rendered as a realistic human penis only. Never replace it with any object.
+- If a vagina/pussy is present, it must be rendered as a realistic human vagina only. Never replace it with any object.
+- Breasts, nipples, ass, hands, and all body parts must keep correct human anatomy.
+- Do not invent or substitute any body part with an object, tool, or prop.
 
 {image_mapping_block}
 
