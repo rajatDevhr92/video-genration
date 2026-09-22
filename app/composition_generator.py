@@ -292,50 +292,11 @@ Generate the exact cinematic story moment.
     ):
         output_path = Path(output_path)
 
-        workflow = self.runner.load_workflow(
-            self.WORKFLOW
-        )
-
         prompt = self.build_prompt(
             scene,
             characters,
         )
 
-        # --------------------------------------------------
-        # Krea 2 prompt
-        # --------------------------------------------------
-
-        workflow["5"]["inputs"]["text"] = prompt
-
-        # --------------------------------------------------
-        # Production scene resolution
-        # --------------------------------------------------
-
-        workflow["7"]["inputs"]["width"] = 1280
-        workflow["7"]["inputs"]["height"] = 720
-        workflow["7"]["inputs"]["batch_size"] = 1
-
-        # --------------------------------------------------
-        # Deterministic scene seed
-        # --------------------------------------------------
-
-        workflow["8"]["inputs"]["seed"] = seed
-
-        # --------------------------------------------------
-        # Krea 2 recommended sampling
-        # --------------------------------------------------
-
-        workflow["8"]["inputs"]["steps"] = 6
-        workflow["8"]["inputs"]["cfg"] = 1.0
-        workflow["8"]["inputs"]["sampler_name"] = "euler"
-        workflow["8"]["inputs"]["scheduler"] = "beta"
-        workflow["8"]["inputs"]["denoise"] = 1.0
-
-        # --------------------------------------------------
-        # Negative prompt
-        # --------------------------------------------------
-
-        workflow["6"]["inputs"]["text"] = (
         negative_prompt = (
             "low quality, blurry, distorted anatomy, deformed hands, "
             "acne, pimples, skin blemishes, skin spots, rough skin, "
@@ -351,14 +312,8 @@ Generate the exact cinematic story moment.
             "genitals turning into objects, wrong gender anatomy, swapped genitals"
         )
 
-        # --------------------------------------------------
-        # Output
-        # --------------------------------------------------
         use_juggernaut = str(IMAGE_GENERATOR_MODEL).lower() in ["juggernaut_xl_v9", "juggernaut", "juggernaut_xl", "sdxl"]
 
-        workflow["10"]["inputs"]["filename_prefix"] = (
-            "story_compositions/scene"
-        )
         if use_juggernaut:
             workflow = self.runner.load_workflow(JUGGERNAUT_XL_WORKFLOW)
             workflow["4"]["inputs"]["ckpt_name"] = JUGGERNAUT_CHECKPOINT
@@ -392,30 +347,17 @@ Generate the exact cinematic story moment.
             model_tag = "KREA2"
 
         print(
-            f"[KREA2] Generating composition "
             f"[{model_tag}] Generating composition "
             f"seed={seed} "
             f"output={output_path}"
         )
 
-        prompt_id, client_id = (
-            self.runner.submit(workflow)
-        )
         prompt_id, client_id = self.runner.submit(workflow)
         result = self.runner.wait(prompt_id)
         images = self.runner.find_images(result)
 
-        result = self.runner.wait(
-            prompt_id
-        )
-
-        images = self.runner.find_images(
-            result
-        )
-
         if not images:
             raise RuntimeError(
-                "Krea 2 composition generation "
                 f"{model_tag} composition generation "
                 "completed without an image output."
             )
@@ -426,7 +368,6 @@ Generate the exact cinematic story moment.
         )
 
         print(
-            f"[KREA2] Composition generated: "
             f"[{model_tag}] Composition generated: "
             f"{output_path}"
         )
