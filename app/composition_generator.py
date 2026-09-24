@@ -1,16 +1,6 @@
 from pathlib import Path
 
 from .config import WORKFLOWS_DIR
-from .config import (
-    WORKFLOWS_DIR,
-    IMAGE_GENERATOR_MODEL,
-    JUGGERNAUT_XL_WORKFLOW,
-    JUGGERNAUT_CHECKPOINT,
-    JUGGERNAUT_STEPS,
-    JUGGERNAUT_CFG,
-    JUGGERNAUT_SAMPLER,
-    JUGGERNAUT_SCHEDULER,
-)
 from .workflow_runner import WorkflowRunner
 
 
@@ -283,26 +273,6 @@ Generate the exact cinematic story moment.
 """
 
 
-    def build_sdxl_prompt(self, scene, characters):
-        char_descs = []
-        for c in characters:
-            name = c.get("name", "")
-            appearance = c.get("appearance", c.get("visual_anchor", ""))
-            clothing = c.get("clothing", "")
-            char_descs.append(f"{name} ({appearance}, {clothing})")
-        char_str = ". ".join(char_descs)
-
-        desc = scene.get("description", "")
-        action = scene.get("action", "")
-        camera = scene.get("camera", "")
-        lighting = scene.get("lighting", "")
-
-        return (
-            f"Cinematic photorealistic film still of {desc}. {action}. "
-            f"{char_str}. Camera: {camera}. Lighting: {lighting}. "
-            f"Realistic human skin texture, highly detailed, 8k resolution."
-        )
-
     def generate(
         self,
         scene,
@@ -312,18 +282,50 @@ Generate the exact cinematic story moment.
     ):
         output_path = Path(output_path)
 
+        workflow = self.runner.load_workflow(
+            self.WORKFLOW
+        )
+
         prompt = self.build_prompt(
             scene,
             characters,
         )
-        use_juggernaut = str(IMAGE_GENERATOR_MODEL).lower() in ["juggernaut_xl_v9", "juggernaut", "juggernaut_xl", "sdxl"]
 
-        if use_juggernaut:
-            prompt = self.build_sdxl_prompt(scene, characters)
-        else:
-            prompt = self.build_prompt(scene, characters)
+        # --------------------------------------------------
+        # Krea 2 prompt
+        # --------------------------------------------------
 
-        negative_prompt = (
+        workflow["5"]["inputs"]["text"] = prompt
+
+        # --------------------------------------------------
+        # Production scene resolution
+        # --------------------------------------------------
+
+        workflow["7"]["inputs"]["width"] = 1280
+        workflow["7"]["inputs"]["height"] = 720
+        workflow["7"]["inputs"]["batch_size"] = 1
+
+        # --------------------------------------------------
+        # Deterministic scene seed
+        # --------------------------------------------------
+
+        workflow["8"]["inputs"]["seed"] = seed
+
+        # --------------------------------------------------
+        # Krea 2 recommended sampling
+        # --------------------------------------------------
+
+        workflow["8"]["inputs"]["steps"] = 6
+        workflow["8"]["inputs"]["cfg"] = 1.0
+        workflow["8"]["inputs"]["sampler_name"] = "euler"
+        workflow["8"]["inputs"]["scheduler"] = "beta"
+        workflow["8"]["inputs"]["denoise"] = 1.0
+
+        # --------------------------------------------------
+        # Negative prompt
+        # --------------------------------------------------
+
+        workflow["6"]["inputs"]["text"] = (
             "low quality, blurry, distorted anatomy, deformed hands, "
             "acne, pimples, skin blemishes, skin spots, rough skin, "
             "character merging, merged bodies, fused limbs, body clipping, "
@@ -338,53 +340,35 @@ Generate the exact cinematic story moment.
             "genitals turning into objects, wrong gender anatomy, swapped genitals"
         )
 
-        use_juggernaut = str(IMAGE_GENERATOR_MODEL).lower() in ["juggernaut_xl_v9", "juggernaut", "juggernaut_xl", "sdxl"]
+        # --------------------------------------------------
+        # Output
+        # --------------------------------------------------
 
-        if use_juggernaut:
-            workflow = self.runner.load_workflow(JUGGERNAUT_XL_WORKFLOW)
-            workflow["4"]["inputs"]["ckpt_name"] = JUGGERNAUT_CHECKPOINT
-            workflow["5"]["inputs"]["text"] = prompt
-            workflow["6"]["inputs"]["text"] = negative_prompt
-            workflow["7"]["inputs"]["width"] = 1280
-            workflow["7"]["inputs"]["height"] = 720
-            workflow["7"]["inputs"]["batch_size"] = 1
-            workflow["8"]["inputs"]["seed"] = seed
-            workflow["8"]["inputs"]["steps"] = JUGGERNAUT_STEPS
-            workflow["8"]["inputs"]["cfg"] = JUGGERNAUT_CFG
-            workflow["8"]["inputs"]["sampler_name"] = JUGGERNAUT_SAMPLER
-            workflow["8"]["inputs"]["scheduler"] = JUGGERNAUT_SCHEDULER
-            workflow["8"]["inputs"]["denoise"] = 1.0
-            workflow["10"]["inputs"]["filename_prefix"] = "story_compositions/scene"
-            model_tag = "JUGGERNAUT_XL"
-        else:
-            workflow = self.runner.load_workflow(self.WORKFLOW)
-            workflow["5"]["inputs"]["text"] = prompt
-            workflow["6"]["inputs"]["text"] = negative_prompt
-            workflow["7"]["inputs"]["width"] = 1280
-            workflow["7"]["inputs"]["height"] = 720
-            workflow["7"]["inputs"]["batch_size"] = 1
-            workflow["8"]["inputs"]["seed"] = seed
-            workflow["8"]["inputs"]["steps"] = 6
-            workflow["8"]["inputs"]["cfg"] = 1.0
-            workflow["8"]["inputs"]["sampler_name"] = "euler"
-            workflow["8"]["inputs"]["scheduler"] = "beta"
-            workflow["8"]["inputs"]["denoise"] = 1.0
-            workflow["10"]["inputs"]["filename_prefix"] = "story_compositions/scene"
-            model_tag = "KREA2"
+        workflow["10"]["inputs"]["filename_prefix"] = (
+            "story_compositions/scene"
+        )
 
         print(
-            f"[{model_tag}] Generating composition "
+            f"[KREA2] Generating composition "
             f"seed={seed} "
             f"output={output_path}"
         )
 
-        prompt_id, client_id = self.runner.submit(workflow)
-        result = self.runner.wait(prompt_id)
-        images = self.runner.find_images(result)
+        prompt_id, client_id = (
+            self.runner.submit(workflow)
+        )
+
+        result = self.runner.wait(
+            prompt_id
+        )
+
+        images = self.runner.find_images(
+            result
+        )
 
         if not images:
             raise RuntimeError(
-                f"{model_tag} composition generation "
+                "Krea 2 composition generation "
                 "completed without an image output."
             )
 
@@ -394,7 +378,7 @@ Generate the exact cinematic story moment.
         )
 
         print(
-            f"[{model_tag}] Composition generated: "
+            f"[KREA2] Composition generated: "
             f"{output_path}"
         )
 
@@ -403,5 +387,4 @@ Generate the exact cinematic story moment.
             "client_id": client_id,
             "output": str(output_path),
             "prompt": prompt,
-            "model": model_tag,
         }
