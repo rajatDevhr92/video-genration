@@ -24,7 +24,7 @@ class KeyframeGenerator:
         output_path,
         seed,
         denoise=None,
-        genital_references=None,          # list of 0–2 paths
+        genital_references=None,
     ):
         scene_image = Path(scene_image)
         output_path = Path(output_path)
@@ -33,20 +33,8 @@ class KeyframeGenerator:
         if not scene_image.exists():
             raise FileNotFoundError(f"Scene/base image not found: {scene_image}")
 
-        if not character_references:
-            raise ValueError("At least one character reference is required.")
-
-        if len(character_references) > 3:
-            raise ValueError("Maximum of 3 character references supported.")
-
-        if len(genital_references) > 2:
-            raise ValueError("Maximum of 2 genital reference images supported.")
-
-        total_refs = len(character_references) + len(genital_references)
-        if total_refs > 5:
-            raise ValueError(
-                f"Total reference images ({total_refs}) exceeds maximum slot capacity of 5 (1 base + 5 refs = 6 total slots)."
-            )
+        if not character_references and not genital_references:
+            raise ValueError("At least one character or genital reference is required.")
 
         workflow = self.runner.load_workflow(QWEN_EDIT_WORKFLOW)
         self.input_dir.mkdir(parents=True, exist_ok=True)
@@ -67,69 +55,58 @@ class KeyframeGenerator:
             workflow["13"]["inputs"]["image1"] = ["16", 0]
 
             # --------------------------------------------------
-            # 2. Character references (Slots start at Image 2)
+            # 2. Reference Images Assembly (Slots: Image 2 and Image 3 ONLY)
+            # TextEncodeQwenImageEditPlus in ComfyUI supports max 3 images (Image 1 base + Image 2 ref + Image 3 ref)
             # --------------------------------------------------
-            for index, reference in enumerate(character_references, start=1):
-                reference = Path(reference)
-                if not reference.exists():
-                    raise FileNotFoundError(f"Character reference not found: {reference}")
+            all_references = []
+            
+            # Add character references first
+            for ref in character_references:
+                all_references.append(("character", Path(ref)))
 
-                ref_name = f"character_{uuid.uuid4().hex[:12]}{reference.suffix.lower()}"
+            # Add genital references if space available (up to 2 total reference images)
+            for gref in genital_references:
+                if len(all_references) < 2:
+                    all_references.append(("genital", Path(gref)))
+
+            # Cap strictly at 2 reference images (for Image 2 and Image 3)
+            all_references = all_references[:2]
+
+            slot_descriptions = []
+            for index, (ref_type, ref_path) in enumerate(all_references, start=1):
+                if not ref_path.exists():
+                    raise FileNotFoundError(f"{ref_type.capitalize()} reference not found: {ref_path}")
+
+                ref_name = f"{ref_type}_{uuid.uuid4().hex[:12]}{ref_path.suffix.lower()}"
                 ref_target = self.input_dir / ref_name
-                shutil.copy2(reference, ref_target)
+                shutil.copy2(ref_path, ref_target)
                 temporary_files.append(ref_name)
 
-                node_id = str(1001 + index)
+                node_id = str(1001 + index)  # 1002 for Image 2, 1003 for Image 3
                 workflow[node_id] = {
                     "class_type": "LoadImage",
                     "inputs": {"image": ref_name}
                 }
 
-                ref_slot = index + 1          # Image 2, 3, 4
+                ref_slot = index + 1  # Image 2, Image 3
                 input_name = f"image{ref_slot}"
                 workflow["9"]["inputs"][input_name] = [node_id, 0]
                 workflow["13"]["inputs"][input_name] = [node_id, 0]
 
-            # --------------------------------------------------
-            # 3. Genital references (Contiguous slots right after character refs)
-            # --------------------------------------------------
-            char_count = len(character_references)
-            genital_slot_descriptions = []
+                if ref_type == "genital":
+                    slot_descriptions.append(f"Image {ref_slot} (Genital Reference)")
+                else:
+                    slot_descriptions.append(f"Image {ref_slot} (Character Reference)")
 
-            for index, genital_ref in enumerate(genital_references, start=1):
-                genital_ref = Path(genital_ref)
-                if not genital_ref.exists():
-                    raise FileNotFoundError(f"Genital reference not found: {genital_ref}")
-
-                gen_name = f"genital_{uuid.uuid4().hex[:12]}{genital_ref.suffix.lower()}"
-                gen_target = self.input_dir / gen_name
-                shutil.copy2(genital_ref, gen_target)
-                temporary_files.append(gen_name)
-
-                node_id = str(1010 + index)   # use higher node IDs to avoid collision
-                workflow[node_id] = {
-                    "class_type": "LoadImage",
-                    "inputs": {"image": gen_name}
-                }
-
-                # Contiguous assignment: Slot right after character refs
-                ref_slot = 1 + char_count + index
-                input_name = f"image{ref_slot}"
-                workflow["9"]["inputs"][input_name] = [node_id, 0]
-                workflow["13"]["inputs"][input_name] = [node_id, 0]
-                genital_slot_descriptions.append(f"Image {ref_slot}")
-
-            # Clean up any remaining unused slots (up to Image 6)
-            max_used_slot = 1 + len(character_references) + len(genital_references)
-            for ref_slot in range(max_used_slot + 1, 7):
+            # Clean up all unused reference slots (image2, image3 if unused, and ALL higher slots like image4, image5, image6)
+            for ref_slot in range(1 + len(all_references) + 1, 10):
                 input_name = f"image{ref_slot}"
                 workflow["9"]["inputs"].pop(input_name, None)
                 workflow["13"]["inputs"].pop(input_name, None)
 
             # --------------------------------------------------
-            # 4. Prompts
+            # 3. Prompts
             # --------------------------------------------------
-            # Negative prompt (Node 9) - keep short and focused
             workflow["9"]["inputs"]["prompt"] = (
                 "bad anatomy, extra limbs, fused bodies, floating limbs, "
                 "penis on woman, cock on female, dick on female body, "
@@ -140,7 +117,6 @@ class KeyframeGenerator:
                 "acne, pimples, skin blemishes, text, watermark"
             )
 
-            # Positive prompt (Node 13)
             genital_lock = """
 =========================================================
 CRITICAL GENITAL IDENTITY LOCK (HIGHEST PRIORITY)
@@ -150,20 +126,18 @@ CRITICAL GENITAL IDENTITY LOCK (HIGHEST PRIORITY)
 - Keep exact genital size, shape, color, and proportions consistent with the reference images and previous frame.
 - No floating penis, no extra penis, no genitals turning into objects, no gender swap of genitals, no size change during generation.
 """
-
-            # If genital references are provided, reinforce them with dynamic slot numbers
-            if genital_slot_descriptions:
-                slots_str = " and ".join(genital_slot_descriptions)
+            genital_slots = [s for s in slot_descriptions if "Genital" in s]
+            if genital_slots:
+                gen_str = " and ".join([s.split()[0] for s in genital_slots])
                 genital_lock += f"""
-- {slots_str} are authoritative close-up references for the exact genital appearance.
-- Copy exact genital shape, skin tone, labia/penis structure, and anatomical details strictly from {slots_str}.
-- Do not invent, alter, or morph the genitals.
+- {gen_str} is the authoritative close-up reference for genital appearance.
+- Copy exact genital shape, skin tone, labia/penis structure, and anatomical details strictly from {gen_str}.
 """
 
             workflow["13"]["inputs"]["prompt"] = prompt + "\n\n" + genital_lock
 
             # --------------------------------------------------
-            # 5. Sampling
+            # 4. Sampling
             # --------------------------------------------------
             active_denoise = denoise if denoise is not None else KEYFRAME_DENOISE
 
@@ -175,7 +149,7 @@ CRITICAL GENITAL IDENTITY LOCK (HIGHEST PRIORITY)
             workflow["15"]["inputs"]["denoise"] = float(active_denoise)
 
             # --------------------------------------------------
-            # 6. Run
+            # 5. Run
             # --------------------------------------------------
             prompt_id, client_id = self.runner.submit(workflow)
             result = self.runner.wait(prompt_id)
