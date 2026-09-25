@@ -68,6 +68,7 @@ class StoryPlanner:
     def build(
         self,
         story: str,
+        target_scenes: int = None,
     ) -> Dict[str, Any]:
 
         if not story or not story.strip():
@@ -77,7 +78,8 @@ class StoryPlanner:
             )
 
         base_prompt = self._build_prompt(
-            story
+            story,
+            target_scenes=target_scenes,
         )
 
         print(
