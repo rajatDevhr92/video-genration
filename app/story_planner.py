@@ -187,9 +187,6 @@ SCENE COUNT & FULL STORY COVERAGE DIRECTIVE
 - Generate enough scenes to fully cover all events described in the story without skipping scenes or rushing through plot points.
 """
 
-        return f"""
-{scene_directive}
-
 ============================================================
 STORY FIDELITY
 ============================================================
