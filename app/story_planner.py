@@ -151,33 +151,41 @@ class StoryPlanner:
     def _build_prompt(
         self,
         story: str,
+        target_scenes: int = None,
     ) -> str:
 
-        return f"""
-You are a professional cinematic story-to-video planner.
+        # Auto-detect pre-numbered scenes (e.g., "Scene 1 [", "Scene 2 [", etc.)
+        import re
+        detected_scenes = re.findall(r"Scene\s+(\d+)\s*\[", story, flags=re.IGNORECASE)
+        num_detected = len(detected_scenes)
 
-Convert the supplied story into ONE structured JSON production plan.
-
-The plan will be used by:
-
-1. Krea 2 for character references.
-2. Krea 2 for scene composition.
-3. A continuity/keyframe image pipeline.
-4. Wan 2.2 for animation.
-
+        if target_scenes:
+            scene_directive = f"""
 ============================================================
-ABSOLUTE OUTPUT RULES
+MANDATORY TARGET SCENE COUNT DIRECTIVE
 ============================================================
-
-Return ONLY valid JSON.
-
-No Markdown.
-No code fences.
-No explanations.
-
-The JSON MUST be complete.
-
-Do NOT stop early.
+- You MUST divide this story into EXACTLY {target_scenes} sequential scenes.
+- Do NOT condense or merge the story into fewer scenes.
+- Break down every major narrative beat into its own distinct scene object (order 1 through {target_scenes}).
+"""
+        elif num_detected > 0:
+            scene_directive = f"""
+============================================================
+MANDATORY PRE-STRUCTURED SCENE MATCHING DIRECTIVE ({num_detected} SCENES)
+============================================================
+- The input story is already formatted into EXACTLY {num_detected} explicit scene blocks (Scene 1 through Scene {num_detected}).
+- You MUST generate EXACTLY {num_detected} scene objects in your JSON output (order 1 through {num_detected}).
+- DO NOT condense, merge, or drop any of the {num_detected} scenes!
+- Map each "Scene X [Shot Type, 5s]" directly into its corresponding JSON scene object with order = X and duration = 5.
+"""
+        else:
+            scene_directive = """
+============================================================
+SCENE COUNT & FULL STORY COVERAGE DIRECTIVE
+============================================================
+- Do NOT over-compress the story.
+- Generate enough scenes to fully cover all events described in the story without skipping scenes or rushing through plot points.
+"""
 
 ============================================================
 STORY FIDELITY

@@ -81,6 +81,10 @@ class StoryRequest(BaseModel):
         min_length=10,
         description="Complete story to turn into a cinematic video.",
     )
+    target_scenes: int | None = Field(
+        default=None,
+        description="Optional target scene count for the story planner.",
+    )
 
 
 # ============================================================
@@ -124,6 +128,7 @@ def run_command(command):
 def generate_story_job(
     job_id,
     story,
+    target_scenes=None,
 ):
     job_dir = OUTPUT_DIR / job_id
     job_dir.mkdir(
@@ -166,7 +171,8 @@ def generate_story_job(
         )
 
         plan = planner.build(
-            story
+            story,
+            target_scenes=target_scenes,
         )
 
         plan_path = (
@@ -401,6 +407,7 @@ def create_story(request: StoryRequest):
         generate_story_job,
         job_id,
         story,
+        request.target_scenes,
     )
 
     return {
