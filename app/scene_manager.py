@@ -455,10 +455,10 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                     gender_str = "female" if any(w in anchor_lower for w in ["female", "woman", "girl", "lady"]) else "male"
 
                 refs = self.get_or_generate_genital_refs(
-                    character_id=char_id,
                     character_appearance=appearance,
                     gender=gender_str,
-                    output_dir=job_dir / "genital_refs",
+                      character_id=char_id,
+                  output_dir=job_dir / "genital_refs",
                 )
                 genital_refs.extend(refs)
 
@@ -856,13 +856,22 @@ Generate the exact cinematic story moment while preserving character identity an
                 "neutral background, highly detailed anatomical accuracy, sharp focus, no text"
             )
 
-        # TODO: Replace with your actual image generation call, e.g.:
-        # self.composition_generator.generate_simple(prompt=genital_prompt, output_path=ref_path)
+        # Generate the genital reference image via composition generator (Krea T2I)
+        try:
+            logger.info(f"Generating genital reference for character '{character_id}' ({gender})...")
+            gen_seed = (abs(hash(character_id)) % 8000000) + 100000
+            self.composition_generator.generate_simple(
+                prompt=genital_prompt,
+                output_path=ref_path,
+                seed=gen_seed,
+            )
+        except Exception as e:
+            logger.error(f"Failed to generate genital reference for '{character_id}': {e}")
+            return []
 
         if not ref_path.exists() or ref_path.stat().st_size == 0:
             logger.warning(
-                f"Genital reference for '{character_id}' ({gender}) does not exist yet at {ref_path}. "
-                "Skipping genital reference until generation call is connected."
+                f"Genital reference for '{character_id}' ({gender}) failed to save at {ref_path}."
             )
             return []
 

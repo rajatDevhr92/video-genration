@@ -388,3 +388,50 @@ Generate the exact cinematic story moment.
             "output": str(output_path),
             "prompt": prompt,
         }
+
+    def generate_simple(
+        self,
+        prompt,
+        output_path,
+        seed=12345,
+    ):
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        workflow = self.runner.load_workflow(self.WORKFLOW)
+
+        workflow["5"]["inputs"]["text"] = prompt
+        workflow["7"]["inputs"]["width"] = 1024
+        workflow["7"]["inputs"]["height"] = 1024
+        workflow["7"]["inputs"]["batch_size"] = 1
+        workflow["8"]["inputs"]["seed"] = seed
+        workflow["8"]["inputs"]["steps"] = 6
+        workflow["8"]["inputs"]["cfg"] = 1.0
+        workflow["8"]["inputs"]["sampler_name"] = "euler"
+        workflow["8"]["inputs"]["scheduler"] = "beta"
+        workflow["8"]["inputs"]["denoise"] = 1.0
+
+        workflow["6"]["inputs"]["text"] = (
+            "low quality, blurry, distorted anatomy, deformed hands, "
+            "acne, pimples, skin blemishes, skin spots, text, watermark"
+        )
+
+        workflow["10"]["inputs"]["filename_prefix"] = "genital_refs/ref"
+
+        print(f"[KREA2] Generating simple image: seed={seed}, output={output_path}")
+
+        prompt_id, client_id = self.runner.submit(workflow)
+        result = self.runner.wait(prompt_id)
+        images = self.runner.find_images(result)
+
+        if not images:
+            raise RuntimeError("Krea 2 simple generation completed without an image output.")
+
+        self.runner.download_image(images[0], output_path)
+
+        return {
+            "prompt_id": prompt_id,
+            "client_id": client_id,
+            "output": str(output_path),
+            "prompt": prompt,
+        }
