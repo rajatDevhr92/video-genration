@@ -442,6 +442,21 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                     f"Scene '{scene_id}' contains {len(character_refs)} character references. Maximum supported is 3."
                 )
 
+                # --------------------------------------------------
+# Collect genital references
+# --------------------------------------------------
+genital_refs = []
+for char_id in scene_character_ids:
+    char_obj = character_map.get(char_id, {})
+    appearance = char_obj.get("appearance", char_obj.get("visual_anchor", ""))
+    
+    refs = self.get_or_generate_genital_refs(
+        character_id=char_id,
+        character_appearance=appearance,
+        output_dir=job_dir / "genital_refs"
+    )
+    genital_refs.extend(refs)
+
             # Determine adaptive denoise level & setup stage 1
             prev_loc = previous_scene_state.get("location") if previous_scene_state else None
             curr_loc = location_id
@@ -678,6 +693,8 @@ Generate the exact cinematic story moment while preserving character identity an
                 output_path=keyframe_path,
                 seed=2000003 + order * 7919,
                 denoise=active_denoise,
+                genital_references=genital_refs,
+
             )
 
             # Stage 3: Wan 2.2 Video Generation
@@ -796,3 +813,51 @@ Generate the exact cinematic story moment while preserving character identity an
             return False, errors
 
         return True, []
+
+
+        def get_or_generate_genital_refs(self, character_id, character_appearance, output_dir):
+    """
+    Generate genital close-up references once per character and reuse them.
+    Returns a list of paths [male_ref, female_ref] or empty list.
+    """
+    from pathlib import Path
+    import os
+
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    male_path = output_dir / f"{character_id}_penis_ref.png"
+    female_path = output_dir / f"{character_id}_pussy_ref.png"
+
+    # If both already exist, just return them
+    if male_path.exists() and female_path.exists():
+        return [str(male_path), str(female_path)]
+
+    # ----- Generate the references here -----
+    # You can call your existing composition_generator or a simple T2I method.
+    # Example (you need to adapt this to your actual generation method):
+
+    male_prompt = (
+        f"Photorealistic extreme close-up of a realistic adult male human penis, "
+        f"matching skin tone and body type: {character_appearance}, "
+        "natural skin, detailed veins, defined glans, soft natural lighting, "
+        "neutral background, highly detailed anatomical accuracy, sharp focus, no text"
+    )
+
+    female_prompt = (
+        f"Photorealistic extreme close-up of a realistic adult female human vulva, "
+        f"matching skin tone: {character_appearance}, "
+        "natural labia shape and color, soft natural lighting, "
+        "neutral background, highly detailed anatomical accuracy, sharp focus, no text"
+    )
+
+    # TODO: Replace these two lines with your actual image generation call
+    # Example:
+    # self.composition_generator.generate_simple(prompt=male_prompt, output_path=male_path)
+    # self.composition_generator.generate_simple(prompt=female_prompt, output_path=female_path)
+
+    # For now, just create empty files so the code doesn't crash (remove later)
+    male_path.touch()
+    female_path.touch()
+
+    return [str(male_path), str(female_path)]

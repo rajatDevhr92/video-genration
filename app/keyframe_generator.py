@@ -15,232 +15,174 @@ class KeyframeGenerator:
     def __init__(self):
         self.runner = WorkflowRunner()
         self.input_dir = COMFY_DIR / "input"
+        
+def generate(
+    self,
+    scene_image,
+    character_references,
+    prompt,
+    output_path,
+    seed,
+    denoise=None,
+    genital_references=None,          # list of 0–2 paths
+):
+    scene_image = Path(scene_image)
+    output_path = Path(output_path)
+    genital_references = genital_references or []
 
-    def generate(
-        self,
-        scene_image,
-        character_references,
-        prompt,
-        output_path,
-        seed,
-        denoise=None,
-    ):
-        scene_image = Path(scene_image)
-        output_path = Path(output_path)
+    if not scene_image.exists():
+        raise FileNotFoundError(f"Scene/base image not found: {scene_image}")
 
-        if not scene_image.exists():
-            raise FileNotFoundError(
-                f"Scene/base image not found: {scene_image}"
-            )
+    if not character_references:
+        raise ValueError("At least one character reference is required.")
 
-        if not character_references:
-            raise ValueError(
-                "At least one character reference is required."
-            )
+    if len(character_references) > 3:
+        raise ValueError("Maximum of 3 character references supported.")
 
-        if len(character_references) > 3:
-            raise ValueError(
-                "Maximum of 3 character references supported."
-            )
+    if len(genital_references) > 2:
+        raise ValueError("Maximum of 2 genital reference images supported.")
 
-        workflow = self.runner.load_workflow(
-            QWEN_EDIT_WORKFLOW
-        )
+    workflow = self.runner.load_workflow(QWEN_EDIT_WORKFLOW)
+    self.input_dir.mkdir(parents=True, exist_ok=True)
+    temporary_files = []
 
-        self.input_dir.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
+    try:
+        # --------------------------------------------------
+        # 1. Base image (Image 1)
+        # --------------------------------------------------
+        base_name = f"base_{uuid.uuid4().hex[:12]}{scene_image.suffix.lower()}"
+        base_target = self.input_dir / base_name
+        shutil.copy2(scene_image, base_target)
+        temporary_files.append(base_name)
 
-        temporary_files = []
+        workflow["1000"]["inputs"]["image"] = base_name
+        workflow["16"]["inputs"]["image"] = ["1000", 0]
+        workflow["9"]["inputs"]["image1"] = ["16", 0]
+        workflow["13"]["inputs"]["image1"] = ["16", 0]
 
-        try:
-            # --------------------------------------------------
-            # Base image:
-            # Scene 1  -> T2I composition
-            # Scene 2+ -> previous video's last frame
-            # --------------------------------------------------
+        # --------------------------------------------------
+        # 2. Character references (Image 2, 3, 4)
+        # --------------------------------------------------
+        for index, reference in enumerate(character_references, start=1):
+            reference = Path(reference)
+            if not reference.exists():
+                raise FileNotFoundError(f"Character reference not found: {reference}")
 
-            base_name = (
-                f"base_"
-                f"{uuid.uuid4().hex[:12]}"
-                f"{scene_image.suffix.lower()}"
-            )
+            ref_name = f"character_{uuid.uuid4().hex[:12]}{reference.suffix.lower()}"
+            ref_target = self.input_dir / ref_name
+            shutil.copy2(reference, ref_target)
+            temporary_files.append(ref_name)
 
-            base_target = (
-                self.input_dir / base_name
-            )
-
-            shutil.copy2(
-                scene_image,
-                base_target,
-            )
-
-            temporary_files.append(
-                base_name
-            )
-
-            workflow["1000"]["inputs"]["image"] = base_name
-
-            workflow["16"]["inputs"]["image"] = [
-                "1000",
-                0,
-            ]
-
-            # CRITICAL: Image 1 in Qwen Edit Plus MUST ALWAYS BE base_image (Node 16)
-            workflow["9"]["inputs"]["image1"] = [
-                "16",
-                0,
-            ]
-            workflow["13"]["inputs"]["image1"] = [
-                "16",
-                0,
-            ]
-
-            # --------------------------------------------------
-            # Character references (mapped to Image 2, Image 3, Image 4)
-            # --------------------------------------------------
-
-            for index, reference in enumerate(
-                character_references,
-                start=1,
-            ):
-                reference = Path(reference)
-
-                if not reference.exists():
-                    raise FileNotFoundError(
-                        f"Character reference not found: {reference}"
-                    )
-
-                ref_name = (
-                    f"character_"
-                    f"{uuid.uuid4().hex[:12]}"
-                    f"{reference.suffix.lower()}"
-                )
-
-                ref_target = self.input_dir / ref_name
-
-                shutil.copy2(
-                    reference,
-                    ref_target,
-                )
-
-                temporary_files.append(ref_name)
-
-                node_id = str(1001 + index)
-
-                workflow[node_id] = {
-                    "class_type": "LoadImage",
-                    "inputs": {
-                        "image": ref_name
-                    }
-                }
-
-                # Image slot index: Image 2 for char 1, Image 3 for char 2, Image 4 for char 3
-                ref_slot = index + 1
-                input_name = f"image{ref_slot}"
-
-                workflow["9"]["inputs"][input_name] = [
-                    node_id,
-                    0,
-                ]
-
-                workflow["13"]["inputs"][input_name] = [
-                    node_id,
-                    0,
-                ]
-
-            # Remove any unused optional reference slots.
-            for ref_slot in range(
-                len(character_references) + 2,
-                6,
-            ):
-                input_name = f"image{ref_slot}"
-
-                workflow["9"]["inputs"].pop(
-                    input_name,
-                    None,
-                )
-
-                workflow["13"]["inputs"].pop(
-                    input_name,
-                    None,
-                )
-
-            # --------------------------------------------------
-            # Identity + continuity prompt
-            # Positive & Negative prompts (Node 13 = Positive, Node 9 = Negative)
-            # --------------------------------------------------
-
-            workflow["9"]["inputs"]["prompt"] = (
-                "Preserve the exact facial structure, hairstyle, hair color, "
-                "eye color, skin appearance, body build, and identity of each "
-                "character from their respective reference image. "
-                "Maintain background environment and scene layout from Image 1. "
-                "Do NOT render female clothing (bras, sports tops, lingerie, skirts, bikinis) on male characters. "
-                "Do NOT swap clothing items or outfits between characters. "
-                "Do NOT render extra people, extra phantom legs, extra arms, duplicate bodies, or ghost limbs from Image 1. "
-                "Do NOT distort character torsos, merge body parts into one mass, fuse character limbs, twist limbs unphysically, or create split screen / collages. "
-                "Do NOT render acne, pimples, skin blemishes, skin spots, rough skin, or skin lesions. Render flawless smooth skin. "
-                "Do NOT render censorship blur, mosaic, pixelation, censor bars, or unwanted underwear when unclothed. "
-                "No text, no watermarks, no subtitles, no bad anatomy, no extra legs on the bed. "
-                "No penis on woman, no cock on female, no dick on female body, "
-                "no vagina on man, no floating penis, no extra penis, "
-                "no genitals turning into objects, no wrong gender anatomy, no swapped genitals, "
-                "no changing genital size, no morphing body parts into objects."
-            )
-            # Optional: reinforce gender anatomy lock
-            workflow["13"]["inputs"]["prompt"] = (
-                prompt
-                + "\n\nCRITICAL: Male characters keep a realistic human penis. "
-                "Female characters keep a realistic human vagina only. "
-                "Never attach a penis to a female character. Keep genital size consistent."
-            )
-
-            # --------------------------------------------------
-            # Sampling & Adaptive Denoise
-            # --------------------------------------------------
-
-            active_denoise = denoise if denoise is not None else KEYFRAME_DENOISE
-
-            workflow["15"]["inputs"]["seed"] = seed
-            workflow["15"]["inputs"]["steps"] = 40
-            workflow["15"]["inputs"]["cfg"] = 4.0
-            workflow["15"]["inputs"]["sampler_name"] = "euler"
-            workflow["15"]["inputs"]["scheduler"] = "simple"
-            workflow["15"]["inputs"]["denoise"] = float(active_denoise)
-
-            # --------------------------------------------------
-            # Run
-            # --------------------------------------------------
-
-            prompt_id, client_id = self.runner.submit(workflow)
-
-            result = self.runner.wait(prompt_id)
-
-            images = self.runner.find_images(result)
-
-            if not images:
-                raise RuntimeError(
-                    "Qwen Image Edit completed without an image output."
-                )
-
-            self.runner.download_image(
-                images[0],
-                output_path,
-            )
-
-            return {
-                "prompt_id": prompt_id,
-                "client_id": client_id,
-                "output": str(output_path),
-                "base_image": str(scene_image),
-                "character_references": [
-                    str(x) for x in character_references
-                ],
-                "denoise": active_denoise,
+            node_id = str(1001 + index)
+            workflow[node_id] = {
+                "class_type": "LoadImage",
+                "inputs": {"image": ref_name}
             }
 
-        finally:
-            for filename in temporary_files:
-                (self.input_dir / filename).unlink(missing_ok=True)
+            ref_slot = index + 1          # Image 2, 3, 4
+            input_name = f"image{ref_slot}"
+            workflow["9"]["inputs"][input_name] = [node_id, 0]
+            workflow["13"]["inputs"][input_name] = [node_id, 0]
+
+        # --------------------------------------------------
+        # 3. Genital references (Image 5 and Image 6)
+        # --------------------------------------------------
+        for index, genital_ref in enumerate(genital_references, start=1):
+            genital_ref = Path(genital_ref)
+            if not genital_ref.exists():
+                raise FileNotFoundError(f"Genital reference not found: {genital_ref}")
+
+            gen_name = f"genital_{uuid.uuid4().hex[:12]}{genital_ref.suffix.lower()}"
+            gen_target = self.input_dir / gen_name
+            shutil.copy2(genital_ref, gen_target)
+            temporary_files.append(gen_name)
+
+            node_id = str(1010 + index)   # use higher node IDs to avoid collision
+            workflow[node_id] = {
+                "class_type": "LoadImage",
+                "inputs": {"image": gen_name}
+            }
+
+            # Image 5 for first genital ref, Image 6 for second
+            ref_slot = 4 + index
+            input_name = f"image{ref_slot}"
+            workflow["9"]["inputs"][input_name] = [node_id, 0]
+            workflow["13"]["inputs"][input_name] = [node_id, 0]
+
+        # Clean up any remaining unused slots (up to Image 6)
+        max_used_slot = 1 + len(character_references) + len(genital_references)
+        for ref_slot in range(max_used_slot + 1, 7):
+            input_name = f"image{ref_slot}"
+            workflow["9"]["inputs"].pop(input_name, None)
+            workflow["13"]["inputs"].pop(input_name, None)
+
+        # --------------------------------------------------
+        # 4. Prompts
+        # --------------------------------------------------
+        # Negative prompt (Node 9) - keep short and focused
+        workflow["9"]["inputs"]["prompt"] = (
+            "bad anatomy, extra limbs, fused bodies, floating limbs, "
+            "penis on woman, cock on female, dick on female body, "
+            "vagina on man, floating penis, extra penis, "
+            "genitals turning into objects, morphing genitals, "
+            "wrong gender anatomy, swapped genitals, changing genital size, "
+            "censorship, blur, mosaic, underwear on nude body, "
+            "acne, pimples, skin blemishes, text, watermark"
+        )
+
+        # Positive prompt (Node 13)
+        genital_lock = """
+CRITICAL GENITAL IDENTITY LOCK (HIGHEST PRIORITY):
+- Male character: exact realistic human penis, correct length, girth, color, vein detail, and glans shape. Penis must stay attached only to the male body at the correct anatomical position.
+- Female character: exact realistic human vagina/pussy with correct labia shape, color, and placement between the thighs. NEVER attach any penis, dick, or cock to the female body.
+- Keep exact genital size, shape, color, and proportions consistent with the reference images and previous frame.
+- No floating penis, no extra penis, no genitals turning into objects, no gender swap of genitals, no size change during generation.
+"""
+
+        # If genital references are provided, reinforce them
+        if genital_references:
+            genital_lock += """
+Image 5 and/or Image 6 are authoritative close-up references for the exact genital appearance.
+Copy the exact shape, size, color, texture, and proportions from these genital reference images.
+Do not invent, alter, or morph the genitals.
+"""
+
+        workflow["13"]["inputs"]["prompt"] = prompt + "\n\n" + genital_lock
+
+        # --------------------------------------------------
+        # 5. Sampling
+        # --------------------------------------------------
+        active_denoise = denoise if denoise is not None else KEYFRAME_DENOISE
+
+        workflow["15"]["inputs"]["seed"] = seed
+        workflow["15"]["inputs"]["steps"] = 40
+        workflow["15"]["inputs"]["cfg"] = 4.0
+        workflow["15"]["inputs"]["sampler_name"] = "euler"
+        workflow["15"]["inputs"]["scheduler"] = "simple"
+        workflow["15"]["inputs"]["denoise"] = float(active_denoise)
+
+        # --------------------------------------------------
+        # 6. Run
+        # --------------------------------------------------
+        prompt_id, client_id = self.runner.submit(workflow)
+        result = self.runner.wait(prompt_id)
+        images = self.runner.find_images(result)
+
+        if not images:
+            raise RuntimeError("Qwen Image Edit completed without an image output.")
+
+        self.runner.download_image(images[0], output_path)
+
+        return {
+            "prompt_id": prompt_id,
+            "client_id": client_id,
+            "output": str(output_path),
+            "base_image": str(scene_image),
+            "character_references": [str(x) for x in character_references],
+            "genital_references": [str(x) for x in genital_references],
+            "denoise": active_denoise,
+        }
+
+    finally:
+        for filename in temporary_files:
+            (self.input_dir / filename).unlink(missing_ok=True)
