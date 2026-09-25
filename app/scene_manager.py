@@ -442,20 +442,27 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                     f"Scene '{scene_id}' contains {len(character_refs)} character references. Maximum supported is 3."
                 )
 
-                # --------------------------------------------------
-# Collect genital references
-# --------------------------------------------------
-genital_refs = []
-for char_id in scene_character_ids:
-    char_obj = character_map.get(char_id, {})
-    appearance = char_obj.get("appearance", char_obj.get("visual_anchor", ""))
-    
-    refs = self.get_or_generate_genital_refs(
-        character_id=char_id,
-        character_appearance=appearance,
-        output_dir=job_dir / "genital_refs"
-    )
-    genital_refs.extend(refs)
+            # --------------------------------------------------
+            # Collect genital references
+            # --------------------------------------------------
+            genital_refs = []
+            for char_id in scene_character_ids:
+                char_obj = character_map.get(char_id, {})
+                appearance = char_obj.get("appearance", char_obj.get("visual_anchor", ""))
+                gender_str = char_obj.get("gender", "")
+                if not gender_str:
+                    anchor_lower = (appearance + " " + char_obj.get("name", "")).lower()
+                    gender_str = "female" if any(w in anchor_lower for w in ["female", "woman", "girl", "lady"]) else "male"
+
+                refs = self.get_or_generate_genital_refs(
+                    character_id=char_id,
+                    character_appearance=appearance,
+                    gender=gender_str,
+                    output_dir=job_dir / "genital_refs",
+                )
+                genital_refs.extend(refs)
+
+            genital_refs = genital_refs[:2]
 
             # Determine adaptive denoise level & setup stage 1
             prev_loc = previous_scene_state.get("location") if previous_scene_state else None
@@ -815,49 +822,48 @@ Generate the exact cinematic story moment while preserving character identity an
         return True, []
 
 
-        def get_or_generate_genital_refs(self, character_id, character_appearance, output_dir):
-    """
-    Generate genital close-up references once per character and reuse them.
-    Returns a list of paths [male_ref, female_ref] or empty list.
-    """
-    from pathlib import Path
-    import os
+    def get_or_generate_genital_refs(self, character_id, character_appearance, gender, output_dir):
+        """
+        Generate genital close-up reference once per character based on gender and reuse it.
+        Returns a list of paths containing [ref_path] or empty list.
+        """
+        from pathlib import Path
 
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
 
-    male_path = output_dir / f"{character_id}_penis_ref.png"
-    female_path = output_dir / f"{character_id}_pussy_ref.png"
+        is_male = str(gender).lower() == "male"
+        ref_filename = f"{character_id}_penis_ref.png" if is_male else f"{character_id}_pussy_ref.png"
+        ref_path = output_dir / ref_filename
 
-    # If both already exist, just return them
-    if male_path.exists() and female_path.exists():
-        return [str(male_path), str(female_path)]
+        # If reference image already exists and is non-empty, return it
+        if ref_path.exists() and ref_path.stat().st_size > 0:
+            return [str(ref_path)]
 
-    # ----- Generate the references here -----
-    # You can call your existing composition_generator or a simple T2I method.
-    # Example (you need to adapt this to your actual generation method):
+        # Prompt definition for genital generation
+        if is_male:
+            genital_prompt = (
+                f"Photorealistic extreme close-up of a realistic adult male human penis, "
+                f"matching skin tone and body type: {character_appearance}, "
+                "natural skin, detailed veins, defined glans, soft natural lighting, "
+                "neutral background, highly detailed anatomical accuracy, sharp focus, no text"
+            )
+        else:
+            genital_prompt = (
+                f"Photorealistic extreme close-up of a realistic adult female human vulva, "
+                f"matching skin tone: {character_appearance}, "
+                "natural labia shape and color, soft natural lighting, "
+                "neutral background, highly detailed anatomical accuracy, sharp focus, no text"
+            )
 
-    male_prompt = (
-        f"Photorealistic extreme close-up of a realistic adult male human penis, "
-        f"matching skin tone and body type: {character_appearance}, "
-        "natural skin, detailed veins, defined glans, soft natural lighting, "
-        "neutral background, highly detailed anatomical accuracy, sharp focus, no text"
-    )
+        # TODO: Replace with your actual image generation call, e.g.:
+        # self.composition_generator.generate_simple(prompt=genital_prompt, output_path=ref_path)
 
-    female_prompt = (
-        f"Photorealistic extreme close-up of a realistic adult female human vulva, "
-        f"matching skin tone: {character_appearance}, "
-        "natural labia shape and color, soft natural lighting, "
-        "neutral background, highly detailed anatomical accuracy, sharp focus, no text"
-    )
+        if not ref_path.exists() or ref_path.stat().st_size == 0:
+            logger.warning(
+                f"Genital reference for '{character_id}' ({gender}) does not exist yet at {ref_path}. "
+                "Skipping genital reference until generation call is connected."
+            )
+            return []
 
-    # TODO: Replace these two lines with your actual image generation call
-    # Example:
-    # self.composition_generator.generate_simple(prompt=male_prompt, output_path=male_path)
-    # self.composition_generator.generate_simple(prompt=female_prompt, output_path=female_path)
-
-    # For now, just create empty files so the code doesn't crash (remove later)
-    male_path.touch()
-    female_path.touch()
-
-    return [str(male_path), str(female_path)]
+        return [str(ref_path)]
