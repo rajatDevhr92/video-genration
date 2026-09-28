@@ -632,6 +632,24 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
 
             image_mapping_lines.append("""
 =========================================================
+CRITICAL CLOTHING CONTINUITY LOCK
+=========================================================
+- Maintain 100% strict clothing state continuity from Image 1 and character reference.
+- IF THE SCENE IS NUDE / UNCLOTHED: Keep character(s) 100% fully nude with complete bare skin. DO NOT invent white tops, sports bras, thongs, wrist wraps, or random underwear on nude bodies unless explicitly instructed in scene description.
+- IF THE SCENE IS CLOTHED: Keep their exact canonical outfit from the character reference sheet.
+""")
+
+            image_mapping_lines.append("""
+=========================================================
+POSE & REAR-ENTRY PENETRATION ALIGNMENT LOCK
+=========================================================
+- For Doggy / Rear-Entry scenes: Female character is on all fours or bending forward with hips raised. Male character kneels or stands directly behind her. Both legs of female character must remain naturally positioned on mattress without twisting, flipping, or distorted hips.
+- ACCURATE PENETRATION ALIGNMENT: Male penis connects directly into female pussy entrance at the correct anatomical location from behind or in front. Penis must NOT be positioned above hips, floating in air, on thighs, or sticking out of wrong anatomical places.
+- PANEL SELECTION: Use RIGHT PANEL (Rear/Back View) of Image 2 for rear/doggy shots, CENTER PANEL (3/4 Side View) for side shots, and LEFT PANEL (Front View) for front shots.
+""")
+
+            image_mapping_lines.append("""
+=========================================================
 CRITICAL CONTACT & ANATOMY LOCK (NO BLACK HOLES / NO VOIDS)
 =========================================================
 - Solid, unbroken, continuous skin-to-skin contact between bodies.
