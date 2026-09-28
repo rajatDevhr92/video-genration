@@ -443,26 +443,46 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                 )
 
             # --------------------------------------------------
-            # Collect genital references
+            # Check if scene is sexual or nude
+            # --------------------------------------------------
+            desc_text = f"{scene.get('description', '')} {scene.get('action', '')}".lower()
+            char_current = scene_state.get("character_current_states", {})
+            is_nude_scene = False
+            for char_id, cstate in char_current.items():
+                if isinstance(cstate, dict) and "nude" in str(cstate.get("current_clothing_state", "")).lower():
+                    is_nude_scene = True
+            if any(w in desc_text for w in [
+                "nude", "naked", "unclothed", "bare breast", "undress", "strips",
+                "penis", "pussy", "cock", "dick", "vagina", "clitoris", "cum", "ejaculat",
+                "sex", "fuck", "penetrat", "doggystyle", "cowgirl", "blowjob", "handjob",
+                "oral sex", "grind", "thrust", "intercourse"
+            ]):
+                is_nude_scene = True
+
+            # --------------------------------------------------
+            # Collect genital references ONLY if scene is sexual or nude
             # --------------------------------------------------
             genital_refs = []
-            for char_id in scene_character_ids:
-                char_obj = character_map.get(char_id, {})
-                appearance = char_obj.get("appearance", char_obj.get("visual_anchor", ""))
-                gender_str = char_obj.get("gender", "")
-                if not gender_str:
-                    anchor_lower = (appearance + " " + char_obj.get("name", "")).lower()
-                    gender_str = "female" if any(w in anchor_lower for w in ["female", "woman", "girl", "lady"]) else "male"
+            if is_nude_scene:
+                for char_id in scene_character_ids:
+                    char_obj = character_map.get(char_id, {})
+                    appearance = char_obj.get("appearance", char_obj.get("visual_anchor", ""))
+                    gender_str = char_obj.get("gender", "")
+                    if not gender_str:
+                        anchor_lower = (appearance + " " + char_obj.get("name", "")).lower()
+                        gender_str = "female" if any(w in anchor_lower for w in ["female", "woman", "girl", "lady"]) else "male"
 
-                refs = self.get_or_generate_genital_refs(
-                    character_appearance=appearance,
-                    gender=gender_str,
-                      character_id=char_id,
-                  output_dir=job_dir / "genital_refs",
-                )
-                genital_refs.extend(refs)
+                    refs = self.get_or_generate_genital_refs(
+                        character_appearance=appearance,
+                        gender=gender_str,
+                        character_id=char_id,
+                        output_dir=job_dir / "genital_refs",
+                    )
+                    genital_refs.extend(refs)
 
-            genital_refs = genital_refs[:2]
+                genital_refs = genital_refs[:2]
+            else:
+                logger.info(f"[GENITAL REF] Scene {scene_id} is not sexual/nude -> skipping genital references.")
 
             # Determine adaptive denoise level & setup stage 1
             prev_loc = previous_scene_state.get("location") if previous_scene_state else None
@@ -547,16 +567,22 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                 c_gender = "male" if "man" in c_anchor.lower() or "male" in c_anchor.lower() else ("female" if "woman" in c_anchor.lower() or "female" in c_anchor.lower() else "person")
                 slot_num = idx + 1
                 image_mapping_lines.append(
-                    f"Image {slot_num}: 3-Angle Turnaround Model Sheet Grid for '{c_name}' (ID: {char_id}, Gender: {c_gender.upper()})."
+                    f"Image {slot_num}: 3-Panel Turnaround Model Sheet Grid for character '{c_name}' (ID: {char_id}, Gender: {c_gender.upper()})."
                 )
                 image_mapping_lines.append(
-                    f"  -> Image {slot_num} contains 3 distinct panels: [Left: Front View], [Center: 3/4 Side View], [Right: Back View]."
+                    f"  -> PANEL LAYOUT: [Left Panel = Front View] | [Center Panel = 3/4 Side View] | [Right Panel = Rear/Back View]."
                 )
                 image_mapping_lines.append(
-                    f"  -> CRITICAL CAMERA ANGLE MATCHING: Inspect the current scene camera angle. "
-                    f"If camera is side/profile view, copy face & body strictly from Center panel (3/4 Side). "
-                    f"If camera is rear view, copy hair & back posture strictly from Right panel (Back View). "
-                    f"If camera is front view, copy facial features strictly from Left panel (Front View)."
+                    f"  -> MANDATORY CAMERA ANGLE MATCHING RULES:"
+                )
+                image_mapping_lines.append(
+                    f"     1. FRONT ANGLE SHOT (facing camera / front view): Copy face, eyes, hair, and clothing strictly from the LEFT PANEL (Front View)."
+                )
+                image_mapping_lines.append(
+                    f"     2. PROFILE / SIDE ANGLE SHOT (side view / 3/4 angle): Copy nose profile, jawline, side body structure, and hair strictly from the CENTER PANEL (3/4 Side View)."
+                )
+                image_mapping_lines.append(
+                    f"     3. REAR / BACK ANGLE SHOT (from behind / doggystyle / back view): Copy hair length, back posture, and rear silhouette strictly from the RIGHT PANEL (Rear/Back View)."
                 )
                 image_mapping_lines.append(
                     f"  -> CRITICAL: Keep {c_name}'s upper body anatomy and clothing state appropriate for {c_name} ({c_gender}). Do NOT render female sports tops, bras, or lingerie on male characters!"

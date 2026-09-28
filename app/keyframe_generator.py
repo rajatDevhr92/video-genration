@@ -174,4 +174,3 @@ CRITICAL GENITAL & TURNAROUND IDENTITY LOCK (HIGHEST PRIORITY)
         finally:
             for filename in temporary_files:
                 (self.input_dir / filename).unlink(missing_ok=True)
-            (self.input_dir / filename).unlink(missing_ok=True)
