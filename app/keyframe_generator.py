@@ -109,8 +109,10 @@ class KeyframeGenerator:
             # --------------------------------------------------
             workflow["9"]["inputs"]["prompt"] = (
                 "bad anatomy, extra limbs, fused bodies, floating limbs, "
+                "black holes, dark circular artifacts, dark spots on skin, black void, "
                 "holes in skin, void skin patches, blank skin, missing skin, torso holes, "
                 "body cutouts, hollow skin, erased skin, floating background patches on body, "
+                "broken contact area, melted skin, corrupted skin texture, shadow voids, "
                 "penis on woman, cock on female, dick on female body, "
                 "vagina on man, floating penis, extra penis, "
                 "genitals turning into objects, morphing genitals, "

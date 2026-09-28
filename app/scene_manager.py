@@ -540,6 +540,22 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                     # New location -> allow room transition
                     active_denoise = 0.85 if (is_close_up or is_wide_or_full) else 0.65
 
+                # Force lower denoise (max 0.45) for close body contact / penetration scenes
+                contact_keywords = [
+                    "penetrat", "entering", "slides inside", "thrust", "cock inside",
+                    "pussy contact", "groin pressed", "hips pressed", "skin to skin",
+                    "intimate contact", "doggystyle", "cowgirl", "missionary", "grinding",
+                    "against her wet pussy", "thrusting", "fucking", "penetration", "sex"
+                ]
+                full_text = f"{scene.get('description', '')} {scene.get('action', '')} {scene.get('video_prompt', '')}".lower()
+                is_contact_scene = any(w in full_text for w in contact_keywords)
+
+                if is_contact_scene:
+                    active_denoise = min(active_denoise, 0.45)
+                    logger.info(
+                        f"[DENOISE] Body contact/penetration detected in scene {order} -> capped denoise to {active_denoise} to prevent black holes and broken skin artifacts"
+                    )
+
                 print()
                 print("=" * 80)
                 print(f"SCENE {order}: USING PREVIOUS VIDEO LAST FRAME (denoise={active_denoise}, pose_transition={has_pose_transition})")
@@ -587,6 +603,16 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                 image_mapping_lines.append(
                     f"  -> CRITICAL: Keep {c_name}'s upper body anatomy and clothing state appropriate for {c_name} ({c_gender}). Do NOT render female sports tops, bras, or lingerie on male characters!"
                 )
+
+            image_mapping_lines.append("""
+=========================================================
+CRITICAL CONTACT & ANATOMY LOCK (NO BLACK HOLES / NO VOIDS)
+=========================================================
+- Solid, unbroken, continuous skin-to-skin contact between bodies.
+- ABSOLUTELY NO black holes, dark circular voids, missing flesh, hollow skin, or dark cutout spots in contact zones.
+- Skin must be continuous, smooth, realistic, and fully opaque across all thighs, hips, waist, and genitalia contact areas.
+- No shadow distortion turning skin into empty dark holes or black background gaps.
+""")
 
             image_mapping_block = "\n".join(image_mapping_lines)
 
