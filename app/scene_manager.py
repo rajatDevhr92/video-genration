@@ -530,9 +530,9 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                             f"[DENOISE] Camera cut/framing transition (is_close_up={is_close_up}, prev_was_close_up={prev_was_close_up}) in scene {order} -> boosted denoise to {active_denoise}"
                         )
                     elif has_pose_transition:
-                        active_denoise = 0.65
+                        active_denoise = 0.85
                         logger.info(
-                            f"[DENOISE] Same location but pose/angle transition detected in scene {order} -> boosted denoise to {active_denoise}"
+                            f"[DENOISE] Same location but pose/angle transition detected in scene {order} -> boosted denoise to {active_denoise} for clean pose re-orientation"
                         )
                     else:
                         active_denoise = 0.50
