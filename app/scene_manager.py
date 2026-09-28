@@ -534,10 +534,10 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
             # Build explicit Image slot assignment block for Qwen Edit Plus
             image_mapping_lines = [
                 "=========================================================",
-                "IMAGE SLOT ASSIGNMENT & IDENTITY AUTHORITY",
+                "IMAGE SLOT ASSIGNMENT & 3D TURNAROUND ANGLE MATCHING",
                 "=========================================================",
                 "Image 1: Current Base Scene / Previous Video Last Frame.",
-                "Use Image 1 as the primary authority for room background, furniture, spatial layout, and lighting.",
+                "Use Image 1 as primary authority for room background, furniture, spatial layout, and lighting.",
             ]
 
             for idx, char_id in enumerate(scene_character_ids, start=1):
@@ -547,10 +547,16 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                 c_gender = "male" if "man" in c_anchor.lower() or "male" in c_anchor.lower() else ("female" if "woman" in c_anchor.lower() or "female" in c_anchor.lower() else "person")
                 slot_num = idx + 1
                 image_mapping_lines.append(
-                    f"Image {slot_num}: Reference image authority for character '{c_name}' (ID: {char_id}, Gender: {c_gender.upper()})."
+                    f"Image {slot_num}: 3-Angle Turnaround Model Sheet Grid for '{c_name}' (ID: {char_id}, Gender: {c_gender.upper()})."
                 )
                 image_mapping_lines.append(
-                    f"  -> Copy {c_name}'s face, eyes, hair, facial structure, skin tone, gender ({c_gender}), and body build strictly from Image {slot_num}."
+                    f"  -> Image {slot_num} contains 3 distinct panels: [Left: Front View], [Center: 3/4 Side View], [Right: Back View]."
+                )
+                image_mapping_lines.append(
+                    f"  -> CRITICAL CAMERA ANGLE MATCHING: Inspect the current scene camera angle. "
+                    f"If camera is side/profile view, copy face & body strictly from Center panel (3/4 Side). "
+                    f"If camera is rear view, copy hair & back posture strictly from Right panel (Back View). "
+                    f"If camera is front view, copy facial features strictly from Left panel (Front View)."
                 )
                 image_mapping_lines.append(
                     f"  -> CRITICAL: Keep {c_name}'s upper body anatomy and clothing state appropriate for {c_name} ({c_gender}). Do NOT render female sports tops, bras, or lingerie on male characters!"
@@ -840,19 +846,21 @@ Generate the exact cinematic story moment while preserving character identity an
         if ref_path.exists() and ref_path.stat().st_size > 0:
             return [str(ref_path)]
 
-        # Prompt definition for genital generation
+        # Prompt definition for multi-angle genital grid generation
         if is_male:
             genital_prompt = (
-                f"Photorealistic extreme close-up of a realistic adult male human penis, "
-                f"matching skin tone and body type: {character_appearance}, "
-                "natural skin, detailed veins, defined glans, soft natural lighting, "
+                f"Photorealistic medical anatomical detail turnaround grid, showing 2 clean distinct views of adult male human penis, "
+                f"matching skin tone and body type: {character_appearance}: "
+                "Left panel: clear frontal view; Right panel: 3/4 side profile view. "
+                "Natural skin texture, detailed veins, defined glans, soft natural lighting, "
                 "neutral background, highly detailed anatomical accuracy, sharp focus, no text"
             )
         else:
             genital_prompt = (
-                f"Photorealistic extreme close-up of a realistic adult female human vulva, "
-                f"matching skin tone: {character_appearance}, "
-                "natural labia shape and color, soft natural lighting, "
+                f"Photorealistic medical anatomical detail turnaround grid, showing 2 clean distinct views of adult female human vulva / pussy, "
+                f"matching skin tone: {character_appearance}: "
+                "Left panel: clear frontal view; Right panel: 3/4 side profile view. "
+                "Natural labia shape and color, soft natural lighting, "
                 "neutral background, highly detailed anatomical accuracy, sharp focus, no text"
             )
 

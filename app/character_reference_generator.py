@@ -24,11 +24,9 @@ class CharacterReferenceGenerator:
     @staticmethod
     def build_prompt(character):
         return f"""
-Photorealistic full-body editorial studio photograph of one adult
-person standing alone.
+Photorealistic studio character turnaround model sheet grid, showing 3 distinct full-body views of one adult person on a simple neutral background:
 
 SUBJECT:
-
 {character["name"]}
 
 Appearance:
@@ -40,73 +38,19 @@ Outfit:
 Identity details:
 {character.get("visual_anchor", "")}
 
-Create a realistic photograph of this exact adult person.
+LAYOUT & VIEW SPECIFICATIONS:
+- Left panel: Full frontal view, standing naturally and facing directly forward.
+- Center panel: 3/4 side profile view, showing nose profile, jawline, side body structure.
+- Right panel: Full rear/back view, showing hair length, back posture, and rear silhouette.
 
-The person must be the only human visible anywhere in the image.
+CRITICAL TURNAROUND RULES:
+- The exact same face, hair, skin tone, eye color, body build, and outfit must be 100% consistent across all 3 view panels.
+- Show the complete full body in each panel from top of head down to feet.
+- Outfit must be exactly: {character.get("clothing", "")}
+- Simple dark neutral studio background across all panels.
+- Professional cinematic photorealistic studio photography with soft directional lighting.
 
-The person is standing naturally in a relaxed three-quarter pose,
-facing generally toward the camera.
-
-Show the complete body from the top of the head to the bottoms of
-both feet.
-
-The entire body must fit comfortably inside the frame.
-
-Both feet must be visible.
-
-Both hands must be visible.
-
-Use one consistent face and one consistent body.
-
-The facial structure, hair, skin tone, eye color, body build and
-distinctive physical features must match the supplied description.
-
-The outfit must be exactly:
-
-{character.get("clothing", "")}
-
-Do not change the outfit.
-
-Do not add clothing that is not specified.
-
-Do not remove clothing that is specified.
-
-Use a simple dark neutral studio background.
-
-Professional cinematic photography.
-
-Realistic human anatomy.
-
-Realistic skin texture.
-
-Realistic hair.
-
-Realistic hands.
-
-Realistic feet.
-
-Natural proportions.
-
-Natural perspective.
-
-Soft directional studio lighting.
-
-Subtle rim light.
-
-Natural shadows.
-
-High-end photorealistic photography.
-
-The composition must be a single uninterrupted photograph with the
-person centered in the frame and empty background surrounding them.
-
-ONE ADULT PERSON.
-ONE BODY.
-ONE FACE.
-ONE HEAD.
-ONE OUTFIT.
-ONE POSE.
-ONE PHOTOGRAPH.
+ONE ADULT PERSON. 3-VIEW TURNAROUND MODEL SHEET GRID.
 """
 
     def generate(
@@ -152,11 +96,11 @@ ONE PHOTOGRAPH.
         workflow["5"]["inputs"]["text"] = prompt
 
         # --------------------------------------------------
-        # Character reference resolution
+        # Character reference resolution (Wide landscape for 3-panel turnaround grid)
         # --------------------------------------------------
 
-        workflow["7"]["inputs"]["width"] = 1024
-        workflow["7"]["inputs"]["height"] = 1536
+        workflow["7"]["inputs"]["width"] = 1536
+        workflow["7"]["inputs"]["height"] = 1024
         workflow["7"]["inputs"]["batch_size"] = 1
 
         # --------------------------------------------------
@@ -186,15 +130,9 @@ ONE PHOTOGRAPH.
             "extra arms, extra legs, extra hands, "
             "acne, pimples, skin blemishes, skin spots, rough skin texture, "
             "inset portrait, surrounding portrait, "
-            "additional photograph, additional figure, "
-            "multiple images, multiple photographs, "
-            "multiple poses, multiple angles, "
-            "side view, rear view, "
-            "close-up, face close-up, "
             "cropped head, cropped hands, cropped feet, "
             "cropped body, "
-            "collage, panel layout, grid layout, "
-            "border, frame, split image, "
+            "border, frame, "
             "text, labels, captions, logo, watermark"
         )
 

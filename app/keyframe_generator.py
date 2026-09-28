@@ -119,10 +119,11 @@ class KeyframeGenerator:
 
             genital_lock = """
 =========================================================
-CRITICAL GENITAL IDENTITY LOCK (HIGHEST PRIORITY)
+CRITICAL GENITAL & TURNAROUND IDENTITY LOCK (HIGHEST PRIORITY)
 =========================================================
 - Male character: exact realistic human penis, correct length, girth, color, vein detail, and glans shape. Penis must stay attached only to the male body at the correct anatomical position.
 - Female character: exact realistic human vagina/pussy with correct labia shape, color, and placement between the thighs. NEVER attach any penis, dick, or cock to the female body.
+- Turnaround Angle Matching: Match the current scene camera orientation (Front View, 3/4 Side View, or Rear/Back View) to the corresponding panel in the reference model sheet grid.
 - Keep exact genital size, shape, color, and proportions consistent with the reference images and previous frame.
 - No floating penis, no extra penis, no genitals turning into objects, no gender swap of genitals, no size change during generation.
 """
@@ -130,8 +131,8 @@ CRITICAL GENITAL IDENTITY LOCK (HIGHEST PRIORITY)
             if genital_slots:
                 gen_str = " and ".join([s.split()[0] for s in genital_slots])
                 genital_lock += f"""
-- {gen_str} is the authoritative close-up reference for genital appearance.
-- Copy exact genital shape, skin tone, labia/penis structure, and anatomical details strictly from {gen_str}.
+- {gen_str} is the 2-angle anatomical detail grid reference (Frontal & 3/4 Profile) for genital appearance.
+- Copy exact genital shape, skin tone, labia/penis structure, and anatomical details strictly from the matching angle panel of {gen_str}.
 """
 
             workflow["13"]["inputs"]["prompt"] = prompt + "\n\n" + genital_lock
