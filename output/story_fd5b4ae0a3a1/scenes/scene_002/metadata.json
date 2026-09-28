@@ -1,0 +1,60 @@
+{
+  "scene_id": "scene_002",
+  "order": 2,
+  "character_ids": [
+    "character_001",
+    "character_002"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/references/characters/lena_character_001.png",
+    "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/references/characters/mark_character_002.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_002/composition.png",
+  "composition_source": "previous_video_last_frame",
+  "keyframe": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_002/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_002/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_002/last_frame.png",
+  "previous_last_frame": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_001/last_frame.png",
+  "composition_prompt_id": null,
+  "keyframe_prompt_id": "4bc79514-6664-41c4-a3bd-a8c8a3dc29d6",
+  "video_prompt_id": "8b2d15f5-2416-426b-8367-727058a2ac8b",
+  "video_generation_time_seconds": 80.08534216880798,
+  "scene_state": {
+    "scene_id": "scene_002",
+    "order": 2,
+    "location": "location_001",
+    "characters": [
+      "character_001",
+      "character_002"
+    ],
+    "weather": null,
+    "lighting": "Warm side lighting, highlights on the curve of her hips and his cock, soft shadows on the bed",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {},
+      "character_002": {}
+    },
+    "time_of_day": null,
+    "master_lighting": "Warm side lighting from a bedside lamp, casting soft shadows on the bed and bodies, highlights on skin",
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.65,
+  "story_id": "story_fd5b4ae0a3a1",
+  "scene_segment": "Man grips her waist firmly and pulls her hips back toward him. Fully nude bodies",
+  "characters_used": [
+    "character_001",
+    "character_002"
+  ],
+  "location": "location_001",
+  "action": "Mark grips Lena's waist with both hands, pulls her hips back, aligning their bodies. His cock presses against her wet, glistening pussy, ready to penetrate.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nCRITICAL GENITAL & BODY PART IDENTI",
+  "generated_video": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_002/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_002/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_002/video_with_audio.mp4"
+}

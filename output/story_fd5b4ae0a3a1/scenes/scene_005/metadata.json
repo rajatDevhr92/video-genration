@@ -1,0 +1,60 @@
+{
+  "scene_id": "scene_005",
+  "order": 5,
+  "character_ids": [
+    "character_001",
+    "character_002"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/references/characters/lena_character_001.png",
+    "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/references/characters/mark_character_002.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_005/composition.png",
+  "composition_source": "previous_video_last_frame",
+  "keyframe": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_005/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_005/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_005/last_frame.png",
+  "previous_last_frame": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_004/last_frame.png",
+  "composition_prompt_id": null,
+  "keyframe_prompt_id": "ba2b02c1-9939-4e62-9a9c-ece47d5a538e",
+  "video_prompt_id": "ebdcaae9-7e1d-478c-a784-daa5b98e03e0",
+  "video_generation_time_seconds": 82.11593914031982,
+  "scene_state": {
+    "scene_id": "scene_005",
+    "order": 5,
+    "location": "location_001",
+    "characters": [
+      "character_001",
+      "character_002"
+    ],
+    "weather": null,
+    "lighting": "Warm side lighting, highlights on moving muscles and wet skin, dynamic shadows",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {},
+      "character_002": {}
+    },
+    "time_of_day": null,
+    "master_lighting": "Warm side lighting from a bedside lamp, casting soft shadows on the bed and bodies, highlights on skin",
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.65,
+  "story_id": "story_fd5b4ae0a3a1",
+  "scene_segment": "Man increases pace, hips slamming forward. Fully nude woman braces on her forear",
+  "characters_used": [
+    "character_001",
+    "character_002"
+  ],
+  "location": "location_001",
+  "action": "Mark thrusts faster, hips slamming into Lena with force. She braces on her forearms, body rocking with each deep thrust, breasts swinging freely.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nCRITICAL GENITAL & BODY PART IDENTI",
+  "generated_video": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_005/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_005/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_005/video_with_audio.mp4"
+}

@@ -1,0 +1,60 @@
+{
+  "scene_id": "scene_006",
+  "order": 6,
+  "character_ids": [
+    "character_001",
+    "character_002"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/references/characters/lena_character_001.png",
+    "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/references/characters/mark_character_002.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_006/composition.png",
+  "composition_source": "previous_video_last_frame",
+  "keyframe": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_006/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_006/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_006/last_frame.png",
+  "previous_last_frame": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_005/last_frame.png",
+  "composition_prompt_id": null,
+  "keyframe_prompt_id": "80009056-c197-43f3-a2ce-fe8fb449de33",
+  "video_prompt_id": "158b2256-26c3-4a37-a5f0-7467970aaf03",
+  "video_generation_time_seconds": 80.36961126327515,
+  "scene_state": {
+    "scene_id": "scene_006",
+    "order": 6,
+    "location": "location_001",
+    "characters": [
+      "character_001",
+      "character_002"
+    ],
+    "weather": null,
+    "lighting": "Soft side lighting, highlights on her lips and cheeks, gentle shadows in eyes",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {},
+      "character_002": {}
+    },
+    "time_of_day": null,
+    "master_lighting": "Warm side lighting from a bedside lamp, casting soft shadows on the bed and bodies, highlights on skin",
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.85,
+  "story_id": "story_fd5b4ae0a3a1",
+  "scene_segment": "Close shot of her face turned to the side, mouth open in pleasure. Eyes half-clo",
+  "characters_used": [
+    "character_001",
+    "character_002"
+  ],
+  "location": "location_001",
+  "action": "Close-up of Lena's face, mouth open, eyes half-closed, moaning softly. Her expression shows intense pleasure from the deep thrusts.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nCRITICAL GENITAL & BODY PART IDENTI",
+  "generated_video": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_006/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_006/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_006/video_with_audio.mp4"
+}

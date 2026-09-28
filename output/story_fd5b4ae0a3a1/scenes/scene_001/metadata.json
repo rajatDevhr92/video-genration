@@ -1,0 +1,60 @@
+{
+  "scene_id": "scene_001",
+  "order": 1,
+  "character_ids": [
+    "character_001",
+    "character_002"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/references/characters/lena_character_001.png",
+    "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/references/characters/mark_character_002.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_001/composition.png",
+  "composition_source": "qwen_t2i",
+  "keyframe": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_001/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_001/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_001/last_frame.png",
+  "previous_last_frame": null,
+  "composition_prompt_id": "48100cfd-36a5-45e9-ae23-df6f99f44c9e",
+  "keyframe_prompt_id": "1aee1224-f3f8-470f-b6c0-0c2455f9f50b",
+  "video_prompt_id": "ec2621c0-0231-42e2-b8c1-6eb5c02bef44",
+  "video_generation_time_seconds": 106.09944677352905,
+  "scene_state": {
+    "scene_id": "scene_001",
+    "order": 1,
+    "location": "location_001",
+    "characters": [
+      "character_001",
+      "character_002"
+    ],
+    "weather": null,
+    "lighting": "Warm side lighting from a bedside lamp, casting soft shadows on the bed and bodies, highlights on skin",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {},
+      "character_002": {}
+    },
+    "time_of_day": null,
+    "master_lighting": "Warm side lighting from a bedside lamp, casting soft shadows on the bed and bodies, highlights on skin",
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.7,
+  "story_id": "story_fd5b4ae0a3a1",
+  "scene_segment": "Dim bedroom with warm side lighting. Fully nude adult woman on all fours on the ",
+  "characters_used": [
+    "character_001",
+    "character_002"
+  ],
+  "location": "location_001",
+  "action": "Lena is on all fours, back arched slightly, head turned to the side. Mark kneels behind her, hands gripping her hips, his cock fully erect and positioned at her entrance.",
+  "generated_prompt": "\nCreate ONE SINGLE photorealistic cinematic frame\nthat represents the exact story moment described below.\n\n=========================================================\nCRITICAL GENITAL & BODY PART IDENTI",
+  "generated_video": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_001/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_001/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_fd5b4ae0a3a1/scenes/scene_001/video_with_audio.mp4"
+}
