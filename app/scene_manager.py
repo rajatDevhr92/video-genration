@@ -481,6 +481,23 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                     genital_refs.extend(refs)
 
                 genital_refs = genital_refs[:2]
+
+                # --------------------------------------------------
+                # Solo Female Shot Guardrail:
+                # If a scene shot features ONLY a female character (e.g. female alone in doorway),
+                # strip out male penis references so Qwen Edit cannot attach a penis to her body!
+                # --------------------------------------------------
+                cam_desc = f"{scene.get('camera', '')} {scene.get('description', '')}".lower()
+                is_female_solo = (
+                    len(scene_character_ids) == 1 
+                    and any(w in str(character_map.get(scene_character_ids[0], {}).get("visual_anchor", "") + " " + character_map.get(scene_character_ids[0], {}).get("appearance", "")).lower() for w in ["female", "woman", "girl", "lady"])
+                ) or any(
+                    w in cam_desc for w in ["female solo", "solo woman", "woman alone", "standing alone", "close-up of female", "close-up of woman", "solo female"]
+                )
+
+                if is_female_solo and genital_refs:
+                    genital_refs = [g for g in genital_refs if "penis" not in g.lower()]
+                    logger.info(f"[SOLO FEMALE GUARDRAIL] Scene {scene_id} is female solo shot -> stripped male penis genital references.")
             else:
                 logger.info(f"[GENITAL REF] Scene {scene_id} is not sexual/nude -> skipping genital references.")
 

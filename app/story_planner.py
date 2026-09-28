@@ -502,62 +502,23 @@ approximately 60 words.
 
 If the scene is sexual, describe the sexual action explicitly
 
-Every scene MUST contain an "audio" object.
-
-"audio" MUST NEVER be a string.
-
-The structure MUST be:
-
-"audio": {{
-  "narration": [],
-  "dialogue": [],
-  "sound_effects": [],
-  "music": {{
-    "mood": "",
-    "intensity": ""
-  }}
-}}
-
-"narration" MUST be an array of objects.
-
-Each narration object MUST contain:
-- text
-- voice
-
-Example:
-
-"narration": [
-  {{
-    "text": "Narration text.",
-    "voice": "alloy"
-  }}
-]
-
-If there is no narration:
-
-"narration": []
-
-"dialogue" MUST be an array of objects.
-
-Each dialogue object MUST contain:
-- character_id
-- text
-
-The character_id MUST exactly match one of the character IDs
-defined in the characters array.
-
-Example:
-
-"dialogue": [
-  {{
-    "character_id": "character_001",
-    "text": "Hello."
-  }}
-]
-
-If there is no dialogue:
-
-"dialogue": []
+CRITICAL AUDIO VOICE DIRECTIVE:
+- Every scene MUST contain active voice audio text in either "narration" OR "dialogue".
+- If characters are speaking, gasping, or vocalizing in the scene: populate "dialogue" with character objects:
+  "dialogue": [
+    {
+      "character_id": "character_001",
+      "text": "Don't stop..."
+    }
+  ]
+- If characters are not speaking aloud: populate "narration" with a voiceover object:
+  "narration": [
+    {
+      "text": "Descriptive voiceover narration of the scene atmosphere or character thoughts...",
+      "voice": "alloy"
+    }
+  ]
+- NEVER leave both "narration": [] and "dialogue": [] empty at the same time in any scene! Every scene MUST have voice text to generate audio TTS!
 
 "sound_effects" MUST be an array of short strings.
 
@@ -729,31 +690,22 @@ Return the COMPLETE corrected JSON now.
 AUDIO REQUIREMENT:
 
 Every scene MUST contain:
-
 "audio": {{
-  "narration": [],
+  "narration": [
+    {{
+      "text": "Cinematic voiceover narration text...",
+      "voice": "alloy"
+    }}
+  ],
   "dialogue": [],
-  "sound_effects": [],
+  "sound_effects": ["soft breathing"],
   "music": {{
-    "mood": "",
-    "intensity": ""
+    "mood": "sensual",
+    "intensity": "medium"
   }}
 }}
 
-The "audio" value MUST be an object, never a string.
-
-"narration" must be a list.
-
-"dialogue" must be a list.
-
-"sound_effects" must be a list.
-
-"music" must be an object.
-
-Every dialogue character_id must reference an existing
-character ID.
-
-Do not omit audio from any scene.
+CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice text in every scene. NEVER leave both "narration": [] and "dialogue": [] empty simultaneously!
 """
 
     def _validate(
