@@ -506,17 +506,17 @@ CRITICAL AUDIO VOICE DIRECTIVE:
 - Every scene MUST contain active voice audio text in either "narration" OR "dialogue".
 - If characters are speaking, gasping, or vocalizing in the scene: populate "dialogue" with character objects:
   "dialogue": [
-    {
+    {{
       "character_id": "character_001",
       "text": "Don't stop..."
-    }
+    }}
   ]
 - If characters are not speaking aloud: populate "narration" with a voiceover object:
   "narration": [
-    {
+    {{
       "text": "Descriptive voiceover narration of the scene atmosphere or character thoughts...",
       "voice": "alloy"
-    }
+    }}
   ]
 - NEVER leave both "narration": [] and "dialogue": [] empty at the same time in any scene! Every scene MUST have voice text to generate audio TTS!
 
