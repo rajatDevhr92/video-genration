@@ -123,10 +123,10 @@ class KeyframeGenerator:
 
             genital_lock = """
 =========================================================
-CRITICAL GENITAL & TURNAROUND IDENTITY LOCK (HIGHEST PRIORITY)
+CRITICAL GENDER & ANATOMY SEPARATION LOCK (HIGHEST PRIORITY)
 =========================================================
-- Male character: exact realistic human penis, correct length, girth, color, vein detail, and glans shape. Penis must stay attached only to the male body at the correct anatomical position.
-- Female character: exact realistic human vagina/pussy with correct labia shape, color, and placement between the thighs. NEVER attach any penis, dick, or cock to the female body.
+- FEMALE CHARACTER ANATOMY LOCK: Female characters MUST have female anatomy (pussy/vulva) between thighs, smooth female waist, and feminine chest. ABSOLUTELY NEVER attach any male penis, cock, dick, or testicles to a female body under any circumstances.
+- MALE CHARACTER ANATOMY LOCK: Male characters MUST have male anatomy (penis/cock) attached strictly at the male pelvis and flat masculine torso. ABSOLUTELY NEVER render female vulva, sports bras, tops, or thongs on a male body.
 - Turnaround Angle Matching: Match the current scene camera orientation (Front View, 3/4 Side View, or Rear/Back View) to the corresponding panel in the reference model sheet grid.
 - Keep exact genital size, shape, color, and proportions consistent with the reference images and previous frame.
 - No floating penis, no extra penis, no genitals turning into objects, no gender swap of genitals, no size change during generation.

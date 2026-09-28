@@ -600,9 +600,18 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                 image_mapping_lines.append(
                     f"     3. REAR / BACK ANGLE SHOT (from behind / doggystyle / back view): Copy hair length, back posture, and rear silhouette strictly from the RIGHT PANEL (Rear/Back View)."
                 )
-                image_mapping_lines.append(
-                    f"  -> CRITICAL: Keep {c_name}'s upper body anatomy and clothing state appropriate for {c_name} ({c_gender}). Do NOT render female sports tops, bras, or lingerie on male characters!"
-                )
+                if c_gender == "female":
+                    image_mapping_lines.append(
+                        f"  -> STRICT GENDER ANATOMY LOCK FOR '{c_name.upper()}' (FEMALE): "
+                        f"Render feminine chest, female waist, and female pussy/vulva between thighs. "
+                        f"ABSOLUTELY NEVER attach a male penis, cock, or male testicles to '{c_name}' under any circumstances!"
+                    )
+                elif c_gender == "male":
+                    image_mapping_lines.append(
+                        f"  -> STRICT GENDER ANATOMY LOCK FOR '{c_name.upper()}' (MALE): "
+                        f"Render masculine torso, flat male chest, and male penis/cock attached only at male pelvis. "
+                        f"ABSOLUTELY NEVER render female sports bras, tops, thongs, or female vulva on '{c_name}'!"
+                    )
 
             image_mapping_lines.append("""
 =========================================================
