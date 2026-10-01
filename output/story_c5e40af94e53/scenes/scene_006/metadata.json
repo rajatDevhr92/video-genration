@@ -1,0 +1,57 @@
+{
+  "scene_id": "scene_006",
+  "order": 6,
+  "character_ids": [
+    "character_001"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_c5e40af94e53/references/characters/lena_character_001.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_006/composition.png",
+  "composition_source": "previous_video_last_frame",
+  "keyframe": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_006/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_006/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_006/last_frame.png",
+  "previous_last_frame": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_005/last_frame.png",
+  "composition_prompt_id": null,
+  "keyframe_prompt_id": "7fb358b8-bdec-41c1-8012-612a7be1faab",
+  "video_prompt_id": "4fa4be10-fd39-4e0e-97e1-fb5058bfcefc",
+  "video_generation_time_seconds": 82.09609818458557,
+  "scene_state": {
+    "scene_id": "scene_006",
+    "order": 6,
+    "location": "location_001",
+    "characters": [
+      "character_001"
+    ],
+    "weather": null,
+    "lighting": "Warm lamplight, casting long shadows as her body moves and tenses",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {
+        "current_pose": "standing"
+      }
+    },
+    "time_of_day": null,
+    "master_lighting": "Soft warm lamplight from a floor lamp, creating gentle highlights on her skin and subtle shadows under her breasts and hips",
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.85,
+  "story_id": "story_c5e40af94e53",
+  "scene_segment": "She arches hard off the bed, fully nude, legs trembling wide. She climaxes with ",
+  "characters_used": [
+    "character_001"
+  ],
+  "location": "location_001",
+  "action": "She arches her back violently off the bed, legs kicking open. Her body convulses with full-body shudders. Fingers remain deep inside her pussy. Her breasts heave rapidly, then slowly settle as she collapses back onto the bed.",
+  "generated_prompt": "\n=========================================================\nIMAGE SLOT ASSIGNMENT & 3D TURNAROUND ANGLE MATCHING\n=========================================================\nImage 1: Current Base Scene / ",
+  "generated_video": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_006/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_006/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_006/video_with_audio.mp4"
+}

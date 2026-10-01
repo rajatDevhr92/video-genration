@@ -1,0 +1,57 @@
+{
+  "scene_id": "scene_001",
+  "order": 1,
+  "character_ids": [
+    "character_001"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_c5e40af94e53/references/characters/lena_character_001.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_001/composition.png",
+  "composition_source": "qwen_t2i",
+  "keyframe": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_001/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_001/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_001/last_frame.png",
+  "previous_last_frame": null,
+  "composition_prompt_id": "9b3d8ac8-cab6-451f-9614-966d6e7468c1",
+  "keyframe_prompt_id": "36621212-3381-4500-b084-dfa5aa04326a",
+  "video_prompt_id": "bb6258aa-13c5-450a-8803-45950d3b24ae",
+  "video_generation_time_seconds": 108.39400362968445,
+  "scene_state": {
+    "scene_id": "scene_001",
+    "order": 1,
+    "location": "location_001",
+    "characters": [
+      "character_001"
+    ],
+    "weather": null,
+    "lighting": "Soft warm lamplight from a floor lamp, creating gentle highlights on her skin and subtle shadows under her breasts and hips",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {
+        "current_pose": "standing"
+      }
+    },
+    "time_of_day": null,
+    "master_lighting": "Soft warm lamplight from a floor lamp, creating gentle highlights on her skin and subtle shadows under her breasts and hips",
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.7,
+  "story_id": "story_c5e40af94e53",
+  "scene_segment": "A fully nude mature woman stands at the foot of a king-sized bed in a dimly lit ",
+  "characters_used": [
+    "character_001"
+  ],
+  "location": "location_001",
+  "action": "She stands upright, bare feet on the floor, arms at her sides. Slowly rotates her torso 180 degrees to face the camera, maintaining a steady, deliberate motion.",
+  "generated_prompt": "\n=========================================================\nIMAGE SLOT ASSIGNMENT & 3D TURNAROUND ANGLE MATCHING\n=========================================================\nImage 1: Current Base Scene / ",
+  "generated_video": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_001/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_001/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_001/video_with_audio.mp4"
+}

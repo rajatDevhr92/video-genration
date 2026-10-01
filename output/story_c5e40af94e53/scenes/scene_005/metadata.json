@@ -1,0 +1,57 @@
+{
+  "scene_id": "scene_005",
+  "order": 5,
+  "character_ids": [
+    "character_001"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_c5e40af94e53/references/characters/lena_character_001.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_005/composition.png",
+  "composition_source": "previous_video_last_frame",
+  "keyframe": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_005/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_005/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_005/last_frame.png",
+  "previous_last_frame": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_004/last_frame.png",
+  "composition_prompt_id": null,
+  "keyframe_prompt_id": "f61c412e-bae9-4939-aa56-fd6938eb23eb",
+  "video_prompt_id": "1eeab854-93dc-42be-a431-a05b5b19c7b2",
+  "video_generation_time_seconds": 80.31518197059631,
+  "scene_state": {
+    "scene_id": "scene_005",
+    "order": 5,
+    "location": "location_001",
+    "characters": [
+      "character_001"
+    ],
+    "weather": null,
+    "lighting": "Warm lamplight, casting soft highlights on her cheeks and the curve of her breasts",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {
+        "current_pose": "standing"
+      }
+    },
+    "time_of_day": null,
+    "master_lighting": "Soft warm lamplight from a floor lamp, creating gentle highlights on her skin and subtle shadows under her breasts and hips",
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.45,
+  "story_id": "story_c5e40af94e53",
+  "scene_segment": "Extreme close-up on her face and bouncing breasts. Mouth open in a moan, eyes ha",
+  "characters_used": [
+    "character_001"
+  ],
+  "location": "location_001",
+  "action": "Her face contorts in pleasure, mouth open in a silent moan. Her breasts bounce slightly with each rapid thrust. Her fingers move faster and deeper into her wet pussy.",
+  "generated_prompt": "\n=========================================================\nIMAGE SLOT ASSIGNMENT & 3D TURNAROUND ANGLE MATCHING\n=========================================================\nImage 1: Current Base Scene / ",
+  "generated_video": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_005/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_005/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_005/video_with_audio.mp4"
+}

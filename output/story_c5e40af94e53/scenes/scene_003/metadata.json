@@ -1,0 +1,57 @@
+{
+  "scene_id": "scene_003",
+  "order": 3,
+  "character_ids": [
+    "character_001"
+  ],
+  "character_references": [
+    "/workspace/story-video-engine/output/story_c5e40af94e53/references/characters/lena_character_001.png"
+  ],
+  "composition": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_003/composition.png",
+  "composition_source": "previous_video_last_frame",
+  "keyframe": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_003/keyframe.png",
+  "video": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_003/video.mp4",
+  "last_frame": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_003/last_frame.png",
+  "previous_last_frame": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_002/last_frame.png",
+  "composition_prompt_id": null,
+  "keyframe_prompt_id": "ce9de7ac-4b47-4620-98c9-f60b06d4f11f",
+  "video_prompt_id": "f9a34766-42a7-492d-8876-5eac8ed041e5",
+  "video_generation_time_seconds": 82.14200901985168,
+  "scene_state": {
+    "scene_id": "scene_003",
+    "order": 3,
+    "location": "location_001",
+    "characters": [
+      "character_001"
+    ],
+    "weather": null,
+    "lighting": "Warm lamplight from the floor lamp, highlighting her inner thighs and the curve of her hips",
+    "objects": {},
+    "notes": [],
+    "character_current_states": {
+      "character_001": {
+        "current_pose": "standing"
+      }
+    },
+    "time_of_day": null,
+    "master_lighting": "Soft warm lamplight from a floor lamp, creating gentle highlights on her skin and subtle shadows under her breasts and hips",
+    "lighting_quality": null,
+    "important_objects": {},
+    "spatial_layout": null,
+    "background": null
+  },
+  "active_denoise": 0.85,
+  "story_id": "story_c5e40af94e53",
+  "scene_segment": "She lies back on the bed, fully nude, legs spreading wider. Her fingers glide ov",
+  "characters_used": [
+    "character_001"
+  ],
+  "location": "location_001",
+  "action": "She reclines fully onto the bed, legs spreading wide. Her fingers move to her vulva, rubbing slow circles on her clit with steady pressure, her chest rising and falling with each breath.",
+  "generated_prompt": "\n=========================================================\nIMAGE SLOT ASSIGNMENT & 3D TURNAROUND ANGLE MATCHING\n=========================================================\nImage 1: Current Base Scene / ",
+  "generated_video": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_003/video.mp4",
+  "generation_status": "completed",
+  "validation_status": "pending",
+  "audio": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_003/audio.wav",
+  "video_with_audio": "/workspace/story-video-engine/output/story_c5e40af94e53/scenes/scene_003/video_with_audio.mp4"
+}
