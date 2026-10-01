@@ -50,6 +50,11 @@ class Scene:
     camera: str
     lighting: str
     video_prompt: str
+    clothing_state: str = ""
+    pose_type: str = ""
+    penetration_state: str = ""
+    primary_motion: str = ""
+    previous_scene_context: str = ""
     continuity: Dict[str, Any] = field(
         default_factory=dict
     )
@@ -102,6 +107,11 @@ class StoryPlan:
                     "duration": s.duration,
                     "location_id": s.location_id,
                     "character_ids": s.character_ids,
+                    "clothing_state": getattr(s, "clothing_state", ""),
+                    "pose_type": getattr(s, "pose_type", ""),
+                    "penetration_state": getattr(s, "penetration_state", ""),
+                    "primary_motion": getattr(s, "primary_motion", ""),
+                    "previous_scene_context": getattr(s, "previous_scene_context", ""),
                     "description": s.description,
                     "action": s.action,
                     "camera": s.camera,

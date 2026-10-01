@@ -664,8 +664,14 @@ CRITICAL CONTACT & ANATOMY LOCK (NO BLACK HOLES / NO VOIDS)
 {image_mapping_block}
 
 =========================================================
-SCENE PROMPT
+SCENE PROMPT & CONTINUITY CONTEXT
 =========================================================
+Clothing State: {scene.get('clothing_state', 'Fully nude, completely unclothed, bare skin')}
+Pose Type: {scene.get('pose_type', '')}
+Penetration State: {scene.get('penetration_state', '')}
+Primary Motion: {scene.get('primary_motion', '')}
+Previous Scene Context: {scene.get('previous_scene_context', 'None (Scene 1)')}
+
 Scene description:
 {scene.get('description', '')}
 
@@ -678,7 +684,7 @@ Camera:
 Lighting:
 {scene.get('lighting', '')}
 
- continuity state:
+Character continuity state:
 {json.dumps(scene_state.get('character_current_states', {}), ensure_ascii=False, indent=2)}
 
 Maintain character identity, body pose, and clothing from the input keyframe.

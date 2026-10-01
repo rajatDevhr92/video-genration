@@ -53,6 +53,10 @@ class StoryPlanner:
         "duration",
         "location_id",
         "character_ids",
+        "clothing_state",
+        "pose_type",
+        "penetration_state",
+        "primary_motion",
         "description",
         "action",
         "camera",
@@ -426,19 +430,26 @@ SCENES
 
 Create the necessary cinematic scenes.
 
-Each scene must contains:
+Each scene must contain:
 
 - id
 - order
 - duration
 - location_id
 - character_ids
+- clothing_state (e.g. "Fully nude, completely unclothed, bare skin")
+- pose_type (exact anatomical posture, e.g. "On all fours in doggy position", "Standing upright")
+- penetration_state (exact intimate contact or penetration state, e.g. "Male penis entering female pussy from behind", "None")
+- primary_motion (isolated kinetic movement description)
 - description
 - action
-- camera
+- camera (MUST explicitly indicate matching 3-panel turnaround grid panel: "(matches LEFT PANEL Front View of turnaround sheet)", "(matches CENTER PANEL 3/4 Side View of turnaround sheet)", or "(matches RIGHT PANEL Rear View of turnaround sheet)")
 - lighting
 - video_prompt
 - audio
+
+For scenes starting from scene 2 (order >= 2), you MUST also include:
+- previous_scene_context (1-3 short sentences describing exact body positions, clothing state, and contact points from the previous scene for visual continuity)
 
 Optionally include:
 
@@ -820,6 +831,40 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                 raise ValueError(
                     "Scene must be an object."
                 )
+
+            # --------------------------------------------------
+            # Auto-populate keyframe-enrichment scene fields if missing
+            # --------------------------------------------------
+            if not scene.get("clothing_state"):
+                desc_lower = f"{scene.get('description', '')} {scene.get('action', '')}".lower()
+                if any(w in desc_lower for w in ["nude", "naked", "unclothed", "bare skin", "undress", "strips"]):
+                    scene["clothing_state"] = "Fully nude, completely unclothed, bare skin"
+                else:
+                    scene["clothing_state"] = "Canonical outfit from character reference"
+
+            if not scene.get("pose_type"):
+                scene["pose_type"] = (scene.get("action") or scene.get("description") or "Standing upright")[:80]
+
+            if not scene.get("penetration_state"):
+                desc_lower = f"{scene.get('description', '')} {scene.get('action', '')}".lower()
+                if any(w in desc_lower for w in ["penetrat", "doggystyle", "thrust", "cock inside", "pussy contact", "sex", "fuck"]):
+                    scene["penetration_state"] = "Active intimate penetration / body contact"
+                else:
+                    scene["penetration_state"] = "None"
+
+            if not scene.get("primary_motion"):
+                scene["primary_motion"] = (scene.get("video_prompt") or scene.get("action") or "")[:80]
+
+            scene_order = scene.get("order", 1)
+            if scene_order >= 2 and not scene.get("previous_scene_context"):
+                scenes_list = result.get("scenes", [])
+                prev_idx = scene_order - 2
+                if 0 <= prev_idx < len(scenes_list):
+                    prev_scene = scenes_list[prev_idx]
+                    prev_desc = prev_scene.get("description", "")
+                    prev_clothing = prev_scene.get("clothing_state", "Fully nude, completely unclothed, bare skin")
+                    prev_pose = prev_scene.get("pose_type", prev_scene.get("action", ""))
+                    scene["previous_scene_context"] = f"In scene {scene_order - 1}, character was in pose ({prev_pose}). Clothing state: {prev_clothing}. Context: {prev_desc[:120]}"
 
             for field in (
                 self.REQUIRED_SCENE_FIELDS
