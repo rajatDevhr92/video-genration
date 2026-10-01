@@ -443,13 +443,13 @@ Each scene must contain:
 - primary_motion (isolated kinetic movement description)
 - description
 - action
-- camera (MUST explicitly indicate matching 3-panel turnaround grid panel: "(matches LEFT PANEL Front View of turnaround sheet)", "(matches CENTER PANEL 3/4 Side View of turnaround sheet)", or "(matches RIGHT PANEL Rear View of turnaround sheet)")
+- camera (MUST combine technical cinematic camera framing with turnaround sheet panel tag: e.g., "Medium close-up, low angle, front-facing on bed (matches LEFT PANEL Front View of turnaround sheet)")
 - lighting
 - video_prompt
 - audio
 
 For scenes starting from scene 2 (order >= 2), you MUST also include:
-- previous_scene_context (1-3 short sentences describing exact body positions, clothing state, and contact points from the previous scene for visual continuity)
+- previous_scene_context (1-3 short sentences describing the previous scene's exact body positions, clothing state, and key contact/genital alignment for seamless visual continuity)
 
 Optionally include:
 
@@ -485,11 +485,26 @@ If the scene is sexual, describe the sexual action explicitly.
 CAMERA
 ============================================================
 
-Use a concise actionable camera description.
+The camera description MUST combine full technical camera details with a turnaround panel tag.
+
+Requirements:
+1. Technical Camera Specs: State the exact shot size (Wide Shot, Medium Shot, Close-up, Extreme Close-up), camera height/angle (Low angle, Eye-level, High angle, Over-the-shoulder), and focus point/framing.
+2. Turnaround Panel Tag: Indicate which panel of the character 3-panel turnaround sheet to use for reference:
+   - Front-facing shots / facing camera → "(matches LEFT PANEL Front View of turnaround sheet)"
+   - Side / profile / 3/4 angle shots → "(matches CENTER PANEL 3/4 Side View of turnaround sheet)"
+   - Rear / back / doggy-style shots from behind → "(matches RIGHT PANEL Rear View of turnaround sheet)"
+
+CRITICAL RULE:
+NEVER output only the panel tag! Always combine detailed technical camera framing with the matching panel tag.
+
+Examples:
+- GOOD: "Medium shot, low angle from behind, tight focus on hips and rear alignment (matches RIGHT PANEL Rear View of turnaround sheet)"
+- GOOD: "Close-up, front-facing eye-level, tracking face and chest expressions (matches LEFT PANEL Front View of turnaround sheet)"
+- GOOD: "Wide shot, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet)"
+- BAD: "(matches LEFT PANEL Front View of turnaround sheet)"
 
 Maximum target:
-
-approximately 35 words.
+approximately 45 words.
 
 ============================================================
 LIGHTING
