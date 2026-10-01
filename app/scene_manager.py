@@ -660,6 +660,38 @@ CRITICAL CONTACT & ANATOMY LOCK (NO BLACK HOLES / NO VOIDS)
 
             image_mapping_block = "\n".join(image_mapping_lines)
 
+            keyframe_prompt = f"""
+{image_mapping_block}
+
+=========================================================
+SCENE PROMPT
+=========================================================
+Scene description:
+{scene.get('description', '')}
+
+Action:
+{scene.get('action', '')}
+
+Camera:
+{scene.get('camera', '')}
+
+Lighting:
+{scene.get('lighting', '')}
+
+ continuity state:
+{json.dumps(scene_state.get('character_current_states', {}), ensure_ascii=False, indent=2)}
+
+Maintain character identity, body pose, and clothing from the input keyframe.
+Refine genitalia and contact areas in Stage B if applicable.
+
+=========================================================
+CRITICAL CONTACT & ANATOMY LOCK (NO BLACK HOLES / NO VOIDS)
+=========================================================
+- Solid, unbroken, continuous skin-to-skin contact between bodies.
+- ABSOLUTELY NO black holes, dark circular voids, missing flesh, hollow skin, or dark cutout spots in contact zones.
+- Skin must be continuous, smooth, realistic, and fully opaque across all thighs, hips, waist, and genitalia contact areas.
+- No shadow distortion turning skin into empty dark holes or black background gaps.
+"""
             # Check for explicit Nudity directive in scene description or continuity
             is_nude_scene = False
             desc_text = f"{scene.get('description', '')} {scene.get('action', '')}".lower()
@@ -706,105 +738,48 @@ POSE & POSITION TRANSITION INSTRUCTION
 - Retain room architecture, background layout, and lighting from Image 1, but rebuild character body postures cleanly.
 """
 
-            # Stage 2: Keyframe Generation
-            print()
-            print("=" * 80)
-            print(f"SCENE {order}: GENERATING CONTINUITY KEYFRAME (denoise={active_denoise})")
-            print("=" * 80)
+# Stage 2: Keyframe Generation - Two-Pass Workflow
+            # --------------------------------------------------
+            # Stage A: Identity, Body Pose & Clothing (no genital references)
+            # --------------------------------------------------
+            stage_a_keyframe_path = scene_dir / "stage_a_keyframe.png"
 
-            if previous_last_frame:
-                continuity_instruction = f"""
-This scene continues from the previous video last frame (Image 1).
-Preserve the exact room layout, furniture, background architecture, and lighting from Image 1.
-Preserve character clothing states from the previous scene unless the NEW scene description explicitly requires a change.
-Advance the scene action smoothly while maintaining character identity from the reference images.
-"""
-            else:
-                continuity_instruction = """
-This is the opening scene.
-Establish the visual world, characters, environment, and cinematic language of the story.
-"""
-
-            master_lighting = scene_state.get("master_lighting") or scene.get("lighting", "")
-
-            keyframe_prompt = f"""
-Create ONE SINGLE photorealistic cinematic frame
-that represents the exact story moment described below.
-
-=========================================================
-CRITICAL GENITAL & BODY PART IDENTITY LOCK
-=========================================================
-- Male characters must have a realistic human penis attached only to the male body.
-- Female characters must have a realistic human vagina only. NEVER render a penis on a female character.
-- Do not attach, float, or transfer a penis onto the woman.
-- Do not invent extra genitals.
-- Keep exact genital size and proportions consistent with the reference and previous frame.
-- Breasts, nipples, ass, hands and all body parts must keep correct human anatomy and never become objects.
-
-{image_mapping_block}
-
-{human_count_block}
-
-=========================================================
-STORY MOMENT
-=========================================================
-
-Scene ID: {scene_id}
-Order: {order}
-
-Scene description:
-{scene.get("description", "")}
-
-Action happening in this exact moment:
-{scene.get("action", "")}
-
-Camera direction:
-{scene.get("camera", "")}
-
-Master Lighting Authority (Room Ambient Glow):
-{master_lighting}
-
-Scene Lighting Details:
-{scene.get("lighting", "")}
-
-Time of day:
-{scene_state.get("time_of_day", "Not specified")}
-
-=========================================================
-CONTINUITY INSTRUCTIONS
-=========================================================
-{continuity_instruction}
-{nudity_instruction}
-{pose_transition_instruction}
-Per-Character Continuity State:
-{json.dumps(scene_state.get("character_current_states", {}), ensure_ascii=False, indent=2)}
-
-- CRITICAL LIGHTING LOCK: Preserve the exact master room lighting ({master_lighting}) from Image 1. Maintain consistent color temperature, white balance, ambient exposure, and shadow balance across all scene cuts.
-- If continuing from Image 1, preserve the exact room architecture, furniture, and environmental lighting from Image 1.
-- CHARACTER IDENTITY & BODY CONSISTENCY: Maintain exact facial features, hair color, skin tone, gender traits, and body proportions for each character based on their respective reference images (Image 2, Image 3, etc.).
-- Do NOT swap character faces or body features between characters.
-- Do NOT alter character physical builds or introduce unwanted objects/artifacts onto characters.
-- Do NOT introduce unscripted extra people, extra limbs, or duplicate bodies.
-
-============================================================
-STRICT IMAGE RULES
-============================================================
-ONE continuous photographic frame.
-ONE camera viewpoint.
-No collage, no split screen, no turnaround sheet, no text, no subtitles.
-Generate the exact cinematic story moment while preserving character identity and scene continuity.
-"""
-
-            keyframe_result = self.keyframe_generator.generate(
+            keyframe_a_result = self.keyframe_generator.generate(
                 scene_image=base_image,
                 character_references=character_refs,
                 prompt=keyframe_prompt,
-                output_path=keyframe_path,
+                output_path=stage_a_keyframe_path,
                 seed=2000003 + order * 7919,
                 denoise=active_denoise,
-                genital_references=genital_refs,
-
+                genital_references=[],
             )
+
+            # --------------------------------------------------
+            # Stage B: Anatomy Refinement (conditional)
+            # --------------------------------------------------
+            if is_nude_scene and genital_refs:
+                # Call Stage B to refine genitalia and contact areas
+                keyframe_b_result = self.keyframe_generator.generate_stage_b(
+                    stage_a_image=stage_a_keyframe_path,
+                    genital_references=genital_refs,
+                    prompt=keyframe_prompt,
+                    output_path=keyframe_path,
+                    seed=2000003 + order * 7919 + 1,
+                    denoise=0.30,
+                )
+                keyframe_result = keyframe_b_result
+            else:
+                # Copy Stage A keyframe directly (no anatomy refinement needed)
+                shutil.copy2(stage_a_keyframe_path, keyframe_path)
+                keyframe_result = {
+                    "prompt_id": keyframe_a_result.get("prompt_id"),
+                    "client_id": keyframe_a_result.get("client_id"),
+                    "output": str(keyframe_path),
+                    "base_image": str(stage_a_keyframe_path),
+                    "character_references": keyframe_a_result.get("character_references", []),
+                    "genital_references": keyframe_a_result.get("genital_references", []),
+                    "denoise": active_denoise,
+                }
 
             # Stage 3: Wan 2.2 Video Generation
             print()
