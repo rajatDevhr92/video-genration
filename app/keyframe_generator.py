@@ -317,12 +317,23 @@ CRITICAL GENDER, PENETRATION & CLOTHING LOCK (HIGHEST PRIORITY)
 - Copy exact genital shape, skin tone, labia/penis structure, and anatomical details strictly from the matching angle panel of {gen_str}.
 """
 
-            workflow["13"]["inputs"]["prompt"] = prompt + "\n\n" + genital_lock
+            stage_b_contact_lock = """
+=========================================================
+CRITICAL CONTACT ZONE & STAGE B ANATOMY FOCUS
+=========================================================
+- Continuous solid skin between bodies across all contact areas.
+- ABSOLUTELY NO black holes, dark voids, missing flesh, or shadow spots.
+- Clean, sharp, realistic contact between male penis and female pussy.
+- FEMALE ANATOMY: Only female pussy/vulva on female character. ABSOLUTELY NO penis on woman.
+- MALE ANATOMY: Only male penis attached at pelvis on male character. ABSOLUTELY NO female vulva on man.
+- Preserve face, hair, and background from Image 1 base; focus strictly on refining groin anatomy and contact alignment.
+"""
+            workflow["13"]["inputs"]["prompt"] = prompt + "\n\n" + genital_lock + "\n\n" + stage_b_contact_lock
 
             # --------------------------------------------------
             # 4. Sampling
             # --------------------------------------------------
-            active_denoise = denoise if denoise is not None else 0.30
+            active_denoise = denoise if denoise is not None else 0.25
 
             workflow["15"]["inputs"]["seed"] = seed
             workflow["15"]["inputs"]["steps"] = 40

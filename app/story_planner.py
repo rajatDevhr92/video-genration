@@ -467,6 +467,10 @@ Keep each scene description concise (approximately 80 words).
 
 If characters change body posture or spatial position between scenes (e.g. moving from standing to lying down, turning around, crawling over each other, or rotating position), state their exact new body orientation clearly so keyframe and animation pipelines maintain body integrity and smooth motion.
 
+CRITICAL HAND POSITION RULE:
+- In "description", "action", and "previous_scene_context", ALWAYS explicitly state the exact position of both hands for every character (e.g. "both hands firmly gripping her hips", "left hand resting flat on mattress", "right hand reaching under to rub her clit").
+- Never leave hands unmentioned or floating in ambiguity.
+
 If the scene is sexual, describe the sexual action explicitly.
 
 ============================================================
@@ -474,6 +478,8 @@ ACTION
 ============================================================
 
 Describe the main visible action clearly and continuously.
+
+State exact limb placement, torso posture, and hand anchoring points.
 
 Maximum target:
 

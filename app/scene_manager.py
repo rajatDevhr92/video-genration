@@ -552,12 +552,12 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                             f"[DENOISE] Same location but pose/angle transition detected in scene {order} -> boosted denoise to {active_denoise} for clean pose re-orientation"
                         )
                     else:
-                        active_denoise = 0.50
+                        active_denoise = 0.40
                 else:
                     # New location -> allow room transition
                     active_denoise = 0.85 if (is_close_up or is_wide_or_full) else 0.65
 
-                # Force lower denoise (max 0.45) for close body contact / penetration scenes
+                # Force lower denoise (max 0.40) for close body contact / penetration scenes
                 contact_keywords = [
                     "penetrat", "entering", "slides inside", "thrust", "cock inside",
                     "pussy contact", "groin pressed", "hips pressed", "skin to skin",
@@ -568,9 +568,9 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                 is_contact_scene = any(w in full_text for w in contact_keywords)
 
                 if is_contact_scene:
-                    active_denoise = min(active_denoise, 0.45)
+                    active_denoise = min(active_denoise, 0.40)
                     logger.info(
-                        f"[DENOISE] Body contact/penetration detected in scene {order} -> capped denoise to {active_denoise} to prevent black holes and broken skin artifacts"
+                        f"[DENOISE] Body contact/penetration detected in scene {order} -> capped denoise to {active_denoise} to prevent pose drift and black holes"
                     )
 
                 print()
@@ -637,6 +637,17 @@ CRITICAL CLOTHING CONTINUITY LOCK
 - Maintain 100% strict clothing state continuity from Image 1 and character reference.
 - IF THE SCENE IS NUDE / UNCLOTHED: Keep character(s) 100% fully nude with complete bare skin. DO NOT invent white tops, sports bras, thongs, wrist wraps, or random underwear on nude bodies unless explicitly instructed in scene description.
 - IF THE SCENE IS CLOTHED: Keep their exact canonical outfit from the character reference sheet.
+""")
+
+            image_mapping_lines.append("""
+=========================================================
+CRITICAL POSE LOCK (PREVENT POSE DRIFT)
+=========================================================
+- Maintain exact body posture, leg positioning, and hip elevation from Image 1 base.
+- If female character is on all fours, keep her on all fours with knees spread, back arched, and ass raised.
+- If male character is kneeling behind her, keep him kneeling directly behind her hips.
+- Do NOT straighten her back, do NOT drop her hips, do NOT stand the male character up.
+- Keep hands anchored in their exact described position without floating, jumping, or shifting randomly.
 """)
 
             image_mapping_lines.append("""
@@ -771,7 +782,7 @@ POSE & POSITION TRANSITION INSTRUCTION
                     prompt=keyframe_prompt,
                     output_path=keyframe_path,
                     seed=2000003 + order * 7919 + 1,
-                    denoise=0.30,
+                    denoise=0.25,
                 )
                 keyframe_result = keyframe_b_result
             else:
