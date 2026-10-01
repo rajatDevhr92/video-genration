@@ -57,6 +57,12 @@ class StoryPlanner:
         "pose_type",
         "penetration_state",
         "primary_motion",
+        "pose_lock",
+        "hand_positions",
+        "genital_alignment",
+        "contact_zone",
+        "motion_intensity",
+        "expression",
         "description",
         "action",
         "camera",
@@ -441,6 +447,12 @@ Each scene must contain:
 - pose_type (exact anatomical posture, e.g. "On all fours in doggy position", "Standing upright")
 - penetration_state (exact intimate contact or penetration state, e.g. "Male penis entering female pussy from behind", "None")
 - primary_motion (isolated kinetic movement description)
+- pose_lock (strict anatomical lock, e.g. "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.")
+- hand_positions (exact anchoring of both hands for every character, e.g. "Man's left hand gripping her left hip, right hand on mattress")
+- genital_alignment (precise genital insertion/alignment, e.g. "Male erect cock aligned and fully inserted into female pussy from behind")
+- contact_zone (skin continuity directive, e.g. "Continuous solid skin contact at hips and penetration point, no dark voids")
+- motion_intensity ("low", "medium", "fast and hard", or "deep and slow thrusting")
+- expression (facial expression state, e.g. "Woman: eyes closed, mouth open in pleasure. Man: focused expression")
 - description
 - action
 - camera (MUST combine technical cinematic camera framing with turnaround sheet panel tag: e.g., "Medium close-up, low angle, front-facing on bed (matches LEFT PANEL Front View of turnaround sheet)")
@@ -875,6 +887,24 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
 
             if not scene.get("primary_motion"):
                 scene["primary_motion"] = (scene.get("video_prompt") or scene.get("action") or "")[:80]
+
+            if not scene.get("pose_lock"):
+                scene["pose_lock"] = scene.get("pose_type", scene.get("action", ""))
+
+            if not scene.get("hand_positions"):
+                scene["hand_positions"] = "Hands anchored naturally on body or mattress as described in action"
+
+            if not scene.get("genital_alignment"):
+                scene["genital_alignment"] = scene.get("penetration_state", "Direct anatomical alignment at contact point")
+
+            if not scene.get("contact_zone"):
+                scene["contact_zone"] = "Continuous solid skin-to-skin contact between bodies, no dark voids"
+
+            if not scene.get("motion_intensity"):
+                scene["motion_intensity"] = "medium"
+
+            if not scene.get("expression"):
+                scene["expression"] = "Intense, emotionally grounded facial expression"
 
             scene_order = scene.get("order", 1)
             if scene_order >= 2 and not scene.get("previous_scene_context"):

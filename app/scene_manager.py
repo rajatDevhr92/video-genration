@@ -157,8 +157,16 @@ class SceneManager:
         ]
         is_sexual = any(kw in (description + action).lower() for kw in sexual_keywords)
 
+        motion_intensity = scene.get("motion_intensity", "")
+        primary_motion = scene.get("primary_motion", "")
+        hand_positions = scene.get("hand_positions", "")
+
         base = f"""
 Animate this input keyframe with smooth, continuous, realistic physical motion.
+
+Motion Intensity & Rhythm: {motion_intensity}
+Primary Motion Focus: {primary_motion}
+Hand Placement Anchor: {hand_positions}
 
 Scene description:
 {description}
@@ -679,8 +687,14 @@ SCENE PROMPT & CONTINUITY CONTEXT
 =========================================================
 Clothing State: {scene.get('clothing_state', 'Fully nude, completely unclothed, bare skin')}
 Pose Type: {scene.get('pose_type', '')}
+Pose Lock: {scene.get('pose_lock', '')}
+Hand Positions: {scene.get('hand_positions', '')}
+Genital Alignment: {scene.get('genital_alignment', '')}
+Contact Zone: {scene.get('contact_zone', '')}
+Facial Expression: {scene.get('expression', '')}
 Penetration State: {scene.get('penetration_state', '')}
 Primary Motion: {scene.get('primary_motion', '')}
+Motion Intensity: {scene.get('motion_intensity', '')}
 Previous Scene Context: {scene.get('previous_scene_context', 'None (Scene 1)')}
 
 Scene description:

@@ -55,6 +55,12 @@ class Scene:
     penetration_state: str = ""
     primary_motion: str = ""
     previous_scene_context: str = ""
+    pose_lock: str = ""
+    hand_positions: str = ""
+    genital_alignment: str = ""
+    contact_zone: str = ""
+    motion_intensity: str = ""
+    expression: str = ""
     continuity: Dict[str, Any] = field(
         default_factory=dict
     )
@@ -112,6 +118,12 @@ class StoryPlan:
                     "penetration_state": getattr(s, "penetration_state", ""),
                     "primary_motion": getattr(s, "primary_motion", ""),
                     "previous_scene_context": getattr(s, "previous_scene_context", ""),
+                    "pose_lock": getattr(s, "pose_lock", ""),
+                    "hand_positions": getattr(s, "hand_positions", ""),
+                    "genital_alignment": getattr(s, "genital_alignment", ""),
+                    "contact_zone": getattr(s, "contact_zone", ""),
+                    "motion_intensity": getattr(s, "motion_intensity", ""),
+                    "expression": getattr(s, "expression", ""),
                     "description": s.description,
                     "action": s.action,
                     "camera": s.camera,
