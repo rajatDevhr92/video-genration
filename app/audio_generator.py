@@ -171,6 +171,15 @@ class AudioGenerator:
             [],
         )
 
+        # Fallback: If both narration and dialogue are empty, auto-populate from scene description or action
+        if not narration and not dialogue:
+            fallback_text = (audio_plan.get("description") or audio_plan.get("action") or "").strip()
+            if fallback_text:
+                narration = [{
+                    "text": fallback_text,
+                    "voice": DEFAULT_NARRATOR_VOICE,
+                }]
+
         segments = []
 
         with tempfile.TemporaryDirectory(

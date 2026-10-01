@@ -172,7 +172,7 @@ Return exactly:
         }
 
         for scene in plan["scenes"]:
-            scene["audio"] = by_scene.get(
+            scene_audio = by_scene.get(
                 scene["id"],
                 {
                     "narration": [],
@@ -184,6 +184,17 @@ Return exactly:
                     },
                 },
             )
+            # Ensure narration or dialogue is non-empty for every scene
+            narr = scene_audio.get("narration", [])
+            dial = scene_audio.get("dialogue", [])
+            if not narr and not dial:
+                fallback_text = (scene.get("description") or scene.get("action") or "").strip()
+                if fallback_text:
+                    scene_audio["narration"] = [{
+                        "text": fallback_text,
+                        "voice": "alloy"
+                    }]
+            scene["audio"] = scene_audio
 
         with open(
             plan_path,

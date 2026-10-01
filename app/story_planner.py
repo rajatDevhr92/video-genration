@@ -959,6 +959,20 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                         f"{item['character_id']}"
                     )
 
+            # --------------------------------------------------
+            # Voice Audio Enforcement & Auto-Repair:
+            # Every scene MUST contain active voice audio. If both narration
+            # and dialogue are empty, auto-populate narration from scene description.
+            # --------------------------------------------------
+            if not narration and not dialogue:
+                fallback_text = (scene.get("description") or scene.get("action") or "").strip()
+                if fallback_text:
+                    narration = [{
+                        "text": fallback_text,
+                        "voice": "alloy"
+                    }]
+                    audio["narration"] = narration
+
             for effect in sound_effects:
 
                 if not isinstance(
