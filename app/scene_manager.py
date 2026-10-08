@@ -6,6 +6,7 @@ import shutil
 from .composition_generator import CompositionGenerator
 from .config import OUTPUT_DIR
 from .keyframe_generator import KeyframeGenerator
+from .story_schema import motion_to_prompt
 from .video_generator import VideoGenerator
 from .video_utils import extract_last_frame
 
@@ -161,10 +162,17 @@ class SceneManager:
         primary_motion = scene.get("primary_motion", "")
         hand_positions = scene.get("hand_positions", "")
 
+        # Extract structured motion object if present, or generate prompt string
+        if scene.get("motion"):
+            motion_prompt_text = motion_to_prompt(scene["motion"])
+        else:
+            motion_prompt_text = scene.get("primary_motion", scene.get("video_prompt", ""))
+
         base = f"""
 Animate this input keyframe with smooth, continuous, realistic physical motion.
 
 Motion Intensity & Rhythm: {motion_intensity}
+Structured Kinetic Motion: {motion_prompt_text}
 Primary Motion Focus: {primary_motion}
 Hand Placement Anchor: {hand_positions}
 
