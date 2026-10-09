@@ -20,15 +20,19 @@ class LocalLLMProvider(LLMProvider):
         # Release ComfyUI VRAM BEFORE loading Qwen
         prepare_for_local_llm()
 
+        default_model = "/workspace/models/qwen3-30b-a3b-instruct-2507"
+        if not Path(default_model).exists():
+            default_model = "Qwen/Qwen2.5-7B-Instruct"
+
         self.model_path = model_path or os.getenv(
             "LOCAL_PLANNER_MODEL",
-            "/workspace/models/qwen3-30b-a3b-instruct-2507",
+            default_model,
         )
 
         self.max_new_tokens = int(
             os.getenv(
                 "LOCAL_PLANNER_MAX_TOKENS",
-                "36384",
+                "2048",
             )
         )
 

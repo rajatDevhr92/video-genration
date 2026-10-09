@@ -766,10 +766,14 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                 "Plan must be a JSON object."
             )
 
+        if "title" not in result or not result["title"]:
+            result["title"] = "Cinematic Story Plan"
+
+        if "summary" not in result or not result["summary"]:
+            result["summary"] = "Cinematic video production plan."
+
         for field in self.REQUIRED_PLAN_FIELDS:
-
             if field not in result:
-
                 raise ValueError(
                     f"Missing top-level field: {field}"
                 )

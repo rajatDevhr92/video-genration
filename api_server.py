@@ -166,8 +166,14 @@ def generate_story_job(
 
         log("Creating story plan...")
 
+        if os.getenv("OPENAI_API_KEY"):
+            from app.openai_provider import OpenAIProvider
+            provider = OpenAIProvider()
+        else:
+            provider = LocalLLMProvider()
+
         planner = StoryPlanner(
-            provider=LocalLLMProvider()
+            provider=provider
         )
 
         plan = planner.build(

@@ -27,6 +27,8 @@ class VideoGenerator:
         motion_prompt,
         output_path,
         seed,
+        motion_lora_name=None,
+        motion_lora_strength=0.65,
     ):
         keyframe = Path(keyframe)
         output_path = Path(output_path)
@@ -64,6 +66,17 @@ class VideoGenerator:
             workflow["1000"]["inputs"]["image"] = temp_name
 
             workflow["9"]["inputs"]["text"] = motion_prompt
+
+            if motion_lora_name:
+                workflow["500"] = {
+                    "class_type": "LoraLoaderModelOnly",
+                    "inputs": {
+                        "model": ["5", 0],
+                        "lora_name": motion_lora_name,
+                        "strength_model": float(motion_lora_strength),
+                    },
+                }
+                workflow["7"]["inputs"]["model"] = ["500", 0]
 
             workflow["11"]["inputs"]["width"] = VIDEO_WIDTH
             workflow["11"]["inputs"]["height"] = VIDEO_HEIGHT

@@ -49,6 +49,8 @@ def test_anal_lora(
         motion_prompt=prompt,
         output_path=output_path,
         seed=seed,
+        motion_lora_name=lora_name,
+        motion_lora_strength=lora_strength,
     )
 
     print(f"Test generation complete! Video saved to: {result['output']}")

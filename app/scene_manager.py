@@ -831,11 +831,30 @@ POSE & POSITION TRANSITION INSTRUCTION
                 scene_state=scene_state,
             )
 
+            # Auto-detect motion LoRA category (e.g. anal motion)
+            motion_obj = scene.get("motion")
+            motion_cat = ""
+            if isinstance(motion_obj, dict):
+                motion_cat = str(motion_obj.get("category", "")).lower()
+            elif hasattr(motion_obj, "category"):
+                motion_cat = str(getattr(motion_obj, "category", "")).lower()
+
+            scene_text = f"{scene.get('description', '')} {scene.get('action', '')} {scene.get('primary_motion', '')}".lower()
+            if not motion_cat:
+                if any(w in scene_text for w in ["anal", "butt sex", "rear penetration"]):
+                    motion_cat = "anal"
+
+            motion_lora_name = None
+            if motion_cat == "anal":
+                motion_lora_name = "wan2.2_motion_anal_v1/wan2.2_motion_anal_v1.safetensors"
+
             video_result = self.video_generator.generate(
                 keyframe=keyframe_path,
                 motion_prompt=motion_prompt,
                 output_path=video_path,
                 seed=3000003 + order * 7919,
+                motion_lora_name=motion_lora_name,
+                motion_lora_strength=0.65,
             )
 
             # Stage 4: Last frame extraction
