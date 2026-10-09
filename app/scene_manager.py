@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import shutil
+from pathlib import Path
 
 from .composition_generator import CompositionGenerator
 from .config import OUTPUT_DIR
