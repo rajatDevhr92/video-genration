@@ -1,5 +1,11 @@
 import sys
 from pathlib import Path
+
+# Add project root to sys.path to support imports from any directory
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from app.video_generator import VideoGenerator
 
 
@@ -17,6 +23,16 @@ def test_anal_lora(
     if not keyframe.exists():
         print(f"Error: Keyframe image not found at {keyframe}")
         return
+
+    # Resolve LoRA file path
+    loras_dir = Path("/workspace/ComfyUI/models/loras")
+    subfolder_lora = loras_dir / "wan2.2_motion_anal_v1" / "wan2.2_motion_anal_v1.safetensors"
+    root_lora = loras_dir / "wan2.2_motion_anal_v1.safetensors"
+
+    if subfolder_lora.exists():
+        lora_name = "wan2.2_motion_anal_v1/wan2.2_motion_anal_v1.safetensors"
+    elif root_lora.exists():
+        lora_name = "wan2.2_motion_anal_v1.safetensors"
 
     video_gen = VideoGenerator()
 
