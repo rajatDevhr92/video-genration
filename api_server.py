@@ -166,7 +166,8 @@ def generate_story_job(
 
         log("Creating story plan...")
 
-        if os.getenv("OPENAI_API_KEY"):
+        use_openai = os.getenv("USE_OPENAI_PLANNER", "false").lower() in ("true", "1")
+        if use_openai:
             from app.openai_provider import OpenAIProvider
             provider = OpenAIProvider()
         else:

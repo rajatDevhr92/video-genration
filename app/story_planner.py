@@ -817,57 +817,85 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
 
         character_ids = set()
 
-        for character in result["characters"]:
+        for idx, character in enumerate(result["characters"], start=1):
+            if not isinstance(character, dict):
+                raise ValueError("Character must be an object.")
 
-            if not isinstance(
-                character,
-                dict,
-            ):
+            if not character.get("id"):
+                character["id"] = f"char_{idx:03d}"
 
-                raise ValueError(
-                    "Character must be an object."
-                )
+            if not character.get("name"):
+                character["name"] = f"Character {idx}"
 
-            for field in (
-                self.REQUIRED_CHARACTER_FIELDS
-            ):
+            if not character.get("appearance"):
+                character["appearance"] = "Adult person, dark hair, expressive eyes, athletic build"
 
+            if not character.get("clothing"):
+                character["clothing"] = "Fully nude, completely unclothed, bare skin"
+
+            if not character.get("personality"):
+                character["personality"] = "Passionate and expressive"
+
+            if not character.get("visual_anchor"):
+                character["visual_anchor"] = character.get("appearance")
+
+            for field in self.REQUIRED_CHARACTER_FIELDS:
                 if field not in character:
-
-                    raise ValueError(
-                        "Character missing field: "
-                        f"{field}"
-                    )
+                    raise ValueError(f"Character missing field: {field}")
 
             character_id = character["id"]
-
             if character_id in character_ids:
-
-                raise ValueError(
-                    f"Duplicate character id: "
-                    f"{character_id}"
-                )
-
-            character_ids.add(
-                character_id
-            )
+                raise ValueError(f"Duplicate character id: {character_id}")
+            character_ids.add(character_id)
 
         # --------------------------------------------------
         # Validate scenes
         # --------------------------------------------------
-
         scene_ids = set()
 
-        for scene in result["scenes"]:
+        for idx, scene in enumerate(result["scenes"], start=1):
+            if not isinstance(scene, dict):
+                raise ValueError("Scene must be an object.")
 
-            if not isinstance(
-                scene,
-                dict,
-            ):
+            if not scene.get("id"):
+                scene["id"] = f"scene_{idx:03d}"
 
-                raise ValueError(
-                    "Scene must be an object."
+            if not scene.get("order"):
+                scene["order"] = idx
+
+            if not scene.get("duration"):
+                scene["duration"] = 5.0
+
+            if not scene.get("location_id"):
+                scene["location_id"] = (
+                    result["locations"][0]["id"] if result.get("locations") else "loc_001"
                 )
+
+            if not scene.get("character_ids"):
+                scene["character_ids"] = [c["id"] for c in result.get("characters", [])]
+
+            if not scene.get("description"):
+                scene["description"] = scene.get("action", "Cinematic scene action.")
+
+            if not scene.get("action"):
+                scene["action"] = scene.get("description", "Physical movement.")
+
+            if not scene.get("camera"):
+                scene["camera"] = "Medium shot, eye-level tracking shot (matches CENTER PANEL 3/4 Side View of turnaround sheet)"
+
+            if not scene.get("lighting"):
+                scene["lighting"] = "Warm cinematic lighting"
+
+            if not scene.get("video_prompt"):
+                scene["video_prompt"] = scene.get("action", "Smooth continuous physical motion")
+
+            if not scene.get("audio") or not isinstance(scene.get("audio"), dict):
+                scene["audio"] = {
+                    "narration": [],
+                    "dialogue": [],
+                    "sound_effects": ["soft breathing"],
+                    "music": {"mood": "sensual", "intensity": "medium"},
+                }
 
             # --------------------------------------------------
             # Auto-populate keyframe-enrichment scene fields if missing
@@ -921,16 +949,9 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                     prev_pose = prev_scene.get("pose_type", prev_scene.get("action", ""))
                     scene["previous_scene_context"] = f"In scene {scene_order - 1}, character was in pose ({prev_pose}). Clothing state: {prev_clothing}. Context: {prev_desc[:120]}"
 
-            for field in (
-                self.REQUIRED_SCENE_FIELDS
-            ):
-
+            for field in self.REQUIRED_SCENE_FIELDS:
                 if field not in scene:
-
-                    raise ValueError(
-                        "Scene missing field: "
-                        f"{field}"
-                    )
+                    raise ValueError(f"Scene missing field: {field}")
 
             scene_id = scene["id"]
 
