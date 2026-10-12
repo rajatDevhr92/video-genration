@@ -34,7 +34,7 @@ class LocalLLMProvider(LLMProvider):
         self.max_new_tokens = int(
             os.getenv(
                 "LOCAL_PLANNER_MAX_TOKENS",
-                "2048",
+                "32768",
             )
         )
 
