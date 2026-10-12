@@ -860,11 +860,30 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
             if not scene.get("id"):
                 scene["id"] = f"scene_{idx:03d}"
 
-            if not scene.get("order"):
-                scene["order"] = idx
+            import re
 
-            if not scene.get("duration"):
+            raw_order = scene.get("order")
+            if raw_order is None or raw_order == "":
+                scene["order"] = idx
+            else:
+                try:
+                    scene["order"] = int(raw_order)
+                except (ValueError, TypeError):
+                    cleaned_order = re.sub(r"[^\d]", "", str(raw_order))
+                    scene["order"] = int(cleaned_order) if cleaned_order else idx
+
+            raw_duration = scene.get("duration")
+            if raw_duration is None or raw_duration == "":
                 scene["duration"] = 5.0
+            else:
+                try:
+                    scene["duration"] = float(raw_duration)
+                except (ValueError, TypeError):
+                    cleaned_dur = re.sub(r"[^\d.]", "", str(raw_duration))
+                    try:
+                        scene["duration"] = float(cleaned_dur) if cleaned_dur else 5.0
+                    except ValueError:
+                        scene["duration"] = 5.0
 
             if not scene.get("location_id"):
                 scene["location_id"] = (

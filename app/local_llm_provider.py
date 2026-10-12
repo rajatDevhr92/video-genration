@@ -2,6 +2,7 @@ import gc
 import json
 import os
 import re
+from pathlib import Path
 
 import torch
 from transformers import (
@@ -20,14 +21,15 @@ class LocalLLMProvider(LLMProvider):
         # Release ComfyUI VRAM BEFORE loading Qwen
         prepare_for_local_llm()
 
-        default_model = "/workspace/models/qwen3-30b-a3b-instruct-2507"
-        if not Path(default_model).exists():
-            default_model = "Qwen/Qwen2.5-7B-Instruct"
+        target_path = model_path or os.getenv("LOCAL_PLANNER_MODEL") or "/workspace/models/qwen3-30b-a3b-instruct-2507"
 
-        self.model_path = model_path or os.getenv(
-            "LOCAL_PLANNER_MODEL",
-            default_model,
-        )
+        # DEEP SAFETY CHECK: If target_path looks like a local filesystem path but does NOT exist on disk, fall back to Qwen 7B
+        is_local_path = target_path.startswith("/") or target_path.startswith(".") or "\\" in target_path or ":" in target_path
+        if is_local_path and not os.path.exists(target_path):
+            print(f"[LLM] Notice: Local model path '{target_path}' not found on disk. Falling back to 'Qwen/Qwen2.5-7B-Instruct'.")
+            target_path = "Qwen/Qwen2.5-7B-Instruct"
+
+        self.model_path = target_path
 
         self.max_new_tokens = int(
             os.getenv(

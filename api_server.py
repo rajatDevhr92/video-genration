@@ -213,13 +213,21 @@ def generate_story_job(
             scenes
         )
 
+        def parse_dur(val) -> float:
+            if isinstance(val, (int, float)):
+                return float(val)
+            try:
+                return float(val)
+            except (ValueError, TypeError):
+                import re
+                cleaned = re.sub(r"[^\d.]", "", str(val or ""))
+                try:
+                    return float(cleaned) if cleaned else 5.0
+                except ValueError:
+                    return 5.0
+
         total_duration = sum(
-            float(
-                scene.get(
-                    "duration",
-                    5,
-                )
-            )
+            parse_dur(scene.get("duration", 5))
             for scene in scenes
         )
 

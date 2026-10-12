@@ -3,6 +3,7 @@
 import argparse
 import json
 import uuid
+from pathlib import Path
 
 from app.config import OUTPUT_DIR
 from app.reference_manager import ReferenceManager
