@@ -172,6 +172,8 @@ class Character:
     clothing: str
     personality: str = ""
     visual_anchor: str = ""
+    age: int = 18
+    gender: str = ""
 
 
 @dataclass
@@ -224,6 +226,9 @@ class Scene:
     motion_intensity: str = ""
     expression: str = ""
     motion: Optional[Motion] = None
+    audio: Dict[str, Any] = field(
+        default_factory=dict
+    )
     continuity: Dict[str, Any] = field(
         default_factory=dict
     )
@@ -256,6 +261,8 @@ class StoryPlan:
                     "clothing": c.clothing,
                     "personality": c.personality,
                     "visual_anchor": c.visual_anchor,
+                    "age": getattr(c, "age", 18),
+                    "gender": getattr(c, "gender", ""),
                 }
                 for c in self.characters
             ],
@@ -293,11 +300,73 @@ class StoryPlan:
                     "camera": s.camera,
                     "lighting": s.lighting,
                     "video_prompt": s.video_prompt,
+                    "audio": getattr(s, "audio", {}),
                     "continuity": s.continuity,
                 }
                 for s in self.scenes
             ],
         }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "StoryPlan":
+        characters = [
+            Character(
+                id=c.get("id", ""),
+                name=c.get("name", ""),
+                appearance=c.get("appearance", ""),
+                clothing=c.get("clothing", ""),
+                personality=c.get("personality", ""),
+                visual_anchor=c.get("visual_anchor", ""),
+                age=int(c.get("age", 18)),
+                gender=c.get("gender", ""),
+            )
+            for c in data.get("characters", [])
+        ]
+        locations = [
+            Location(
+                id=l.get("id", ""),
+                name=l.get("name", ""),
+                description=l.get("description", ""),
+                visual_style=l.get("visual_style", ""),
+            )
+            for l in data.get("locations", [])
+        ]
+        scenes = [
+            Scene(
+                id=s.get("id", ""),
+                order=int(s.get("order", 1)),
+                duration=float(s.get("duration", 5.0)),
+                location_id=s.get("location_id", ""),
+                character_ids=list(s.get("character_ids", [])),
+                description=s.get("description", ""),
+                action=s.get("action", ""),
+                camera=s.get("camera", ""),
+                lighting=s.get("lighting", ""),
+                video_prompt=s.get("video_prompt", ""),
+                clothing_state=s.get("clothing_state", ""),
+                pose_type=s.get("pose_type", ""),
+                penetration_state=s.get("penetration_state", ""),
+                primary_motion=s.get("primary_motion", ""),
+                previous_scene_context=s.get("previous_scene_context", ""),
+                pose_lock=s.get("pose_lock", ""),
+                hand_positions=s.get("hand_positions", ""),
+                genital_alignment=s.get("genital_alignment", ""),
+                contact_zone=s.get("contact_zone", ""),
+                motion_intensity=s.get("motion_intensity", ""),
+                expression=s.get("expression", ""),
+                motion=s.get("motion"),
+                audio=s.get("audio", {}),
+                continuity=s.get("continuity", {}),
+            )
+            for s in data.get("scenes", [])
+        ]
+        return cls(
+            title=data.get("title", ""),
+            summary=data.get("summary", ""),
+            characters=characters,
+            locations=locations,
+            scenes=scenes,
+        )
 
 
 StoryPlanSchema = StoryPlan

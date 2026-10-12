@@ -968,8 +968,18 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                 }
 
             # --------------------------------------------------
-            # Auto-populate keyframe-enrichment scene fields if missing
+            # Auto-populate keyframe-enrichment scene fields if missing / clean placeholders
             # --------------------------------------------------
+            for key in ["description", "action", "primary_motion", "pose_lock", "video_prompt"]:
+                if scene.get(key):
+                    txt = str(scene[key])
+                    cleaned = re.sub(r'motion_anal_thrust_action', 'steady deep rhythmic anal thrusting', txt, flags=re.IGNORECASE)
+                    cleaned = re.sub(r'motion_[a-zA-Z0-9_]+_action', 'rhythmic thrusting motion', cleaned, flags=re.IGNORECASE)
+                    cleaned = re.sub(r'motion_[a-zA-Z0-9_]+', 'rhythmic motion', cleaned, flags=re.IGNORECASE)
+                    cleaned = re.sub(r'continuous rhythmic steady deep rhythmic', 'continuous steady deep rhythmic', cleaned, flags=re.IGNORECASE)
+                    cleaned = re.sub(r'continuous rhythmic continuous rhythmic', 'continuous rhythmic', cleaned, flags=re.IGNORECASE)
+                    scene[key] = cleaned.strip()
+
             if not scene.get("clothing_state"):
                 desc_lower = f"{scene.get('description', '')} {scene.get('action', '')}".lower()
                 if any(w in desc_lower for w in ["nude", "naked", "unclothed", "bare skin", "undress", "strips"]):
@@ -980,12 +990,48 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
             if not scene.get("pose_type"):
                 scene["pose_type"] = (scene.get("action") or scene.get("description") or "Standing upright")
 
-            if not scene.get("penetration_state"):
-                desc_lower = f"{scene.get('description', '')} {scene.get('action', '')}".lower()
-                if any(w in desc_lower for w in ["penetrat", "doggystyle", "thrust", "cock inside", "pussy contact", "sex", "fuck"]):
-                    scene["penetration_state"] = "Active intimate penetration / body contact"
+            # Dynamic penetration and genital alignment detection
+            desc_lower = f"{scene.get('description', '')} {scene.get('action', '')} {scene.get('primary_motion', '')}".lower()
+            desc_for_pen = re.sub(r'fully\s+nude|fully\s+unclothed|completely\s+unclothed', '', desc_lower)
+            current_pen = scene.get("penetration_state", "")
+            current_align = scene.get("genital_alignment", "")
+
+            if not current_pen or current_pen.lower() == "none":
+                if any(w in desc_for_pen for w in ["cum", "climax", "fill me up", "filling your hole", "final deep"]) and any(w in desc_for_pen for w in ["ass", "hole", "pussy", "inside"]):
+                    scene["penetration_state"] = "Full depth hilt hold during climax"
+                elif any(w in desc_for_pen for w in ["pound", "accelerat", "harder", "deep strokes", "increasing force", "pounding"]):
+                    scene["penetration_state"] = "Intense deep rhythmic penetration"
+                elif any(w in desc_for_pen for w in ["thrusting", "rhythmic motion", "burying his", "thrust"]):
+                    scene["penetration_state"] = "Continuous rhythmic penetration"
+                elif any(w in desc_for_pen for w in ["fully buried", "buried deep", "to the hilt", "all the way in", "fully aligned and buried"]):
+                    scene["penetration_state"] = "Full penetration to hilt"
+                elif any(w in desc_for_pen for w in ["half is buried", "halfway"]):
+                    scene["penetration_state"] = "Halfway penetration"
+                elif any(w in desc_for_pen for w in ["tip", "head is in", "sinks inside", "stretches and sinks"]):
+                    scene["penetration_state"] = "Tip penetration past entrance"
+                elif any(w in desc_for_pen for w in ["position the head", "against sunny", "against her", "head of his"]):
+                    scene["penetration_state"] = "External contact at entrance"
                 else:
                     scene["penetration_state"] = "None"
+
+            if not current_align or current_align.lower() == "none":
+                pen = scene["penetration_state"]
+                if "climax" in pen.lower():
+                    scene["genital_alignment"] = "Thick erect cock buried deep to the hilt, continuous full contact"
+                elif "intense" in pen.lower():
+                    scene["genital_alignment"] = "Thick erect cock fully buried to hilt on forward strokes with continuous skin contact"
+                elif "rhythmic" in pen.lower():
+                    scene["genital_alignment"] = "Thick erect cock driving deep inside with continuous skin contact at base"
+                elif "full" in pen.lower():
+                    scene["genital_alignment"] = "Thick erect cock fully buried to the hilt, slight upward angle"
+                elif "halfway" in pen.lower():
+                    scene["genital_alignment"] = "Thick erect cock halfway buried inside her ass, moderate depth"
+                elif "tip" in pen.lower():
+                    scene["genital_alignment"] = "Cock head just past the anal ring, 2 cm inside"
+                elif "external" in pen.lower():
+                    scene["genital_alignment"] = "Cock head pressed firmly against anal entrance, zero penetration"
+                else:
+                    scene["genital_alignment"] = "None"
 
             if not scene.get("primary_motion"):
                 scene["primary_motion"] = (scene.get("video_prompt") or scene.get("action") or "")
@@ -993,11 +1039,13 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
             if not scene.get("pose_lock"):
                 scene["pose_lock"] = scene.get("pose_type", scene.get("action", ""))
 
+            # Sanitize hand positions to avoid boilerplate contradictions
             if not scene.get("hand_positions"):
                 scene["hand_positions"] = "Hands anchored naturally on body or mattress as described in action"
-
-            if not scene.get("genital_alignment"):
-                scene["genital_alignment"] = scene.get("penetration_state", "Direct anatomical alignment at contact point")
+            else:
+                hp = str(scene["hand_positions"])
+                if "both hands gripping" in hp.lower() and "left hand on mattress" in hp.lower():
+                    scene["hand_positions"] = "Man: both hands firmly gripping her hips. Woman: both hands planted on the mattress."
 
             if not scene.get("contact_zone"):
                 scene["contact_zone"] = "Continuous solid skin-to-skin contact between bodies, no dark voids"
@@ -1008,6 +1056,16 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
             if not scene.get("expression"):
                 scene["expression"] = "Intense, emotionally grounded facial expression"
 
+            # Ensure structured video prompt (Wan 2.2 5-part format)
+            vp = scene.get("video_prompt", "")
+            if not ("Exact contact:" in vp and "Hands:" in vp and "Camera:" in vp):
+                act_text = scene.get("primary_motion") or scene.get("action") or vp
+                contact_text = scene.get("genital_alignment", "Continuous solid skin contact")
+                hands_text = scene.get("hand_positions", "Hands anchored securely")
+                pose_text = scene.get("pose_lock", scene.get("pose_type", "Locked body pose"))
+                camera_text = scene.get("camera", "Cinematic camera framing")
+                scene["video_prompt"] = f"{act_text.rstrip('.')}. Exact contact: {contact_text}. Hands: {hands_text}. Bodies remain locked in {pose_text}. Camera: {camera_text}."
+
             scene_order = scene.get("order", 1)
             if scene_order >= 2 and not scene.get("previous_scene_context"):
                 scenes_list = result.get("scenes", [])
@@ -1017,7 +1075,8 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                     prev_desc = prev_scene.get("description", "")
                     prev_clothing = prev_scene.get("clothing_state", "Fully nude, completely unclothed, bare skin")
                     prev_pose = prev_scene.get("pose_type", prev_scene.get("action", ""))
-                    scene["previous_scene_context"] = f"In scene {scene_order - 1}, character was in pose ({prev_pose}). Clothing state: {prev_clothing}. Context: {prev_desc[:120]}"
+                    prev_align = prev_scene.get("genital_alignment", "None")
+                    scene["previous_scene_context"] = f"In scene {scene_order - 1}, character was in pose ({prev_pose}). Clothing state: {prev_clothing}. Genital alignment: {prev_align}. Context: {prev_desc}"
 
             for field in self.REQUIRED_SCENE_FIELDS:
                 if field not in scene:
@@ -1186,6 +1245,52 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                         f"unknown character: "
                         f"{character_id}"
                     )
+
+        # --------------------------------------------------
+        # Post-validation: Dynamic pacing and audio escalation across scene arc
+        # If motion_intensity or music intensity is static/flat across all scenes,
+        # escalate them naturally to match the narrative arc.
+        # --------------------------------------------------
+        scenes = result.get("scenes", [])
+        if len(scenes) > 1:
+            intensities = [s.get("motion_intensity", "").strip().lower() for s in scenes]
+            if len(set(intensities)) <= 1:
+                total_s = len(scenes)
+                for idx, s in enumerate(scenes):
+                    ratio = idx / max(1, total_s - 1)
+                    if ratio < 0.25:
+                        s["motion_intensity"] = "slow"
+                    elif ratio < 0.50:
+                        s["motion_intensity"] = "deep and slow"
+                    elif ratio < 0.75:
+                        s["motion_intensity"] = "rhythmic medium"
+                    elif ratio < 0.90:
+                        s["motion_intensity"] = "fast"
+                    else:
+                        s["motion_intensity"] = "final deep hold"
+
+            music_moods = [s.get("audio", {}).get("music", {}).get("mood", "").strip().lower() for s in scenes]
+            music_intensities = [s.get("audio", {}).get("music", {}).get("intensity", "").strip().lower() for s in scenes]
+            if len(set(music_intensities)) <= 1 or len(set(music_moods)) <= 1:
+                total_s = len(scenes)
+                for idx, s in enumerate(scenes):
+                    ratio = idx / max(1, total_s - 1)
+                    m = s.setdefault("audio", {}).setdefault("music", {})
+                    if ratio < 0.25:
+                        m["mood"] = "sensual"
+                        m["intensity"] = "low"
+                    elif ratio < 0.50:
+                        m["mood"] = "sensual"
+                        m["intensity"] = "medium"
+                    elif ratio < 0.75:
+                        m["mood"] = "rhythmic passionate"
+                        m["intensity"] = "medium"
+                    elif ratio < 0.90:
+                        m["mood"] = "intense passionate"
+                        m["intensity"] = "high"
+                    else:
+                        m["mood"] = "climactic passionate"
+                        m["intensity"] = "very high"
 
     def _find_missing_fields(
         self,
