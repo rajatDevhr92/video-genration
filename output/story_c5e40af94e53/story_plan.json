@@ -1,231 +1,659 @@
 {
-  "title": "Solo Pleasure",
-  "summary": "A fully nude mature woman in her early 40s explores her body in a dimly lit luxury bedroom, progressing from standing to lying down, stimulating herself with deliberate hand movements, building to a powerful orgasm with visible physical release.",
+  "title": "Anal Encounter",
+  "summary": "A detailed account of an intimate encounter between Sunny and Jhon involving anal sex.",
   "characters": [
     {
       "id": "character_001",
-      "name": "Lena",
-      "appearance": "Adult woman, early 40s, feminine presentation, warm olive skin, heart-shaped face with high cheekbones, deep brown eyes, long wavy dark brown hair, full heavy breasts, wide hips, lean yet soft body with subtle curves, small scar on right inner thigh",
-      "clothing": "Fully nude, completely unclothed, bare skin",
-      "personality": "Confident, sensual, self-assured, in tune with her body, comfortable in her nudity",
-      "visual_anchor": "Adult woman, early 40s, warm olive skin, deep brown eyes, long wavy dark brown hair, full heavy breasts, wide hips, lean soft build, small scar on right inner thigh"
+      "name": "Sunny",
+      "appearance": "22-year-old woman with long wavy blonde hair, piercing blue eyes, fair smooth skin, slim athletic body and full perky breasts, wearing a thin white thong.",
+      "clothing": "Thin white thong",
+      "personality": "Energetic and responsive, enjoys intimate moments.",
+      "visual_anchor": "Adult woman, long wavy blonde hair, piercing blue eyes, fair smooth skin, slim athletic build, full perky breasts."
+    },
+    {
+      "id": "character_002",
+      "name": "Jhon",
+      "appearance": "25-year-old man with short black hair, dark brown eyes, tanned skin, and muscular athletic build.",
+      "clothing": "None",
+      "personality": "Confident and dominant, enjoys intimate encounters.",
+      "visual_anchor": "Adult man, short black hair, dark brown eyes, tanned skin, muscular athletic build."
     }
   ],
   "locations": [
     {
       "id": "location_001",
-      "name": "Luxury Bedroom",
-      "description": "Elegant bedroom with dark wood flooring, soft cream-colored drapes, a large king-sized bed with black satin sheets, a single floor lamp casting warm golden light, minimal decor, intimate and private atmosphere",
-      "visual_style": "cinematic, soft focus, warm lighting, high-end interior"
+      "name": "Large Bed",
+      "description": "A large bed with soft sheets and pillows.",
+      "visual_style": "Comfortable and inviting."
     }
   ],
   "scenes": [
     {
       "id": "scene_001",
       "order": 1,
-      "duration": 5,
+      "duration": 5.0,
       "location_id": "location_001",
-      "character_ids": [
-        "character_001"
-      ],
-      "description": "A fully nude mature woman stands at the foot of a king-sized bed in a dimly lit luxury bedroom. Her bare skin glows under warm lamplight. She slowly turns her body toward the camera, revealing her full figure, heavy breasts, and wide hips.",
-      "action": "She stands upright, bare feet on the floor, arms at her sides. Slowly rotates her torso 180 degrees to face the camera, maintaining a steady, deliberate motion.",
-      "camera": "Wide shot, low angle, slightly behind and to the side, tracking her rotation with a smooth dolly-in",
-      "lighting": "Soft warm lamplight from a floor lamp, creating gentle highlights on her skin and subtle shadows under her breasts and hips",
-      "video_prompt": "The woman slowly turns her body from facing away to fully facing the camera, her bare skin catching the warm light. Her hair sways slightly with the motion. The camera glides smoothly around her, capturing her full form in silhouette and profile.",
+      "character_ids": ["character_001", "character_002"],
+      "clothing_state": "Thin white thong",
+      "pose_type": "On all fours",
+      "penetration_state": "None",
+      "primary_motion": "Slowly pull the thong down Sunny's thighs in one continuous motion.",
+      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.",
+      "hand_positions": "Both hands gripping her hips, left hand on mattress, right hand on her hip.",
+      "genital_alignment": "None",
+      "contact_zone": "Continuous solid skin contact at hips and penetration point, no dark voids",
+      "motion_intensity": "slow",
+      "expression": "Woman: eyes closed, mouth open in anticipation. Man: focused expression",
+      "description": "Sunny, a 22-year-old woman with long wavy blonde hair, kneels on all fours on a large bed still wearing a thin white thong. Jhon, a 25-year-old man with short black hair, stands behind her and grips her hips as he slowly pulls the thong down her thighs.",
+      "action": "Jhon pulls the thong down Sunny's thighs in one continuous motion.",
+      "camera": "Medium close-up, slow push-in, (matches RIGHT PANEL Rear View)",
+      "lighting": "Soft ambient lighting, gentle shadows",
+      "video_prompt": "Slowly pull the thong down Sunny's thighs in one continuous motion.",
       "audio": {
-        "narration": [
+        "dialogue": [
           {
-            "text": "The room is quiet, the air thick with anticipation. She feels the warmth of the light on her skin, her breath steady as she begins.",
-            "voice": "alloy"
+            "character_id": "character_002",
+            "text": "Ass higher, Sunny."
+          },
+          {
+            "character_id": "character_001",
+            "text": "Take it off."
           }
         ],
         "sound_effects": [
-          "soft footstep on wood",
-          "gentle rustle of hair"
+          "soft fabric sliding",
+          "quiet breathing",
+          "light bed creak"
         ],
         "music": {
-          "mood": "sensual",
+          "mood": "playful",
           "intensity": "low"
         }
-      },
-      "continuity": {
-        "character_pose": "standing, facing away, rotating to face camera",
-        "lighting": "warm, soft, golden glow from floor lamp"
       }
     },
     {
       "id": "scene_002",
       "order": 2,
-      "duration": 5,
+      "duration": 5.0,
       "location_id": "location_001",
-      "character_ids": [
-        "character_001"
-      ],
-      "description": "She sits on the edge of the bed, fully nude, legs parted. Leaning back on one hand, her other hand slides down her soft stomach and rests on her inner thigh, fingers just above her pubic mound.",
-      "action": "She lowers herself onto the bed’s edge, legs spreading apart. Leans back on her right hand, left hand glides down her abdomen to rest on her inner thigh, fingers hovering near her vulva.",
-      "camera": "Medium shot, eye-level, slightly to the side, capturing her profile and upper body",
-      "lighting": "Warm lamplight from below, casting soft shadows on her torso and inner thighs",
-      "video_prompt": "She lowers her body onto the bed, legs parting. Her hand moves slowly down her stomach, fingers brushing her skin. She leans back, resting on one hand, the other hand resting on her inner thigh, fingers just above her pussy.",
+      "character_ids": ["character_001", "character_002"],
+      "clothing_state": "Fully nude, completely unclothed",
+      "pose_type": "On all fours",
+      "penetration_state": "None",
+      "primary_motion": "Spread Sunny's ass cheeks with both hands in one continuous motion.",
+      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man kneeling behind her, spreading her ass cheeks with both hands.",
+      "hand_positions": "Both hands gripping her hips, left hand on mattress, right hand spreading her ass cheeks.",
+      "genital_alignment": "None",
+      "contact_zone": "Continuous solid skin contact at hips and penetration point, no dark voids",
+      "motion_intensity": "slow",
+      "expression": "Woman: eyes closed, mouth open in anticipation. Man: focused expression",
+      "description": "Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, kneels behind her and slowly spreads her ass cheeks with both hands.",
+      "action": "Jhon spreads Sunny's ass cheeks with both hands in one continuous motion.",
+      "camera": "Low angle, steady hold, (matches RIGHT PANEL Rear View)",
+      "lighting": "Soft ambient lighting, gentle shadows",
+      "video_prompt": "Spread Sunny's ass cheeks with both hands in one continuous motion.",
       "audio": {
-        "narration": [
+        "dialogue": [
           {
-            "text": "Her breath deepens. The bed is cool beneath her, but her skin is already warm. She feels the first pulse of desire rise.",
-            "voice": "alloy"
+            "character_id": "character_001",
+            "text": "Open me up."
+          },
+          {
+            "character_id": "character_002",
+            "text": "Looking at that tight hole."
           }
         ],
-        "sound_effects": [
-          "soft creak of bed frame",
-          "light sigh"
-        ],
+        "sound_effects": ["skin contact", "soft flesh stretch", "low breath"],
         "music": {
-          "mood": "sensual",
+          "mood": "playful",
           "intensity": "low"
         }
       },
-      "continuity": {
-        "character_pose": "sitting on edge of bed, legs spread, leaning back on right hand, left hand on inner thigh",
-        "body_orientation": "facing camera, torso slightly reclined"
-      }
+      "previous_scene_context": "In scene 1, character was in pose (On all fours). Clothing state: Thin white thong. Context: Sunny, a 22-year-old woman with long wavy blonde hair, kneels on all fours on a large bed still wearing a thin white tho"
     },
     {
       "id": "scene_003",
       "order": 3,
-      "duration": 5,
+      "duration": 5.0,
       "location_id": "location_001",
-      "character_ids": [
-        "character_001"
-      ],
-      "description": "She lies back on the bed, fully nude, legs spreading wider. Her fingers glide over her shaved vulva, rubbing slow, deliberate circles on her swollen clit while her full breasts rise and fall with each breath.",
-      "action": "She reclines fully onto the bed, legs spreading wide. Her fingers move to her vulva, rubbing slow circles on her clit with steady pressure, her chest rising and falling with each breath.",
-      "camera": "Medium side shot, slightly above, capturing her profile and the full spread of her legs",
-      "lighting": "Warm lamplight from the floor lamp, highlighting her inner thighs and the curve of her hips",
-      "video_prompt": "She lies back on the bed, legs spreading wide. Her fingers glide over her shaved vulva, making slow circles on her clit. Her breasts rise and fall with each breath. The camera captures the movement of her hand and the subtle tension in her body.",
+      "character_ids": ["character_001", "character_002"],
+      "clothing_state": "Fully nude, completely unclothed",
+      "pose_type": "On all fours",
+      "penetration_state": "None",
+      "primary_motion": "Lick Sunny's tight asshole in one continuous wet stroke.",
+      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man leaning in and licking her tight asshole in one continuous wet stroke.",
+      "hand_positions": "Both hands gripping her hips, left hand on mattress, right hand licking her ass.",
+      "genital_alignment": "None",
+      "contact_zone": "Continuous solid skin contact at hips and penetration point, no dark voids",
+      "motion_intensity": "slow",
+      "expression": "Woman: eyes closed, mouth open in anticipation. Man: focused expression",
+      "description": "Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, leans in and slowly licks her tight asshole in one continuous wet stroke.",
+      "action": "Jhon licks Sunny's tight asshole in one continuous wet stroke.",
+      "camera": "Close-up rear, slow dolly-in, (matches RIGHT PANEL Rear View)",
+      "lighting": "Soft ambient lighting, gentle shadows",
+      "video_prompt": "Lick Sunny's tight asshole in one continuous wet stroke.",
       "audio": {
-        "narration": [
+        "dialogue": [
           {
-            "text": "Her fingers find the sensitive peak. She presses gently, feeling the heat build. The rhythm is slow, deliberate, like a drumbeat beneath her skin.",
-            "voice": "alloy"
+            "character_id": "character_001",
+            "text": "Lick it deeper."
+          },
+          {
+            "character_id": "character_002",
+            "text": "Tasting this tight ass."
           }
         ],
-        "sound_effects": [
-          "soft skin-on-skin glide",
-          "slow breath"
-        ],
+        "sound_effects": ["wet licking", "soft moan", "skin contact"],
         "music": {
-          "mood": "sensual",
+          "mood": "playful",
           "intensity": "low"
         }
       },
-      "continuity": {
-        "character_pose": "lying on back, legs wide open, fingers on clit",
-        "body_orientation": "facing camera, torso flat on bed"
-      }
+      "previous_scene_context": "In scene 2, character was in pose (On all fours). Clothing state: Fully nude, completely unclothed. Context: Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, kneels behind h"
     },
     {
       "id": "scene_004",
       "order": 4,
-      "duration": 5,
+      "duration": 5.0,
       "location_id": "location_001",
-      "character_ids": [
-        "character_001"
-      ],
-      "description": "Close-up of her hand between her spread thighs. Two fingers push deep into her wet pussy, thrusting steadily while her thumb presses and circles her swollen clit.",
-      "action": "Two fingers are inserted deep into her vagina, moving in and out with steady rhythm. Her thumb circles her clit with firm pressure, matching the thrusts.",
-      "camera": "Close-up, low angle, focused on her hand and vulva, slightly tilted to capture depth",
-      "lighting": "Soft warm light, highlighting the wetness on her fingers and the glistening of her labia",
-      "video_prompt": "Extreme close-up on her hand: two fingers thrusting in and out of her wet pussy. Her thumb circles her swollen clit. The movement is steady and rhythmic. Sweat glistens on her inner thighs.",
+      "character_ids": ["character_001", "character_002"],
+      "clothing_state": "Fully nude, completely unclothed",
+      "pose_type": "On all fours",
+      "penetration_state": "None",
+      "primary_motion": "Position the head of his thick erect cock against Sunny's tight asshole and hold",
+      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man positioning the head of his thick erect cock against her tight asshole and holding firm contact in one continuous alignment.",
+      "hand_positions": "Both hands gripping her hips, left hand on mattress, right hand holding his cock against her ass.",
+      "genital_alignment": "None",
+      "contact_zone": "Continuous solid skin contact at hips and penetration point, no dark voids",
+      "motion_intensity": "slow",
+      "expression": "Woman: eyes closed, mouth open in anticipation. Man: focused expression",
+      "description": "Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, positions the swollen head of his thick erect cock against her tight asshole and holds firm contact in one continuous alignment.",
+      "action": "Jhon positions the head of his thick erect cock against Sunny's tight asshole and holds firm contact in one continuous alignment.",
+      "camera": "Close-up rear, steady hold, (matches RIGHT PANEL Rear View)",
+      "lighting": "Soft ambient lighting, gentle shadows",
+      "video_prompt": "Position the head of his thick erect cock against Sunny's tight asshole and hold firm contact in one continuous alignment.",
       "audio": {
-        "narration": [
+        "dialogue": [
           {
-            "text": "The wetness is thick, her body responding. The thrusts deepen, her thumb pressing harder. She’s not holding back.",
-            "voice": "alloy"
+            "character_id": "character_002",
+            "text": "Cock head right on your hole."
+          },
+          {
+            "character_id": "character_001",
+            "text": "Push it in."
           }
         ],
         "sound_effects": [
-          "wet thrusting sounds",
-          "soft moan"
+          "soft skin press",
+          "heavy breathing",
+          "quiet tension"
         ],
         "music": {
-          "mood": "intense",
-          "intensity": "medium"
+          "mood": "playful",
+          "intensity": "low"
         }
       },
-      "continuity": {
-        "hand_position": "two fingers deep in vagina, thumb on clit",
-        "body_orientation": "lying on back, legs wide"
-      }
+      "previous_scene_context": "In scene 3, character was in pose (On all fours). Clothing state: Fully nude, completely unclothed. Context: Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, leans in and sl"
     },
     {
       "id": "scene_005",
       "order": 5,
-      "duration": 5,
+      "duration": 5.0,
       "location_id": "location_001",
-      "character_ids": [
-        "character_001"
-      ],
-      "description": "Extreme close-up on her face and bouncing breasts. Mouth open in a moan, eyes half-closed, body tensing as her fingers thrust faster and deeper into her dripping pussy.",
-      "action": "Her face contorts in pleasure, mouth open in a silent moan. Her breasts bounce slightly with each rapid thrust. Her fingers move faster and deeper into her wet pussy.",
-      "camera": "Extreme close-up, focused on face and upper chest, slightly tilted down",
-      "lighting": "Warm lamplight, casting soft highlights on her cheeks and the curve of her breasts",
-      "video_prompt": "Close-up on her face: eyes half-closed, lips parted in a moan. Her breasts bounce with each thrust. Her fingers move rapidly in and out of her pussy, wetness glistening. The camera shakes slightly with her movements.",
+      "character_ids": ["character_001", "character_002"],
+      "clothing_state": "Fully nude, completely unclothed",
+      "pose_type": "On all fours",
+      "penetration_state": "None",
+      "primary_motion": "Slowly press the head of his thick erect cock forward until it stretches and sin",
+      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man slowly pressing the head of his thick erect cock forward until it stretches and sinks inside her tight asshole in one continuous motion.",
+      "hand_positions": "Both hands gripping her hips, left hand on mattress, right hand pressing his cock forward.",
+      "genital_alignment": "None",
+      "contact_zone": "Continuous solid skin contact at hips and penetration point, no dark voids",
+      "motion_intensity": "slow",
+      "expression": "Woman: eyes closed, mouth open in anticipation. Man: focused expression",
+      "description": "Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, slowly presses the head of his thick erect cock forward until it stretches and sinks inside her tight asshole in one continuous motion.",
+      "action": "Jhon slowly presses the head of his thick erect cock forward until it stretches and sinks inside her tight asshole in one continuous motion.",
+      "camera": "Close-up rear, slow push-in, (matches RIGHT PANEL Rear View)",
+      "lighting": "Soft ambient lighting, gentle shadows",
+      "video_prompt": "Slowly press the head of his thick erect cock forward until it stretches and sinks inside her tight asshole in one continuous motion.",
       "audio": {
         "dialogue": [
           {
             "character_id": "character_001",
-            "text": "Yes... oh god, yes..."
+            "text": "Oh fuck, the head is in."
+          },
+          {
+            "character_id": "character_002",
+            "text": "Taking the tip now."
           }
         ],
         "sound_effects": [
-          "wet thrusting sounds",
-          "sharp gasp",
-          "moan"
+          "wet stretch friction",
+          "strained moan",
+          "deep breath"
         ],
         "music": {
-          "mood": "intense",
-          "intensity": "high"
+          "mood": "playful",
+          "intensity": "low"
         }
       },
-      "continuity": {
-        "hand_speed": "fast, deep thrusts",
-        "body_tension": "increasing, muscles tensing"
-      }
+      "previous_scene_context": "In scene 4, character was in pose (On all fours). Clothing state: Fully nude, completely unclothed. Context: Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, positions the s"
     },
     {
       "id": "scene_006",
       "order": 6,
-      "duration": 5,
+      "duration": 5.0,
       "location_id": "location_001",
-      "character_ids": [
-        "character_001"
-      ],
-      "description": "She arches hard off the bed, fully nude, legs trembling wide. She climaxes with visible full-body shudders, fingers buried deep, breasts heaving as she rides out the orgasm and slowly relaxes.",
-      "action": "She arches her back violently off the bed, legs kicking open. Her body convulses with full-body shudders. Fingers remain deep inside her pussy. Her breasts heave rapidly, then slowly settle as she collapses back onto the bed.",
-      "camera": "Medium full shot, eye-level, capturing her entire body from head to feet",
-      "lighting": "Warm lamplight, casting long shadows as her body moves and tenses",
-      "video_prompt": "She arches off the bed, back curved, legs wide and trembling. Her body shudders violently. Fingers remain buried in her pussy. Her breasts heave. She slowly relaxes, sinking back onto the bed, breath ragged. The camera holds on her still form.",
+      "character_ids": ["character_001", "character_002"],
+      "clothing_state": "Fully nude, completely unclothed",
+      "pose_type": "On all fours",
+      "penetration_state": "None",
+      "primary_motion": "Grip her hips and slowly push his thick erect cock deeper until half is buried i",
+      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man gripping her hips and slowly pushing his thick erect cock deeper until half is buried inside her tight asshole in one continuous motion.",
+      "hand_positions": "Both hands gripping her hips, left hand on mattress, right hand pushing his cock deeper.",
+      "genital_alignment": "None",
+      "contact_zone": "Continuous solid skin contact at hips and penetration point, no dark voids",
+      "motion_intensity": "slow",
+      "expression": "Woman: eyes closed, mouth open in anticipation. Man: focused expression",
+      "description": "Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, grips her hips and slowly pushes his thick erect cock deeper until half is buried inside her tight asshole in one continuous motion.",
+      "action": "Jhon grips her hips and slowly pushes his thick erect cock deeper until half is buried inside her tight asshole in one continuous motion.",
+      "camera": "Side medium shot, gentle side track, (matches CENTER PANEL 3/4 Side View)",
+      "lighting": "Soft ambient lighting, gentle shadows",
+      "video_prompt": "Grip her hips and slowly push his thick erect cock deeper until half is buried inside her tight asshole in one continuous motion.",
+      "audio": {
+        "dialogue": [
+          {
+            "character_id": "character_002",
+            "text": "Halfway in your ass."
+          },
+          {
+            "character_id": "character_001",
+            "text": "More, stretch me."
+          }
+        ],
+        "sound_effects": ["wet sliding", "prolonged moan", "skin contact"],
+        "music": {
+          "mood": "playful",
+          "intensity": "low"
+        }
+      },
+      "previous_scene_context": "In scene 5, character was in pose (On all fours). Clothing state: Fully nude, completely unclothed. Context: Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, slowly presses "
+    },
+    {
+      "id": "scene_007",
+      "order": 7,
+      "duration": 5.0,
+      "location_id": "location_001",
+      "character_ids": ["character_001", "character_002"],
+      "clothing_state": "Fully nude, completely unclothed",
+      "pose_type": "On all fours",
+      "penetration_state": "None",
+      "primary_motion": "Drive forward until his thick erect cock is fully aligned and buried deep inside",
+      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man driving forward until his thick erect cock is fully aligned and buried deep inside her tight asshole in one continuous thrust.",
+      "hand_positions": "Both hands gripping her hips, left hand on mattress, right hand driving his cock forward.",
+      "genital_alignment": "None",
+      "contact_zone": "Continuous solid skin contact at hips and penetration point, no dark voids",
+      "motion_intensity": "slow",
+      "expression": "Woman: eyes closed, mouth open in anticipation. Man: focused expression",
+      "description": "Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, drives forward until his thick erect cock is fully aligned and buried deep inside her tight asshole in one continuous thrust.",
+      "action": "Jhon drives forward until his thick erect cock is fully aligned and buried deep inside her tight asshole in one continuous thrust.",
+      "camera": "Overhead angle, slow zoom-in, (matches RIGHT PANEL Rear View)",
+      "lighting": "Soft ambient lighting, gentle shadows",
+      "video_prompt": "Drive forward until his thick erect cock is fully aligned and buried deep inside her tight asshole in one continuous thrust.",
       "audio": {
         "dialogue": [
           {
             "character_id": "character_001",
-            "text": "Ahhhh... ohhhhh..."
+            "text": "All the way in."
+          },
+          {
+            "character_id": "character_002",
+            "text": "Buried deep in your ass."
+          }
+        ],
+        "sound_effects": ["wet full insertion", "heavy gasp", "skin slap"],
+        "music": {
+          "mood": "playful",
+          "intensity": "low"
+        }
+      },
+      "previous_scene_context": "In scene 6, character was in pose (On all fours). Clothing state: Fully nude, completely unclothed. Context: Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, grips her hips "
+    },
+    {
+      "id": "scene_008",
+      "order": 8,
+      "duration": 5.0,
+      "location_id": "location_001",
+      "character_ids": ["character_001", "character_002"],
+      "clothing_state": "Fully nude, completely unclothed",
+      "pose_type": "On all fours",
+      "penetration_state": "None",
+      "primary_motion": "Initiate a continuous rhythmic motion_anal_thrust_action, thrusting his thick er",
+      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man initiating a continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock deeply into her anal entrance.",
+      "hand_positions": "Both hands gripping her hips, left hand on mattress, right hand thrusting his cock.",
+      "genital_alignment": "None",
+      "contact_zone": "Continuous solid skin contact at hips and penetration point, no dark voids",
+      "motion_intensity": "slow",
+      "expression": "Woman: eyes closed, mouth open in anticipation. Man: focused expression",
+      "description": "Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, initiates a continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock deeply into her anal entrance.",
+      "action": "Jhon initiates a continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock deeply into her anal entrance.",
+      "camera": "Side medium shot, steady hold, (matches CENTER PANEL 3/4 Side View)",
+      "lighting": "Soft ambient lighting, gentle shadows",
+      "video_prompt": "Initiate a continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock deeply into her anal entrance.",
+      "audio": {
+        "dialogue": [
+          {
+            "character_id": "character_002",
+            "text": "Feel that cock pounding your ass."
+          },
+          {
+            "character_id": "character_001",
+            "text": "Yes, keep thrusting."
+          }
+        ],
+        "sound_effects": ["rhythmic wet thrusting", "loud moans", "skin slap"],
+        "music": {
+          "mood": "playful",
+          "intensity": "low"
+        }
+      },
+      "previous_scene_context": "In scene 7, character was in pose (On all fours). Clothing state: Fully nude, completely unclothed. Context: Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, drives forward "
+    },
+    {
+      "id": "scene_009",
+      "order": 9,
+      "duration": 5.0,
+      "location_id": "location_001",
+      "character_ids": ["character_001", "character_002"],
+      "clothing_state": "Fully nude, completely unclothed",
+      "pose_type": "On all fours",
+      "penetration_state": "None",
+      "primary_motion": "Continue the continuous rhythmic motion_anal_thrust_action, driving his thick er",
+      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man continuing the continuous rhythmic motion_anal_thrust_action, driving his thick erect cock deeply into her anal entrance with steady power.",
+      "hand_positions": "Both hands gripping her hips, left hand on mattress, right hand thrusting his cock.",
+      "genital_alignment": "None",
+      "contact_zone": "Continuous solid skin contact at hips and penetration point, no dark voids",
+      "motion_intensity": "slow",
+      "expression": "Woman: eyes closed, mouth open in anticipation. Man: focused expression",
+      "description": "Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, continues the continuous rhythmic motion_anal_thrust_action, driving his thick erect cock deeply into her anal entrance with steady power.",
+      "action": "Jhon continues the continuous rhythmic motion_anal_thrust_action, driving his thick erect cock deeply into her anal entrance with steady power.",
+      "camera": "Close-up rear, slow dolly-out, (matches RIGHT PANEL Rear View)",
+      "lighting": "Soft ambient lighting, gentle shadows",
+      "video_prompt": "Continue the continuous rhythmic motion_anal_thrust_action, driving his thick erect cock deeply into her anal entrance with steady power.",
+      "audio": {
+        "dialogue": [
+          {
+            "character_id": "character_001",
+            "text": "Harder in my ass."
+          },
+          {
+            "character_id": "character_002",
+            "text": "Taking every thrust."
+          }
+        ],
+        "sound_effects": ["heavy wet thrusts", "skin impact", "prolonged moan"],
+        "music": {
+          "mood": "playful",
+          "intensity": "low"
+        }
+      },
+      "previous_scene_context": "In scene 8, character was in pose (On all fours). Clothing state: Fully nude, completely unclothed. Context: Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, initiates a con"
+    },
+    {
+      "id": "scene_010",
+      "order": 10,
+      "duration": 5.0,
+      "location_id": "location_001",
+      "character_ids": ["character_001", "character_002"],
+      "clothing_state": "Fully nude, completely unclothed",
+      "pose_type": "On all fours",
+      "penetration_state": "None",
+      "primary_motion": "Maintain continuous rhythmic motion_anal_thrust_action, burying his thick erect ",
+      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man maintaining continuous rhythmic motion_anal_thrust_action, burying his thick erect cock fully aligned deep inside her tight asshole on each stroke.",
+      "hand_positions": "Both hands gripping her hips, left hand on mattress, right hand thrusting his cock.",
+      "genital_alignment": "None",
+      "contact_zone": "Continuous solid skin contact at hips and penetration point, no dark voids",
+      "motion_intensity": "slow",
+      "expression": "Woman: eyes closed, mouth open in anticipation. Man: focused expression",
+      "description": "Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, maintains continuous rhythmic motion_anal_thrust_action, burying his thick erect cock fully aligned deep inside her tight asshole on each stroke.",
+      "action": "Jhon maintains continuous rhythmic motion_anal_thrust_action, burying his thick erect cock fully aligned deep inside her tight asshole on each stroke.",
+      "camera": "Side medium shot, gentle side track, (matches CENTER PANEL 3/4 Side View)",
+      "lighting": "Soft ambient lighting, gentle shadows",
+      "video_prompt": "Maintain continuous rhythmic motion_anal_thrust_action, burying his thick erect cock fully aligned deep inside her tight asshole on each stroke.",
+      "audio": {
+        "dialogue": [
+          {
+            "character_id": "character_002",
+            "text": "Almost there, tight ass."
+          },
+          {
+            "character_id": "character_001",
+            "text": "Fill me up."
           }
         ],
         "sound_effects": [
-          "deep moan",
-          "body shudder",
-          "soft thud of back hitting bed"
+          "rhythmic wet friction",
+          "heavy breathing",
+          "sharp moan"
         ],
         "music": {
-          "mood": "climactic",
-          "intensity": "high"
+          "mood": "playful",
+          "intensity": "low"
         }
       },
-      "continuity": {
-        "body_position": "arched off bed, then collapsed back",
-        "hand_position": "fingers still deep inside",
-        "final_pose": "lying flat, breathing heavily, relaxed"
-      }
+      "previous_scene_context": "In scene 9, character was in pose (On all fours). Clothing state: Fully nude, completely unclothed. Context: Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, continues the c"
+    },
+    {
+      "id": "scene_011",
+      "order": 11,
+      "duration": 5.0,
+      "location_id": "location_001",
+      "character_ids": ["character_001", "character_002"],
+      "clothing_state": "Fully nude, completely unclothed",
+      "pose_type": "On all fours",
+      "penetration_state": "None",
+      "primary_motion": "Perform continuous rhythmic motion_anal_thrust_action, thrusting his thick erect",
+      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man performing continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock deeply into her anal entrance.",
+      "hand_positions": "Both hands gripping her hips, left hand on mattress, right hand thrusting his cock.",
+      "genital_alignment": "None",
+      "contact_zone": "Continuous solid skin contact at hips and penetration point, no dark voids",
+      "motion_intensity": "slow",
+      "expression": "Woman: eyes closed, mouth open in anticipation. Man: focused expression",
+      "description": "Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, performs continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock deeply into her anal entrance.",
+      "action": "Jhon performs continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock deeply into her anal entrance.",
+      "camera": "Overhead angle, steady hold, (matches RIGHT PANEL Rear View)",
+      "lighting": "Soft ambient lighting, gentle shadows",
+      "video_prompt": "Perform continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock deeply into her anal entrance.",
+      "audio": {
+        "dialogue": [
+          {
+            "character_id": "character_001",
+            "text": "Don't stop fucking my ass."
+          },
+          {
+            "character_id": "character_002",
+            "text": "Deep strokes only."
+          }
+        ],
+        "sound_effects": [
+          "intense wet thrusting",
+          "strained breathing",
+          "deep moan"
+        ],
+        "music": {
+          "mood": "playful",
+          "intensity": "low"
+        }
+      },
+      "previous_scene_context": "In scene 10, character was in pose (On all fours). Clothing state: Fully nude, completely unclothed. Context: Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, maintains conti"
+    },
+    {
+      "id": "scene_012",
+      "order": 12,
+      "duration": 5.0,
+      "location_id": "location_001",
+      "character_ids": ["character_001", "character_002"],
+      "clothing_state": "Fully nude, completely unclothed",
+      "pose_type": "On all fours",
+      "penetration_state": "None",
+      "primary_motion": "Accelerate the continuous rhythmic motion_anal_thrust_action, thrusting his thic",
+      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man accelerating the continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock deeply into her anal entrance with increasing force.",
+      "hand_positions": "Both hands gripping her hips, left hand on mattress, right hand thrusting his cock.",
+      "genital_alignment": "None",
+      "contact_zone": "Continuous solid skin contact at hips and penetration point, no dark voids",
+      "motion_intensity": "slow",
+      "expression": "Woman: eyes closed, mouth open in anticipation. Man: focused expression",
+      "description": "Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, accelerates the continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock deeply into her anal entrance with increasing force.",
+      "action": "Jhon accelerates the continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock deeply into her anal entrance with increasing force.",
+      "camera": "Side medium shot, gentle side track, (matches CENTER PANEL 3/4 Side View)",
+      "lighting": "Soft ambient lighting, gentle shadows",
+      "video_prompt": "Accelerate the continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock deeply into her anal entrance with increasing force.",
+      "audio": {
+        "dialogue": [
+          {
+            "character_id": "character_002",
+            "text": "Taking this hard now."
+          },
+          {
+            "character_id": "character_001",
+            "text": "Yes, pound my ass."
+          }
+        ],
+        "sound_effects": ["faster wet slaps", "loud moans", "skin impact"],
+        "music": {
+          "mood": "playful",
+          "intensity": "low"
+        }
+      },
+      "previous_scene_context": "In scene 11, character was in pose (On all fours). Clothing state: Fully nude, completely unclothed. Context: Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, performs contin"
+    },
+    {
+      "id": "scene_013",
+      "order": 13,
+      "duration": 5.0,
+      "location_id": "location_001",
+      "character_ids": ["character_001", "character_002"],
+      "clothing_state": "Fully nude, completely unclothed",
+      "pose_type": "On all fours",
+      "penetration_state": "None",
+      "primary_motion": "Deliver continuous rhythmic motion_anal_thrust_action, driving his thick erect c",
+      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man delivering continuous rhythmic motion_anal_thrust_action, driving his thick erect cock fully aligned and buried deep inside her stretched asshole.",
+      "hand_positions": "Both hands gripping her hips, left hand on mattress, right hand thrusting his cock.",
+      "genital_alignment": "None",
+      "contact_zone": "Continuous solid skin contact at hips and penetration point, no dark voids",
+      "motion_intensity": "slow",
+      "expression": "Woman: eyes closed, mouth open in anticipation. Man: focused expression",
+      "description": "Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, delivers continuous rhythmic motion_anal_thrust_action, driving his thick erect cock fully aligned and buried deep inside her stretched asshole.",
+      "action": "Jhon delivers continuous rhythmic motion_anal_thrust_action, driving his thick erect cock fully aligned and buried deep inside her stretched asshole.",
+      "camera": "Close-up rear, slow zoom-in, (matches RIGHT PANEL Rear View)",
+      "lighting": "Soft ambient lighting, gentle shadows",
+      "video_prompt": "Deliver continuous rhythmic motion_anal_thrust_action, driving his thick erect cock fully aligned and buried deep inside her stretched asshole.",
+      "audio": {
+        "dialogue": [
+          {
+            "character_id": "character_001",
+            "text": "Don't stop fucking my ass."
+          },
+          {
+            "character_id": "character_002",
+            "text": "Deep strokes only."
+          }
+        ],
+        "sound_effects": [
+          "intense wet thrusting",
+          "strained breathing",
+          "deep moan"
+        ],
+        "music": {
+          "mood": "playful",
+          "intensity": "low"
+        }
+      },
+      "previous_scene_context": "In scene 12, character was in pose (On all fours). Clothing state: Fully nude, completely unclothed. Context: Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, accelerates the"
+    },
+    {
+      "id": "scene_014",
+      "order": 14,
+      "duration": 5.0,
+      "location_id": "location_001",
+      "character_ids": ["character_001", "character_002"],
+      "clothing_state": "Fully nude, completely unclothed",
+      "pose_type": "On all fours",
+      "penetration_state": "None",
+      "primary_motion": "Continue continuous rhythmic motion_anal_thrust_action, thrusting his thick erec",
+      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man continuing continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock deeply into her anal entrance as her body rocks forward.",
+      "hand_positions": "Both hands gripping her hips, left hand on mattress, right hand thrusting his cock.",
+      "genital_alignment": "None",
+      "contact_zone": "Continuous solid skin contact at hips and penetration point, no dark voids",
+      "motion_intensity": "slow",
+      "expression": "Woman: eyes closed, mouth open in anticipation. Man: focused expression",
+      "description": "Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, continues continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock deeply into her anal entrance as her body rocks forward.",
+      "action": "Jhon continues continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock deeply into her anal entrance as her body rocks forward.",
+      "camera": "Side medium shot, gentle side track, (matches CENTER PANEL 3/4 Side View)",
+      "lighting": "Soft ambient lighting, gentle shadows",
+      "video_prompt": "Continue continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock deeply into her anal entrance as her body rocks forward.",
+      "audio": {
+        "dialogue": [
+          {
+            "character_id": "character_002",
+            "text": "Almost there, tight ass."
+          },
+          {
+            "character_id": "character_001",
+            "text": "Fill me up."
+          }
+        ],
+        "sound_effects": ["rhythmic wet impact", "heavy gasps", "rising moan"],
+        "music": {
+          "mood": "playful",
+          "intensity": "low"
+        }
+      },
+      "previous_scene_context": "In scene 13, character was in pose (On all fours). Clothing state: Fully nude, completely unclothed. Context: Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, delivers contin"
+    },
+    {
+      "id": "scene_015",
+      "order": 15,
+      "duration": 5.0,
+      "location_id": "location_001",
+      "character_ids": ["character_001", "character_002"],
+      "clothing_state": "Fully nude, completely unclothed",
+      "pose_type": "On all fours",
+      "penetration_state": "None",
+      "primary_motion": "Perform one final deep continuous rhythmic motion_anal_thrust_action, thrusting ",
+      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man performing one final deep continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock fully aligned and buried deep inside her tight asshole as he cums.",
+      "hand_positions": "Both hands gripping her hips, left hand on mattress, right hand thrusting his cock.",
+      "genital_alignment": "None",
+      "contact_zone": "Continuous solid skin contact at hips and penetration point, no dark voids",
+      "motion_intensity": "slow",
+      "expression": "Woman: eyes closed, mouth open in anticipation. Man: focused expression",
+      "description": "Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, performs one final deep continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock fully aligned and buried deep inside her tight asshole as he cums.",
+      "action": "Jhon performs one final deep continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock fully aligned and buried deep inside her tight asshole as he cums.",
+      "camera": "Overhead angle, slow zoom-out, (matches RIGHT PANEL Rear View)",
+      "lighting": "Soft ambient lighting, gentle shadows",
+      "video_prompt": "Perform one final deep continuous rhythmic motion_anal_thrust_action, thrusting his thick erect cock fully aligned and buried deep inside her tight asshole as he cums.",
+      "audio": {
+        "dialogue": [
+          {
+            "character_id": "character_001",
+            "text": "Cum deep in my ass."
+          },
+          {
+            "character_id": "character_002",
+            "text": "Filling your hole now."
+          }
+        ],
+        "sound_effects": [
+          "final wet thrust",
+          "loud climax moan",
+          "heavy breathing"
+        ],
+        "music": {
+          "mood": "playful",
+          "intensity": "low"
+        }
+      },
+      "previous_scene_context": "In scene 14, character was in pose (On all fours). Clothing state: Fully nude, completely unclothed. Context: Sunny, now fully nude, remains on all fours with back arched and ass raised high. Jhon, also fully nude, continues conti"
     }
   ]
 }
