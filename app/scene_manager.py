@@ -797,7 +797,7 @@ POSE & POSITION TRANSITION INSTRUCTION
             # --------------------------------------------------
             # Stage B: Anatomy Refinement (conditional)
             # --------------------------------------------------
-            if is_nude_scene and genital_refs:
+            if is_nude_scene and genital_refs and hasattr(self.keyframe_generator, "generate_stage_b"):
                 # Call Stage B to refine genitalia and contact areas
                 keyframe_b_result = self.keyframe_generator.generate_stage_b(
                     stage_a_image=stage_a_keyframe_path,

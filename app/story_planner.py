@@ -446,10 +446,10 @@ Each scene must contain:
 - clothing_state (e.g. "Fully nude, completely unclothed, bare skin")
 - pose_type (exact anatomical posture, e.g. "On all fours in doggy position", "Standing upright")
 - penetration_state (exact intimate contact or penetration state, e.g. "Male penis entering female pussy from behind", "None")
-- primary_motion (isolated kinetic movement description)
+- primary_motion (isolated kinetic movement description — MUST describe actual physical body movement only. NEVER use placeholder tags like motion_anal_thrust_action, motion_*, or any bracketed tokens. NEVER write camera verbs. Write the actual movement in plain English, e.g. "Jhon drives his hips in steady deep anal thrusts, pulling back halfway and pushing fully to the hilt")
 - pose_lock (strict anatomical lock, e.g. "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.")
-- hand_positions (exact anchoring of both hands for every character, e.g. "Man's left hand gripping her left hip, right hand on mattress")
-- genital_alignment (precise genital insertion/alignment, e.g. "Male erect cock aligned and fully inserted into female pussy from behind")
+- hand_positions (exact anchoring of both hands for every character, e.g. "Man's left hand gripping her left hip, right hand gripping her right hip. Woman's both hands planted flat on mattress.")
+- genital_alignment (REQUIRED — precise genital insertion/alignment state. MUST be updated scene by scene to reflect actual penetration depth. NEVER leave as "None" when there is any contact, approach, or penetration. Examples: "Cock head pressed firmly against anal entrance, zero penetration" / "Cock head past the anal ring, 2 cm inside" / "Thick erect cock half-buried in her ass, moderate depth" / "Thick erect cock fully buried to the hilt in her ass, continuous deep penetration on each thrust")
 - contact_zone (skin continuity directive, e.g. "Continuous solid skin contact at hips and penetration point, no dark voids")
 - motion_intensity ("low", "medium", "fast and hard", or "deep and slow thrusting")
 - expression (facial expression state, e.g. "Woman: eyes closed, mouth open in pleasure. Man: focused expression")
@@ -652,6 +652,48 @@ Required scene fields:
 {self.REQUIRED_SCENE_FIELDS}
 
 ============================================================
+MOTION QUALITY RULES (CRITICAL — READ BEFORE GENERATING)
+============================================================
+
+RULE 1 — primary_motion:
+- MUST describe ONLY the physical body movement of the characters.
+- NEVER use camera verbs (dolly, push, track, zoom, pan, pull).
+- NEVER use placeholder tags (motion_anal_thrust_action, motion_*, [motion], etc.).
+- Write the exact movement in plain English. Name the character performing it.
+- GOOD: "Jhon drives his hips in steady deep anal thrusts, pulling halfway back and pushing fully to the hilt on each stroke"
+- BAD: "Initiate a continuous rhythmic motion_anal_thrust_action"
+- BAD: "Track the camera alongside the thrusting motion"
+
+RULE 2 — motion_intensity:
+- Must escalate across the scene arc. DO NOT keep the same value for all scenes.
+- Use only these values: "very slow" | "slow" | "medium" | "fast" | "deep and slow" | "rhythmic medium" | "final deep hold"
+- For a 15-scene arc: scenes 1-3 = slow, scenes 4-6 = medium, scenes 7-10 = fast, scenes 11-14 = fast, scene 15 = final deep hold
+
+RULE 3 — genital_alignment:
+- MUST be updated every scene that involves genital contact or approach.
+- NEVER write "None" when a cock is pressed against an entrance, partially inserted, or fully buried.
+- Use precise depth markers: "cock head pressing against entrance" / "head past the ring" / "half buried" / "fully buried to the hilt"
+
+RULE 4 — penetration_state:
+- Reflects the ACTUAL state at the end of each scene.
+- Must change as penetration progresses across scenes.
+
+RULE 5 — hand_positions:
+- Specify BOTH hands for EVERY character.
+- Must be physically consistent with the pose_lock.
+- GOOD: "Man: both hands firmly gripping her hips. Woman: both hands planted flat on mattress."
+
+RULE 6 — video_prompt structure:
+- Lead with: [Character A] [specific hip/pelvis action] while [Character B] [reaction].
+- Then: Exact contact: [genital_alignment].
+- Then: Hands: [hand_positions].
+- Then: Bodies remain locked in [pose_lock].
+- Then: Camera: [camera description with panel tag].
+
+RULE 7 — previous_scene_context (required for order >= 2):
+- Describe: exact ending body positions + hand positions + penetration depth + last motion direction.
+
+============================================================
 ORIGINAL STORY
 ============================================================
 
@@ -730,6 +772,15 @@ Original story:
 {story}
 
 Return the COMPLETE corrected JSON now.
+
+CRITICAL MOTION RULES:
+- primary_motion MUST describe actual physical body movement only. NEVER use placeholders like motion_anal_thrust_action or motion_*. NEVER use camera verbs. Write the exact movement in plain English: e.g. "Jhon drives his hips in steady deep anal thrusts, pulling halfway and pushing to the hilt on each stroke."
+- motion_intensity MUST escalate across scenes. Use: "very slow" | "slow" | "medium" | "fast" | "deep and slow" | "rhythmic medium" | "final deep hold". Do NOT repeat "slow" for every scene.
+- genital_alignment MUST reflect actual penetration depth per scene. NEVER write "None" when there is contact, approach, or penetration.
+- penetration_state MUST be updated as penetration progresses across scenes.
+- hand_positions MUST specify BOTH hands for EVERY character. Ensure they are physically consistent with the pose_lock.
+- video_prompt MUST follow structure: [Character A action] while [Character B reaction]. Exact contact: [genital_alignment]. Hands: [hand_positions]. Bodies locked in [pose_lock]. Camera: [camera].
+- previous_scene_context MUST describe the previous scene's ending body positions, hand positions, penetration depth, and last motion.
 
 AUDIO REQUIREMENT:
 
@@ -927,7 +978,7 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                     scene["clothing_state"] = "Canonical outfit from character reference"
 
             if not scene.get("pose_type"):
-                scene["pose_type"] = (scene.get("action") or scene.get("description") or "Standing upright")[:80]
+                scene["pose_type"] = (scene.get("action") or scene.get("description") or "Standing upright")
 
             if not scene.get("penetration_state"):
                 desc_lower = f"{scene.get('description', '')} {scene.get('action', '')}".lower()
@@ -937,7 +988,7 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                     scene["penetration_state"] = "None"
 
             if not scene.get("primary_motion"):
-                scene["primary_motion"] = (scene.get("video_prompt") or scene.get("action") or "")[:80]
+                scene["primary_motion"] = (scene.get("video_prompt") or scene.get("action") or "")
 
             if not scene.get("pose_lock"):
                 scene["pose_lock"] = scene.get("pose_type", scene.get("action", ""))
