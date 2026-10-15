@@ -25,6 +25,8 @@ class KeyframeGenerator:
         seed,
         denoise=None,
         genital_references=None,
+        negative_prompt=None,
+        anatomy_rules="",
     ):
         scene_image = Path(scene_image)
         output_path = Path(output_path)
@@ -107,36 +109,9 @@ class KeyframeGenerator:
             # --------------------------------------------------
             # 3. Prompts
             # --------------------------------------------------
-            workflow["9"]["inputs"]["prompt"] = (
-                "bad anatomy, extra limbs, fused bodies, floating limbs, "
-                "black holes, dark circular artifacts, dark spots on skin, black void, "
-                "holes in skin, void skin patches, blank skin, missing skin, torso holes, "
-                "body cutouts, hollow skin, erased skin, floating background patches on body, "
-                "broken contact area, melted skin, corrupted skin texture, shadow voids, "
-                "twisted legs, mangled hips, distorted thighs, inverted legs, "
-                "misaligned penetration, penis in wrong location, floating penis, extra penis, "
-                "cum from mouth, semen from mouth, liquid from male mouth, spitting cum, drooling semen, "
-                "penis on woman, cock on female, dick on female body, futanari, hermaphrodite, "
-                "vagina on man, genitals turning into objects, morphing genitals, "
-                "wrong gender anatomy, swapped genitals, changing genital size, "
-                "unwanted bra on nude, spontaneous clothing, sports bra on naked body, "
-                "censorship, blur, mosaic, underwear on nude body, "
-                "acne, pimples, skin blemishes, text, watermark"
-            )
+            workflow["9"]["inputs"]["prompt"] = negative_prompt or "bad anatomy, extra limbs, fused bodies, text, watermark"
 
-            genital_lock = """
-=========================================================
-CRITICAL GENDER, PENETRATION & CLOTHING LOCK (HIGHEST PRIORITY)
-=========================================================
-- FEMALE ANATOMY LOCK: Female characters MUST have female anatomy (pussy/vulva) between thighs, smooth female waist, and feminine chest. ABSOLUTELY NEVER attach any male penis, cock, dick, or testicles to a female body under any circumstances.
-- MALE ANATOMY LOCK: Male characters MUST have male anatomy (penis/cock) attached strictly at the male pelvis and flat masculine torso. ABSOLUTELY NEVER render female vulva, sports bras, tops, or thongs on a male body.
-- PENETRATION POSITION LOCK: Male penis MUST enter directly into the female pussy entrance at the correct anatomical location. No penis attached above hips, no floating penis, no misaligned entry.
-- REAR & DOGGY POSE LOCK: Keep hips, thighs, and legs naturally positioned on bed without twisting, reversing, or clipping.
-- CLOTHING CONTINUITY LOCK: If character is nude/unclothed, keep them 100% fully nude bare skin. Do NOT add bras, tops, or thongs unless instructed in scene description.
-- Turnaround Angle Matching: Match the current scene camera orientation (Front View, 3/4 Side View, or Rear/Back View) to the corresponding panel in the reference model sheet grid.
-- Keep exact genital size, shape, color, and proportions consistent with the reference images and previous frame.
-- No floating penis, no extra penis, no genitals turning into objects, no gender swap of genitals, no size change during generation.
-"""
+            genital_lock = anatomy_rules or ""
             genital_slots = [s for s in slot_descriptions if "Genital" in s]
             if genital_slots:
                 gen_str = " and ".join([s.split()[0] for s in genital_slots])
@@ -193,6 +168,8 @@ CRITICAL GENDER, PENETRATION & CLOTHING LOCK (HIGHEST PRIORITY)
         output_path,
         seed,
         denoise=0.30,
+        negative_prompt=None,
+        anatomy_rules="",
     ):
         """
         Stage B: Anatomy & Groin Refinement.
@@ -288,36 +265,9 @@ CRITICAL GENDER, PENETRATION & CLOTHING LOCK (HIGHEST PRIORITY)
             # --------------------------------------------------
             # 3. Prompts
             # --------------------------------------------------
-            workflow["9"]["inputs"]["prompt"] = (
-                "bad anatomy, extra limbs, fused bodies, floating limbs, "
-                "black holes, dark circular artifacts, dark spots on skin, black void, "
-                "holes in skin, void skin patches, blank skin, missing skin, torso holes, "
-                "body cutouts, hollow skin, erased skin, floating background patches on body, "
-                "broken contact area, melted skin, corrupted skin texture, shadow voids, "
-                "twisted legs, mangled hips, distorted thighs, inverted legs, "
-                "misaligned penetration, penis in wrong location, floating penis, extra penis, "
-                "cum from mouth, semen from mouth, liquid from male mouth, spitting cum, drooling semen, "
-                "penis on woman, cock on female, dick on female body, futanari, hermaphrodite, "
-                "vagina on man, genitals turning into objects, morphing genitals, "
-                "wrong gender anatomy, swapped genitals, changing genital size, "
-                "unwanted bra on nude, spontaneous clothing, sports bra on naked body, "
-                "censorship, blur, mosaic, underwear on nude body, "
-                "acne, pimples, skin blemishes, text, watermark"
-            )
+            workflow["9"]["inputs"]["prompt"] = negative_prompt or "bad anatomy, extra limbs, fused bodies, text, watermark"
 
-            genital_lock = """
-=========================================================
-CRITICAL GENDER, PENETRATION & CLOTHING LOCK (HIGHEST PRIORITY)
-=========================================================
-- FEMALE ANATOMY LOCK: Female characters MUST have female anatomy (pussy/vulva) between thighs, smooth female waist, and feminine chest. ABSOLUTELY NEVER attach any male penis, cock, dick, or testicles to a female body under any circumstances.
-- MALE ANATOMY LOCK: Male characters MUST have male anatomy (penis/cock) attached strictly at the male pelvis and flat masculine torso. ABSOLUTELY NEVER render female vulva, sports bras, tops, or thongs on a male body.
-- PENETRATION POSITION LOCK: Male penis MUST enter directly into the female pussy entrance at the correct anatomical location. No penis attached above hips, no floating penis, no misaligned entry.
-- REAR & DOGGY POSE LOCK: Keep hips, thighs, and legs naturally positioned on bed without twisting, reversing, or clipping.
-- CLOTHING CONTINUITY LOCK: If character is nude/unclothed, keep them 100% fully nude bare skin. Do NOT add bras, tops, or thongs unless instructed in scene description.
-- Turnaround Angle Matching: Match the current scene camera orientation (Front View, 3/4 Side View, or Rear/Back View) to the corresponding panel in the reference model grid.
-- Keep exact genital size, shape, color, and proportions consistent with the reference images and previous frame.
-- No floating penis, no extra penis, no genitals turning into objects, no gender swap of genitals, no size change during generation.
-"""
+            genital_lock = anatomy_rules or ""
             gen_slots = [s for s in slot_descriptions if "Genital" in s]
             if gen_slots:
                 gen_str = " and ".join([s.split()[0] for s in gen_slots])

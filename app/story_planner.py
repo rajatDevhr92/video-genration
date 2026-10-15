@@ -1,4 +1,5 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
+from .continuity import ACTS, EVENTS, normalize_gender
 
 
 class StoryPlanValidationError(ValueError):
@@ -41,6 +42,7 @@ class StoryPlanner:
     REQUIRED_CHARACTER_FIELDS = [
         "id",
         "name",
+        "gender",
         "appearance",
         "clothing",
         "personality",
@@ -53,14 +55,11 @@ class StoryPlanner:
         "duration",
         "location_id",
         "character_ids",
+        "act",
+        "wardrobe_events",
         "clothing_state",
         "pose_type",
-        "penetration_state",
         "primary_motion",
-        "pose_lock",
-        "hand_positions",
-        "genital_alignment",
-        "contact_zone",
         "motion_intensity",
         "expression",
         "description",
@@ -240,12 +239,9 @@ Rules:
   purple prose, but still explicit enough for the image
   and video models to understand the exact act.
 - All characters remain adults (18+). Never create minors.
-- Clothing removal or nudity that occurs in the story
-  must be reflected in the relevant scene descriptions.
-- STICKY CLOTHING CONTINUITY RULE: Once characters undress or become nude in a scene, they MUST REMAIN FULLY NUDE ("clothing_state": "Fully nude, completely unclothed, bare skin") in all subsequent scenes until the story explicitly describes them getting dressed again. NEVER switch characters back to clothed between intimacy scenes!
-- The character "clothing" field still remains ONE
-  canonical outfit only. Scene-specific nudity or
-  clothing changes belong only in the scene data.
+- Clothing removal or clothing changes that occur in the story
+  must be expressed through scene wardrobe_events.
+- The character "clothing" field represents the outfit the character first appears in.
 
 ============================================================
 CHARACTERS
@@ -276,6 +272,7 @@ For each character provide:
 
 - id
 - name
+- gender ("female" or "male")
 - appearance
 - clothing
 - personality
@@ -347,13 +344,10 @@ NEVER write:
 
 "X when outside and Y indoors"
 
-CRITICAL NUDITY & CLOTHING RULE:
-- IF THE CHARACTER IS NUDE, UNCLOTHED, OR NAKED IN THE STORY, YOU MUST SET "clothing": "Fully nude, completely unclothed, bare skin".
-- DO NOT invent bras, lingerie, thongs, underwear, swimwear, or casual clothes when the story specifies the character is nude or unclothed!
-- If the character wears an outfit for most of the story, set "clothing" to that ONE canonical outfit.
-- If the story contains multiple clothing states, choose ONE representative outfit (or "Fully nude, completely unclothed" if nude).
-
-ALL OTHER CLOTHING CHANGES MUST EXIST ONLY IN SCENE DATA.
+CRITICAL CLOTHING RULE:
+- "clothing" = the outfit the character first appears in.
+- Undressing and clothing changes are expressed only through scene "wardrobe_events".
+- If the character starts the story fully nude, set "clothing": "Fully nude, completely unclothed, bare skin". Otherwise, set their initial canonical outfit.
 
 The character object must NOT describe clothing changes.
 
@@ -444,16 +438,13 @@ Each scene must contain:
 - duration
 - location_id
 - character_ids
-- clothing_state (REQUIRED — e.g. "Fully nude, completely unclothed, bare skin" or "Canonical outfit from character reference". CRITICAL: Once characters undress, keep "clothing_state": "Fully nude, completely unclothed, bare skin" for all subsequent scenes until they explicitly get dressed)
-- pose_type (exact anatomical posture, e.g. "On all fours in doggy position", "Standing upright")
-- penetration_state (exact intimate contact or penetration state, e.g. "Male penis entering female pussy from behind", "None")
-- primary_motion (isolated kinetic movement description — MUST describe actual physical body movement only. NEVER use placeholder tags like motion_anal_thrust_action, motion_*, or any bracketed tokens. NEVER write camera verbs. Write the actual movement in plain English, e.g. "Jhon drives his hips in steady deep anal thrusts, pulling back halfway and pushing fully to the hilt")
-- pose_lock (strict anatomical lock, e.g. "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.")
-- hand_positions (exact anchoring of both hands for every character, e.g. "Man's left hand gripping her left hip, right hand gripping her right hip. Woman's both hands planted flat on mattress.")
-- genital_alignment (REQUIRED — precise genital insertion/alignment state. MUST be updated scene by scene to reflect actual penetration depth. NEVER leave as "None" when there is any contact, approach, or penetration. Examples: "Cock head pressed firmly against anal entrance, zero penetration" / "Cock head past the anal ring, 2 cm inside" / "Thick erect cock half-buried in her ass, moderate depth" / "Thick erect cock fully buried to the hilt in her ass, continuous deep penetration on each thrust")
-- contact_zone (skin continuity directive, e.g. "Continuous solid skin contact at hips and penetration point, no dark voids")
-- motion_intensity ("low", "medium", "fast and hard", or "deep and slow thrusting")
-- expression (facial expression state, e.g. "Woman: eyes closed, mouth open in pleasure. Man: focused expression")
+- act (REQUIRED — EXACTLY one of: "none", "kiss", "touch", "oral", "vaginal", "anal", "other_contact")
+- wardrobe_events (REQUIRED — list of wardrobe change events: [{"character_id": "...", "event": "remove_top" | "remove_bottom" | "remove_all" | "dress_all"}], or empty list [] when nobody changes clothes)
+- clothing_state (e.g. "Canonical outfit from character reference" or "wearing the top of: ...; lower body bare" or "fully nude, bare skin")
+- pose_type (exact anatomical posture, e.g. "Lying down on bed", "Standing upright")
+- primary_motion (isolated kinetic movement description — MUST describe actual physical body movement only. NEVER use placeholder tags like motion_*, or any bracketed tokens. NEVER write camera verbs. Write the actual movement in plain English, e.g. "Character moves with steady continuous rhythm, maintaining deliberate physical pacing")
+- motion_intensity ("low", "medium", "fast", or "deep and slow")
+- expression (facial expression state, e.g. "Woman: eyes closed, soft smile. Man: focused expression")
 - description
 - action
 - camera (MUST combine technical cinematic camera framing with turnaround sheet panel tag: e.g., "Medium close-up, low angle, front-facing on bed (matches LEFT PANEL Front View of turnaround sheet)")
@@ -659,25 +650,16 @@ MOTION QUALITY RULES (CRITICAL — READ BEFORE GENERATING)
 RULE 1 — primary_motion:
 - MUST describe ONLY the physical body movement of the characters.
 - NEVER use camera verbs (dolly, push, track, zoom, pan, pull).
-- NEVER use placeholder tags (motion_anal_thrust_action, motion_*, [motion], etc.).
+- NEVER use placeholder tags (motion_*, [motion], etc.).
 - Write the exact movement in plain English. Name the character performing it.
-- GOOD: "Jhon drives his hips in steady deep anal thrusts, pulling halfway back and pushing fully to the hilt on each stroke"
-- BAD: "Initiate a continuous rhythmic motion_anal_thrust_action"
-- BAD: "Track the camera alongside the thrusting motion"
+- GOOD: "Character moves with steady continuous rhythm, maintaining deliberate physical pacing"
+- BAD: "Initiate a continuous rhythmic motion_action"
+- BAD: "Track the camera alongside the character"
 
 RULE 2 — motion_intensity:
 - Must escalate across the scene arc. DO NOT keep the same value for all scenes.
 - Use only these values: "very slow" | "slow" | "medium" | "fast" | "deep and slow" | "rhythmic medium" | "final deep hold"
 - For a 15-scene arc: scenes 1-3 = slow, scenes 4-6 = medium, scenes 7-10 = fast, scenes 11-14 = fast, scene 15 = final deep hold
-
-RULE 3 — genital_alignment:
-- MUST be updated every scene that involves genital contact or approach.
-- NEVER write "None" when a cock is pressed against an entrance, partially inserted, or fully buried.
-- Use precise depth markers: "cock head pressing against entrance" / "head past the ring" / "half buried" / "fully buried to the hilt"
-
-RULE 4 — penetration_state:
-- Reflects the ACTUAL state at the end of each scene.
-- Must change as penetration progresses across scenes.
 
 RULE 5 — hand_positions:
 - Specify BOTH hands for EVERY character.
@@ -775,13 +757,11 @@ Original story:
 Return the COMPLETE corrected JSON now.
 
 CRITICAL MOTION RULES:
-- primary_motion MUST describe actual physical body movement only. NEVER use placeholders like motion_anal_thrust_action or motion_*. NEVER use camera verbs. Write the exact movement in plain English: e.g. "Jhon drives his hips in steady deep anal thrusts, pulling halfway and pushing to the hilt on each stroke."
+- primary_motion MUST describe actual physical body movement only. NEVER use placeholders like motion_*. NEVER use camera verbs. Write the exact movement in plain English: e.g. "Character moves with steady deliberate pacing, maintaining close physical contact on each movement."
 - motion_intensity MUST escalate across scenes. Use: "very slow" | "slow" | "medium" | "fast" | "deep and slow" | "rhythmic medium" | "final deep hold". Do NOT repeat "slow" for every scene.
-- genital_alignment MUST reflect actual penetration depth per scene. NEVER write "None" when there is contact, approach, or penetration.
-- penetration_state MUST be updated as penetration progresses across scenes.
-- hand_positions MUST specify BOTH hands for EVERY character. Ensure they are physically consistent with the pose_lock.
-- video_prompt MUST follow structure: [Character A action] while [Character B reaction]. Exact contact: [genital_alignment]. Hands: [hand_positions]. Bodies locked in [pose_lock]. Camera: [camera].
-- previous_scene_context MUST describe the previous scene's ending body positions, hand positions, penetration depth, and last motion.
+- act MUST be EXACTLY one of: "none", "kiss", "touch", "oral", "vaginal", "anal", "other_contact".
+- wardrobe_events MUST be a list of wardrobe events [{"character_id": "...", "event": "remove_top|remove_bottom|remove_all|dress_all"}] (empty list [] if no clothing change).
+- video_prompt MUST describe clear physical movement and character reaction matching the scene action.
 
 AUDIO REQUIREMENT:
 
@@ -883,13 +863,25 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                 character["appearance"] = "Adult person, dark hair, expressive eyes, athletic build"
 
             if not character.get("clothing"):
-                character["clothing"] = "Fully nude, completely unclothed, bare skin"
+                character["clothing"] = "Casual everyday outfit"
 
             if not character.get("personality"):
                 character["personality"] = "Passionate and expressive"
 
             if not character.get("visual_anchor"):
                 character["visual_anchor"] = character.get("appearance")
+
+            if not character.get("gender"):
+                character["gender"] = normalize_gender(
+                    character.get("visual_anchor", ""),
+                    character.get("appearance", ""),
+                    character.get("name", ""),
+                )
+            elif character.get("gender") not in {"female", "male"}:
+                character["gender"] = normalize_gender(character.get("gender", ""))
+
+            if character.get("gender") not in {"female", "male"}:
+                raise ValueError(f"Character {character.get('id')} has invalid gender: {character.get('gender')}. Must be 'female' or 'male'.")
 
             for field in self.REQUIRED_CHARACTER_FIELDS:
                 if field not in character:
@@ -904,7 +896,6 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
         # Validate scenes
         # --------------------------------------------------
         scene_ids = set()
-        running_clothing_state = None
 
         for idx, scene in enumerate(result["scenes"], start=1):
             if not isinstance(scene, dict):
@@ -975,88 +966,40 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
             for key in ["description", "action", "primary_motion", "pose_lock", "video_prompt"]:
                 if scene.get(key):
                     txt = str(scene[key])
-                    cleaned = re.sub(r'motion_anal_thrust_action', 'steady deep rhythmic anal thrusting', txt, flags=re.IGNORECASE)
+                    cleaned = re.sub(r'motion_anal_thrust_action', 'steady deep rhythmic thrusting motion', txt, flags=re.IGNORECASE)
                     cleaned = re.sub(r'motion_[a-zA-Z0-9_]+_action', 'rhythmic thrusting motion', cleaned, flags=re.IGNORECASE)
                     cleaned = re.sub(r'motion_[a-zA-Z0-9_]+', 'rhythmic motion', cleaned, flags=re.IGNORECASE)
                     cleaned = re.sub(r'continuous rhythmic steady deep rhythmic', 'continuous steady deep rhythmic', cleaned, flags=re.IGNORECASE)
                     cleaned = re.sub(r'continuous rhythmic continuous rhythmic', 'continuous rhythmic', cleaned, flags=re.IGNORECASE)
                     scene[key] = cleaned.strip()
 
-            desc_lower = f"{scene.get('description', '')} {scene.get('action', '')}".lower()
-            current_clothing = str(scene.get("clothing_state", "")).strip()
+            from .continuity import ACTS, EVENTS
+            if scene.get("act") not in ACTS:
+                raise ValueError(f"Scene {scene.get('id', idx)}: act must be one of {sorted(ACTS)}")
 
-            is_redressing = any(w in desc_lower for w in [
-                "puts on clothes", "gets dressed", "buttons shirt", "pulls on pants",
-                "dressed back", "puts clothes on", "gets dressed again"
-            ])
+            scene.setdefault("wardrobe_events", [])
+            if not isinstance(scene["wardrobe_events"], list):
+                raise ValueError(f"Scene {scene.get('id', idx)}: wardrobe_events must be a list")
+            for ev in scene["wardrobe_events"]:
+                if (
+                    not isinstance(ev, dict)
+                    or ev.get("event") not in EVENTS
+                    or ev.get("character_id") not in character_ids
+                ):
+                    raise ValueError(f"Scene {scene.get('id', idx)}: bad wardrobe event {ev}")
 
-            has_nudity_or_sex = any(w in desc_lower for w in [
-                "nude", "naked", "unclothed", "bare skin", "undress", "strips",
-                "penis", "pussy", "cock", "dick", "vagina", "clitoris", "cum", "ejaculat",
-                "sex", "fuck", "penetrat", "doggystyle", "cowgirl", "blowjob", "handjob",
-                "oral sex", "grind", "thrust", "intercourse", "climax", "ass", "erotic"
-            ])
-
-            if is_redressing:
+            # Safe non-overwriting defaults if fields are missing
+            if not scene.get("clothing_state"):
                 scene["clothing_state"] = "Canonical outfit from character reference"
-                running_clothing_state = scene["clothing_state"]
-            elif has_nudity_or_sex or "nude" in current_clothing.lower():
-                scene["clothing_state"] = "Fully nude, completely unclothed, bare skin"
-                running_clothing_state = scene["clothing_state"]
-            elif running_clothing_state == "Fully nude, completely unclothed, bare skin":
-                # Sticky Nudity: Once characters undress, they remain nude in subsequent scenes unless redressing
-                scene["clothing_state"] = "Fully nude, completely unclothed, bare skin"
-            elif not current_clothing:
-                scene["clothing_state"] = "Canonical outfit from character reference"
-                running_clothing_state = scene["clothing_state"]
-            else:
-                running_clothing_state = current_clothing
 
             if not scene.get("pose_type"):
                 scene["pose_type"] = (scene.get("action") or scene.get("description") or "Standing upright")
 
-            # Dynamic penetration and genital alignment detection
-            desc_lower = f"{scene.get('description', '')} {scene.get('action', '')} {scene.get('primary_motion', '')}".lower()
-            desc_for_pen = re.sub(r'fully\s+nude|fully\s+unclothed|completely\s+unclothed', '', desc_lower)
-            current_pen = scene.get("penetration_state", "")
-            current_align = scene.get("genital_alignment", "")
+            if not scene.get("penetration_state"):
+                scene["penetration_state"] = "None"
 
-            if not current_pen or current_pen.lower() == "none":
-                if any(w in desc_for_pen for w in ["cum", "climax", "fill me up", "filling your hole", "final deep"]) and any(w in desc_for_pen for w in ["ass", "hole", "pussy", "inside"]):
-                    scene["penetration_state"] = "Full depth hilt hold during climax"
-                elif any(w in desc_for_pen for w in ["pound", "accelerat", "harder", "deep strokes", "increasing force", "pounding"]):
-                    scene["penetration_state"] = "Intense deep rhythmic penetration"
-                elif any(w in desc_for_pen for w in ["thrusting", "rhythmic motion", "burying his", "thrust"]):
-                    scene["penetration_state"] = "Continuous rhythmic penetration"
-                elif any(w in desc_for_pen for w in ["fully buried", "buried deep", "to the hilt", "all the way in", "fully aligned and buried"]):
-                    scene["penetration_state"] = "Full penetration to hilt"
-                elif any(w in desc_for_pen for w in ["half is buried", "halfway"]):
-                    scene["penetration_state"] = "Halfway penetration"
-                elif any(w in desc_for_pen for w in ["tip", "head is in", "sinks inside", "stretches and sinks"]):
-                    scene["penetration_state"] = "Tip penetration past entrance"
-                elif any(w in desc_for_pen for w in ["position the head", "against sunny", "against her", "head of his"]):
-                    scene["penetration_state"] = "External contact at entrance"
-                else:
-                    scene["penetration_state"] = "None"
-
-            if not current_align or current_align.lower() == "none":
-                pen = scene["penetration_state"]
-                if "climax" in pen.lower():
-                    scene["genital_alignment"] = "Thick erect cock buried deep to the hilt, continuous full contact"
-                elif "intense" in pen.lower():
-                    scene["genital_alignment"] = "Thick erect cock fully buried to hilt on forward strokes with continuous skin contact"
-                elif "rhythmic" in pen.lower():
-                    scene["genital_alignment"] = "Thick erect cock driving deep inside with continuous skin contact at base"
-                elif "full" in pen.lower():
-                    scene["genital_alignment"] = "Thick erect cock fully buried to the hilt, slight upward angle"
-                elif "halfway" in pen.lower():
-                    scene["genital_alignment"] = "Thick erect cock halfway buried inside her ass, moderate depth"
-                elif "tip" in pen.lower():
-                    scene["genital_alignment"] = "Cock head just past the anal ring, 2 cm inside"
-                elif "external" in pen.lower():
-                    scene["genital_alignment"] = "Cock head pressed firmly against anal entrance, zero penetration"
-                else:
-                    scene["genital_alignment"] = "None"
+            if not scene.get("genital_alignment"):
+                scene["genital_alignment"] = "None"
 
             if not scene.get("primary_motion"):
                 scene["primary_motion"] = (scene.get("video_prompt") or scene.get("action") or "")

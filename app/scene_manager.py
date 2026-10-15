@@ -10,6 +10,13 @@ from .keyframe_generator import KeyframeGenerator
 from .story_schema import motion_to_prompt
 from .video_generator import VideoGenerator
 from .video_utils import extract_last_frame
+from .continuity import (
+    ContinuityTracker,
+    per_character_clothing_block,
+    anatomy_lock,
+    dynamic_negative,
+    needs_anatomy_pass,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -145,19 +152,21 @@ class SceneManager:
         return True, []
 
     @staticmethod
-    def build_motion_prompt(scene, scene_state=None):
+    def build_motion_prompt(scene, scene_state=None, states=None):
         description = scene.get("description", "")
         action = scene.get("action", "")
         camera = scene.get("camera", "")
         lighting = scene.get("lighting", "")
 
-        sexual_keywords = [
-            "sex", "fuck", "penetrat", "oral", "blowjob", "cunnilingus",
-            "handjob", "masturbat", "nude", "naked", "breast", "pussy",
-            "cock", "penis", "dick", "vagina", "orgasm", "cum", "thrust", "moan",
-            "ass", "butt", "nipple"
-        ]
-        is_sexual = any(kw in (description + action).lower() for kw in sexual_keywords)
+        act = scene.get("act")
+        if act:
+            is_sexual = act in {"oral", "vaginal", "anal"}
+        else:
+            # Fallback when 'act' field is absent (for legacy tests/plans)
+            is_sexual = any(kw in (description + action).lower() for kw in [
+                "sex", "fuck", "penetrat", "oral", "blowjob", "nude", "naked",
+                "breast", "pussy", "cock", "penis", "dick", "vagina", "orgasm", "cum", "thrust"
+            ])
 
         motion_intensity = scene.get("motion_intensity", "")
         primary_motion = scene.get("primary_motion", "")
@@ -169,6 +178,13 @@ class SceneManager:
         else:
             motion_prompt_text = scene.get("primary_motion", scene.get("video_prompt", ""))
 
+        clothing_continuity_section = ""
+        if states:
+            clothing_continuity_section = f"""
+CLOTHING CONTINUITY PER PERSON:
+{per_character_clothing_block(states)}
+"""
+
         base = f"""
 Animate this input keyframe with smooth, continuous, realistic physical motion.
 
@@ -176,7 +192,7 @@ Motion Intensity & Rhythm: {motion_intensity}
 Structured Kinetic Motion: {motion_prompt_text}
 Primary Motion Focus: {primary_motion}
 Hand Placement Anchor: {hand_positions}
-
+{clothing_continuity_section}
 Scene description:
 {description}
 
@@ -342,36 +358,7 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                 elif any(w in text_context for w in ["standing", "stands"]):
                     curr_cstate["current_pose"] = "standing"
 
-            # Track and inherit clothing state across scenes (Sticky Nudity)
-            desc_lower = f"{scene.get('description', '')} {scene.get('action', '')}".lower()
-            is_redressing = any(w in desc_lower for w in [
-                "puts on clothes", "gets dressed", "buttons shirt", "pulls on pants",
-                "dressed back", "puts clothes on", "gets dressed again"
-            ])
-            inherited_clothing = str(curr_cstate.get("current_clothing_state", ""))
-            scene_clothing = str(scene.get("clothing_state", ""))
 
-            has_nudity_or_sex = any(w in desc_lower for w in [
-                "nude", "naked", "unclothed", "bare breast", "bare skin", "undress", "strips",
-                "penis", "pussy", "cock", "dick", "vagina", "clitoris", "cum", "ejaculat",
-                "sex", "fuck", "penetrat", "doggystyle", "cowgirl", "blowjob", "handjob",
-                "oral sex", "grind", "thrust", "intercourse"
-            ])
-
-            if is_redressing:
-                curr_cstate["current_clothing_state"] = "Canonical outfit from character reference"
-                scene["clothing_state"] = "Canonical outfit from character reference"
-            elif has_nudity_or_sex or "nude" in scene_clothing.lower():
-                curr_cstate["current_clothing_state"] = "Fully nude, completely unclothed, bare skin"
-                scene["clothing_state"] = "Fully nude, completely unclothed, bare skin"
-            elif "nude" in inherited_clothing.lower():
-                # Sticky Nudity: inherit previous scene's nude state
-                curr_cstate["current_clothing_state"] = "Fully nude, completely unclothed, bare skin"
-                scene["clothing_state"] = "Fully nude, completely unclothed, bare skin"
-            elif scene_clothing:
-                curr_cstate["current_clothing_state"] = scene_clothing
-            else:
-                curr_cstate["current_clothing_state"] = "Canonical outfit from character reference"
 
         for char_id, cs in character_states.items():
             if char_id in state["character_current_states"]:
@@ -414,6 +401,14 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
             character["id"]: character
             for character in story_plan.get("characters", [])
         }
+
+        tracker = ContinuityTracker(story_plan.get("characters", []))
+
+        # Fast-forward tracker silently if starting from a resumed scene
+        if start_scene > 1:
+            for s in scenes:
+                if int(s.get("order", 0)) < start_scene:
+                    tracker.advance(s)
 
         for scene in scenes:
             order = int(scene["order"])
@@ -491,65 +486,27 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                 )
 
             # --------------------------------------------------
-            # Check if scene is sexual or nude
+            # Track character wardrobe and nudity state via ContinuityTracker
             # --------------------------------------------------
-            desc_text = f"{scene.get('description', '')} {scene.get('action', '')}".lower()
-            char_current = scene_state.get("character_current_states", {})
-            is_nude_scene = False
-            for char_id, cstate in char_current.items():
-                if isinstance(cstate, dict) and "nude" in str(cstate.get("current_clothing_state", "")).lower():
-                    is_nude_scene = True
-            if any(w in desc_text for w in [
-                "nude", "naked", "unclothed", "bare breast", "undress", "strips",
-                "penis", "pussy", "cock", "dick", "vagina", "clitoris", "cum", "ejaculat",
-                "sex", "fuck", "penetrat", "doggystyle", "cowgirl", "blowjob", "handjob",
-                "oral sex", "grind", "thrust", "intercourse"
-            ]):
-                is_nude_scene = True
+            states = tracker.advance(scene)
+            is_nude_scene = any(cs.nude or not cs.bottom_on for cs in states.values())
 
             # --------------------------------------------------
-            # Collect genital references ONLY if scene is sexual or nude
+            # Collect genital references ONLY if scene has exposed lower body
             # --------------------------------------------------
             genital_refs = []
             if is_nude_scene:
                 for char_id in scene_character_ids:
-                    char_obj = character_map.get(char_id, {})
-                    appearance = char_obj.get("appearance", char_obj.get("visual_anchor", ""))
-                    gender_str = self._normalize_gender(char_obj.get("gender", ""))
-                    if gender_str == "unknown":
-                        anchor_lower = (appearance + " " + char_obj.get("name", "")).lower()
-                        gender_str = self._normalize_gender(anchor_lower)
-                        if gender_str == "unknown":
-                            gender_str = "female" if any(w in anchor_lower for w in ["female", "woman", "girl", "lady"]) else "male"
-
-                    refs = self.get_or_generate_genital_refs(
-                        character_appearance=appearance,
-                        gender=gender_str,
+                    cs = states[char_id]
+                    if cs.bottom_on:           # lower body covered, no anatomy reference needed
+                        continue
+                    genital_refs.extend(self.get_or_generate_genital_refs(
+                        character_appearance=character_map[char_id].get("appearance", ""),
+                        gender=cs.gender,
                         character_id=char_id,
                         output_dir=job_dir / "genital_refs",
-                    )
-                    genital_refs.extend(refs)
-
+                    ))
                 genital_refs = genital_refs[:2]
-
-                # --------------------------------------------------
-                # Solo Female Shot Guardrail:
-                # If a scene shot features ONLY a female character (e.g. female alone in doorway),
-                # strip out male penis references so Qwen Edit cannot attach a penis to her body!
-                # STRICT: Must have len(scene_character_ids) == 1 so multi-character intimate scenes never strip male refs!
-                # --------------------------------------------------
-                cam_desc = f"{scene.get('camera', '')} {scene.get('description', '')}".lower()
-                is_female_solo = (
-                    len(scene_character_ids) == 1 
-                    and (
-                        any(w in str(character_map.get(scene_character_ids[0], {}).get("visual_anchor", "") + " " + character_map.get(scene_character_ids[0], {}).get("appearance", "")).lower() for w in ["female", "woman", "girl", "lady"])
-                        or any(w in cam_desc for w in ["female solo", "solo woman", "woman alone", "standing alone", "close-up of female", "close-up of woman", "solo female"])
-                    )
-                )
-
-                if is_female_solo and genital_refs:
-                    genital_refs = [g for g in genital_refs if "penis" not in g.lower()]
-                    logger.info(f"[SOLO FEMALE GUARDRAIL] Scene {scene_id} is female solo shot -> stripped male penis genital references.")
             else:
                 logger.info(f"[GENITAL REF] Scene {scene_id} is not sexual/nude -> skipping genital references.")
 
@@ -649,7 +606,7 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                 char_obj = character_map.get(char_id, {})
                 c_name = char_obj.get("name", char_id)
                 c_anchor = char_obj.get("visual_anchor", char_obj.get("appearance", ""))
-                c_gender = "male" if "man" in c_anchor.lower() or "male" in c_anchor.lower() else ("female" if "woman" in c_anchor.lower() or "female" in c_anchor.lower() else "person")
+                c_gender = states[char_id].gender if char_id in states else "female"
                 slot_num = idx + 1
                 image_mapping_lines.append(
                     f"Image {slot_num}: 3-Panel Turnaround Model Sheet Grid for character '{c_name}' (ID: {char_id}, Gender: {c_gender.upper()})."
@@ -722,6 +679,8 @@ CRITICAL CONTACT & ANATOMY LOCK (NO BLACK HOLES / NO VOIDS)
 """)
 
             image_mapping_block = "\n".join(image_mapping_lines)
+            clothing_block = per_character_clothing_block(states)
+            anatomy_rules = anatomy_lock(states)
 
             keyframe_prompt = f"""
 {image_mapping_block}
@@ -729,7 +688,12 @@ CRITICAL CONTACT & ANATOMY LOCK (NO BLACK HOLES / NO VOIDS)
 =========================================================
 SCENE PROMPT & CONTINUITY CONTEXT
 =========================================================
-Clothing State: {scene.get('clothing_state', 'Fully nude, completely unclothed, bare skin')}
+CLOTHING PER PERSON:
+{clothing_block}
+
+ANATOMY RULES:
+{anatomy_rules}
+
 Pose Type: {scene.get('pose_type', '')}
 Pose Lock: {scene.get('pose_lock', '')}
 Hand Positions: {scene.get('hand_positions', '')}
@@ -767,15 +731,7 @@ CRITICAL CONTACT & ANATOMY LOCK (NO BLACK HOLES / NO VOIDS)
 - Skin must be continuous, smooth, realistic, and fully opaque across all thighs, hips, waist, and genitalia contact areas.
 - No shadow distortion turning skin into empty dark holes or black background gaps.
 """
-            # Check for explicit Nudity directive in scene description or continuity
-            is_nude_scene = False
-            desc_text = f"{scene.get('description', '')} {scene.get('action', '')}".lower()
-            char_current = scene_state.get("character_current_states", {})
-            for char_id, cstate in char_current.items():
-                if isinstance(cstate, dict) and "nude" in str(cstate.get("current_clothing_state", "")).lower():
-                    is_nude_scene = True
-            if any(w in desc_text for w in ["nude", "undress", "strips", "naked", "bare breast"]):
-                is_nude_scene = True
+            # is_nude_scene is determined deterministically above by ContinuityTracker states
 
             nudity_instruction = ""
             if is_nude_scene:
@@ -821,6 +777,8 @@ POSE & POSITION TRANSITION INSTRUCTION
             if pose_transition_instruction:
                 keyframe_prompt += f"\n\n{pose_transition_instruction}"
 
+            negative = dynamic_negative(states)
+
             # --------------------------------------------------
             # Stage 2: Keyframe Generation - Two-Pass Workflow
             # --------------------------------------------------
@@ -836,12 +794,14 @@ POSE & POSITION TRANSITION INSTRUCTION
                 seed=2000003 + order * 7919,
                 denoise=active_denoise,
                 genital_references=[],
+                negative_prompt=negative,
+                anatomy_rules=anatomy_rules,
             )
 
             # --------------------------------------------------
-            # Stage B: Anatomy Refinement (conditional)
+            # Stage B: Anatomy Refinement (conditional via needs_anatomy_pass)
             # --------------------------------------------------
-            if is_nude_scene and genital_refs and hasattr(self.keyframe_generator, "generate_stage_b"):
+            if needs_anatomy_pass(scene.get("act", "none"), states) and genital_refs and hasattr(self.keyframe_generator, "generate_stage_b"):
                 # Call Stage B to refine genitalia and contact areas
                 keyframe_b_result = self.keyframe_generator.generate_stage_b(
                     stage_a_image=stage_a_keyframe_path,
@@ -850,6 +810,8 @@ POSE & POSITION TRANSITION INSTRUCTION
                     output_path=keyframe_path,
                     seed=2000003 + order * 7919 + 1,
                     denoise=0.25,
+                    negative_prompt=negative,
+                    anatomy_rules=anatomy_rules,
                 )
                 keyframe_result = keyframe_b_result
             else:
@@ -874,6 +836,7 @@ POSE & POSITION TRANSITION INSTRUCTION
             motion_prompt = self.build_motion_prompt(
                 scene,
                 scene_state=scene_state,
+                states=states,
             )
 
             # Auto-detect motion LoRA category (e.g. anal motion)
@@ -884,9 +847,8 @@ POSE & POSITION TRANSITION INSTRUCTION
             elif hasattr(motion_obj, "category"):
                 motion_cat = str(getattr(motion_obj, "category", "")).lower()
 
-            scene_text = f"{scene.get('description', '')} {scene.get('action', '')} {scene.get('primary_motion', '')}".lower()
             if not motion_cat:
-                if any(w in scene_text for w in ["anal", "butt sex", "rear penetration"]):
+                if scene.get("act") == "anal":
                     motion_cat = "anal"
 
             motion_lora_name = None
