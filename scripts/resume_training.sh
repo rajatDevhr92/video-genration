@@ -61,3 +61,4 @@ EOF
 
 cd "${AITOOLKIT_DIR}"
 python run.py "${CONFIG_YAML}"
+
