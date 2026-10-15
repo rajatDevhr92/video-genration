@@ -10,6 +10,9 @@ CHECKPOINT_500="/workspace/ComfyUI/models/loras/wan2.2_multi_motion_v1/wan2.2_mu
 export PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True"
 export CUDA_VISIBLE_DEVICES="0"
 
+# Ensure dependencies are present
+pip install python-dotenv || true
+
 CONFIG_YAML="${AITOOLKIT_DIR}/config/wan_multi_motion_resume.yaml"
 
 cat << EOF > "${CONFIG_YAML}"
