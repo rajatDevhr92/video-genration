@@ -242,6 +242,7 @@ Rules:
 - All characters remain adults (18+). Never create minors.
 - Clothing removal or nudity that occurs in the story
   must be reflected in the relevant scene descriptions.
+- STICKY CLOTHING CONTINUITY RULE: Once characters undress or become nude in a scene, they MUST REMAIN FULLY NUDE ("clothing_state": "Fully nude, completely unclothed, bare skin") in all subsequent scenes until the story explicitly describes them getting dressed again. NEVER switch characters back to clothed between intimacy scenes!
 - The character "clothing" field still remains ONE
   canonical outfit only. Scene-specific nudity or
   clothing changes belong only in the scene data.
@@ -443,7 +444,7 @@ Each scene must contain:
 - duration
 - location_id
 - character_ids
-- clothing_state (e.g. "Fully nude, completely unclothed, bare skin")
+- clothing_state (REQUIRED — e.g. "Fully nude, completely unclothed, bare skin" or "Canonical outfit from character reference". CRITICAL: Once characters undress, keep "clothing_state": "Fully nude, completely unclothed, bare skin" for all subsequent scenes until they explicitly get dressed)
 - pose_type (exact anatomical posture, e.g. "On all fours in doggy position", "Standing upright")
 - penetration_state (exact intimate contact or penetration state, e.g. "Male penis entering female pussy from behind", "None")
 - primary_motion (isolated kinetic movement description — MUST describe actual physical body movement only. NEVER use placeholder tags like motion_anal_thrust_action, motion_*, or any bracketed tokens. NEVER write camera verbs. Write the actual movement in plain English, e.g. "Jhon drives his hips in steady deep anal thrusts, pulling back halfway and pushing fully to the hilt")
@@ -903,6 +904,7 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
         # Validate scenes
         # --------------------------------------------------
         scene_ids = set()
+        running_clothing_state = None
 
         for idx, scene in enumerate(result["scenes"], start=1):
             if not isinstance(scene, dict):
@@ -980,12 +982,35 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                     cleaned = re.sub(r'continuous rhythmic continuous rhythmic', 'continuous rhythmic', cleaned, flags=re.IGNORECASE)
                     scene[key] = cleaned.strip()
 
-            if not scene.get("clothing_state"):
-                desc_lower = f"{scene.get('description', '')} {scene.get('action', '')}".lower()
-                if any(w in desc_lower for w in ["nude", "naked", "unclothed", "bare skin", "undress", "strips"]):
-                    scene["clothing_state"] = "Fully nude, completely unclothed, bare skin"
-                else:
-                    scene["clothing_state"] = "Canonical outfit from character reference"
+            desc_lower = f"{scene.get('description', '')} {scene.get('action', '')}".lower()
+            current_clothing = str(scene.get("clothing_state", "")).strip()
+
+            is_redressing = any(w in desc_lower for w in [
+                "puts on clothes", "gets dressed", "buttons shirt", "pulls on pants",
+                "dressed back", "puts clothes on", "gets dressed again"
+            ])
+
+            has_nudity_or_sex = any(w in desc_lower for w in [
+                "nude", "naked", "unclothed", "bare skin", "undress", "strips",
+                "penis", "pussy", "cock", "dick", "vagina", "clitoris", "cum", "ejaculat",
+                "sex", "fuck", "penetrat", "doggystyle", "cowgirl", "blowjob", "handjob",
+                "oral sex", "grind", "thrust", "intercourse", "climax", "ass", "erotic"
+            ])
+
+            if is_redressing:
+                scene["clothing_state"] = "Canonical outfit from character reference"
+                running_clothing_state = scene["clothing_state"]
+            elif has_nudity_or_sex or "nude" in current_clothing.lower():
+                scene["clothing_state"] = "Fully nude, completely unclothed, bare skin"
+                running_clothing_state = scene["clothing_state"]
+            elif running_clothing_state == "Fully nude, completely unclothed, bare skin":
+                # Sticky Nudity: Once characters undress, they remain nude in subsequent scenes unless redressing
+                scene["clothing_state"] = "Fully nude, completely unclothed, bare skin"
+            elif not current_clothing:
+                scene["clothing_state"] = "Canonical outfit from character reference"
+                running_clothing_state = scene["clothing_state"]
+            else:
+                running_clothing_state = current_clothing
 
             if not scene.get("pose_type"):
                 scene["pose_type"] = (scene.get("action") or scene.get("description") or "Standing upright")

@@ -248,6 +248,7 @@ CRITICAL GENDER, PENETRATION & CLOTHING LOCK (HIGHEST PRIORITY)
             all_references = all_references[:2]
 
             slot_descriptions = []
+            slot_gender_locks = []
             for index, (ref_type, ref_path) in enumerate(all_references, start=1):
                 if not ref_path.exists():
                     raise FileNotFoundError(f"Genital reference not found: {ref_path}")
@@ -268,7 +269,15 @@ CRITICAL GENDER, PENETRATION & CLOTHING LOCK (HIGHEST PRIORITY)
                 workflow["9"]["inputs"][input_name] = [node_id, 0]
                 workflow["13"]["inputs"][input_name] = [node_id, 0]
 
-                slot_descriptions.append(f"Image {ref_slot} (Genital Reference)")
+                ref_fname = ref_path.name.lower()
+                if "penis" in ref_fname:
+                    slot_descriptions.append(f"Image {ref_slot} (Male Genital / Penis Reference)")
+                    slot_gender_locks.append(f"  * Image {ref_slot} is STRICTLY for the MALE character's penis at his pelvis. DO NOT apply to female.")
+                elif "pussy" in ref_fname or "vulva" in ref_fname:
+                    slot_descriptions.append(f"Image {ref_slot} (Female Genital / Vulva Reference)")
+                    slot_gender_locks.append(f"  * Image {ref_slot} is STRICTLY for the FEMALE character's pussy/vulva between thighs. DO NOT apply to male.")
+                else:
+                    slot_descriptions.append(f"Image {ref_slot} (Genital Reference)")
 
             # Clean up all unused reference slots (image2, image3 if unused, and ALL higher slots like image4, image5, image6)
             for ref_slot in range(1 + len(all_references) + 1, 10):
@@ -312,8 +321,10 @@ CRITICAL GENDER, PENETRATION & CLOTHING LOCK (HIGHEST PRIORITY)
             gen_slots = [s for s in slot_descriptions if "Genital" in s]
             if gen_slots:
                 gen_str = " and ".join([s.split()[0] for s in gen_slots])
+                gender_rules_str = "\n".join(slot_gender_locks) if slot_gender_locks else ""
                 genital_lock += f"""
-- {gen_str} is the 2-angle anatomical detail grid reference (Frontal & 3/4 Profile) for genital appearance.
+- {gen_str} is the 2-angle anatomical detail grid reference (Frontal & 3/4 Profile) for genital appearance:
+{gender_rules_str}
 - Copy exact genital shape, skin tone, labia/penis structure, and anatomical details strictly from the matching angle panel of {gen_str}.
 """
 

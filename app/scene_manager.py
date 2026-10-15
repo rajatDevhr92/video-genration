@@ -342,6 +342,37 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                 elif any(w in text_context for w in ["standing", "stands"]):
                     curr_cstate["current_pose"] = "standing"
 
+            # Track and inherit clothing state across scenes (Sticky Nudity)
+            desc_lower = f"{scene.get('description', '')} {scene.get('action', '')}".lower()
+            is_redressing = any(w in desc_lower for w in [
+                "puts on clothes", "gets dressed", "buttons shirt", "pulls on pants",
+                "dressed back", "puts clothes on", "gets dressed again"
+            ])
+            inherited_clothing = str(curr_cstate.get("current_clothing_state", ""))
+            scene_clothing = str(scene.get("clothing_state", ""))
+
+            has_nudity_or_sex = any(w in desc_lower for w in [
+                "nude", "naked", "unclothed", "bare breast", "bare skin", "undress", "strips",
+                "penis", "pussy", "cock", "dick", "vagina", "clitoris", "cum", "ejaculat",
+                "sex", "fuck", "penetrat", "doggystyle", "cowgirl", "blowjob", "handjob",
+                "oral sex", "grind", "thrust", "intercourse"
+            ])
+
+            if is_redressing:
+                curr_cstate["current_clothing_state"] = "Canonical outfit from character reference"
+                scene["clothing_state"] = "Canonical outfit from character reference"
+            elif has_nudity_or_sex or "nude" in scene_clothing.lower():
+                curr_cstate["current_clothing_state"] = "Fully nude, completely unclothed, bare skin"
+                scene["clothing_state"] = "Fully nude, completely unclothed, bare skin"
+            elif "nude" in inherited_clothing.lower():
+                # Sticky Nudity: inherit previous scene's nude state
+                curr_cstate["current_clothing_state"] = "Fully nude, completely unclothed, bare skin"
+                scene["clothing_state"] = "Fully nude, completely unclothed, bare skin"
+            elif scene_clothing:
+                curr_cstate["current_clothing_state"] = scene_clothing
+            else:
+                curr_cstate["current_clothing_state"] = "Canonical outfit from character reference"
+
         for char_id, cs in character_states.items():
             if char_id in state["character_current_states"]:
                 state["character_current_states"][char_id].update(cs)
@@ -484,10 +515,12 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                 for char_id in scene_character_ids:
                     char_obj = character_map.get(char_id, {})
                     appearance = char_obj.get("appearance", char_obj.get("visual_anchor", ""))
-                    gender_str = char_obj.get("gender", "")
-                    if not gender_str:
+                    gender_str = self._normalize_gender(char_obj.get("gender", ""))
+                    if gender_str == "unknown":
                         anchor_lower = (appearance + " " + char_obj.get("name", "")).lower()
-                        gender_str = "female" if any(w in anchor_lower for w in ["female", "woman", "girl", "lady"]) else "male"
+                        gender_str = self._normalize_gender(anchor_lower)
+                        if gender_str == "unknown":
+                            gender_str = "female" if any(w in anchor_lower for w in ["female", "woman", "girl", "lady"]) else "male"
 
                     refs = self.get_or_generate_genital_refs(
                         character_appearance=appearance,
@@ -503,13 +536,15 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                 # Solo Female Shot Guardrail:
                 # If a scene shot features ONLY a female character (e.g. female alone in doorway),
                 # strip out male penis references so Qwen Edit cannot attach a penis to her body!
+                # STRICT: Must have len(scene_character_ids) == 1 so multi-character intimate scenes never strip male refs!
                 # --------------------------------------------------
                 cam_desc = f"{scene.get('camera', '')} {scene.get('description', '')}".lower()
                 is_female_solo = (
                     len(scene_character_ids) == 1 
-                    and any(w in str(character_map.get(scene_character_ids[0], {}).get("visual_anchor", "") + " " + character_map.get(scene_character_ids[0], {}).get("appearance", "")).lower() for w in ["female", "woman", "girl", "lady"])
-                ) or any(
-                    w in cam_desc for w in ["female solo", "solo woman", "woman alone", "standing alone", "close-up of female", "close-up of woman", "solo female"]
+                    and (
+                        any(w in str(character_map.get(scene_character_ids[0], {}).get("visual_anchor", "") + " " + character_map.get(scene_character_ids[0], {}).get("appearance", "")).lower() for w in ["female", "woman", "girl", "lady"])
+                        or any(w in cam_desc for w in ["female solo", "solo woman", "woman alone", "standing alone", "close-up of female", "close-up of woman", "solo female"])
+                    )
                 )
 
                 if is_female_solo and genital_refs:
@@ -778,7 +813,16 @@ POSE & POSITION TRANSITION INSTRUCTION
 - Retain room architecture, background layout, and lighting from Image 1, but rebuild character body postures cleanly.
 """
 
-# Stage 2: Keyframe Generation - Two-Pass Workflow
+            # Append context blocks to keyframe_prompt
+            if human_count_block:
+                keyframe_prompt += f"\n\n{human_count_block}"
+            if nudity_instruction:
+                keyframe_prompt += f"\n\n{nudity_instruction}"
+            if pose_transition_instruction:
+                keyframe_prompt += f"\n\n{pose_transition_instruction}"
+
+            # --------------------------------------------------
+            # Stage 2: Keyframe Generation - Two-Pass Workflow
             # --------------------------------------------------
             # Stage A: Identity, Body Pose & Clothing (no genital references)
             # --------------------------------------------------
@@ -957,6 +1001,20 @@ POSE & POSITION TRANSITION INSTRUCTION
 
         return True, []
 
+    def _normalize_gender(self, gender: str) -> str:
+        """Return 'male', 'female', or 'unknown' from any common variant."""
+        if not gender:
+            return "unknown"
+        g = str(gender).strip().lower()
+
+        import re
+        # Check female first to prevent 'male' matching inside 'female' or 'he' inside 'she'
+        if re.search(r"\b(female|woman|women|girl|lady|feminine|she|her|hers)\b", g) or g in ["f", "♀"]:
+            return "female"
+        if re.search(r"\b(male|man|men|guy|boy|masculine|he|him|his|gentleman)\b", g) or g in ["m", "♂"]:
+            return "male"
+
+        return "unknown"
 
     def get_or_generate_genital_refs(self, character_id, character_appearance, gender, output_dir):
         """
@@ -968,7 +1026,17 @@ POSE & POSITION TRANSITION INSTRUCTION
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        is_male = str(gender).lower() == "male"
+        normalized = self._normalize_gender(gender)
+        is_male = normalized == "male"
+
+        # Fallback: if we couldn't determine gender, don't generate anything
+        if normalized == "unknown":
+            logger.warning(
+                f"Could not determine gender for character '{character_id}' "
+                f"(got '{gender}'). Skipping genital reference generation."
+            )
+            return []
+
         ref_filename = f"{character_id}_penis_ref.png" if is_male else f"{character_id}_pussy_ref.png"
         ref_path = output_dir / ref_filename
 
@@ -996,7 +1064,7 @@ POSE & POSITION TRANSITION INSTRUCTION
 
         # Generate the genital reference image via composition generator (Krea T2I)
         try:
-            logger.info(f"Generating genital reference for character '{character_id}' ({gender})...")
+            logger.info(f"Generating genital reference for character '{character_id}' ({gender} → {normalized})...")
             gen_seed = (abs(hash(character_id)) % 8000000) + 100000
             self.composition_generator.generate_simple(
                 prompt=genital_prompt,
