@@ -439,7 +439,7 @@ Each scene must contain:
 - location_id
 - character_ids
 - act (REQUIRED — EXACTLY one of: "none", "kiss", "touch", "oral", "vaginal", "anal", "other_contact")
-- wardrobe_events (REQUIRED — list of wardrobe change events: [{"character_id": "...", "event": "remove_top" | "remove_bottom" | "remove_all" | "dress_all"}], or empty list [] when nobody changes clothes)
+- wardrobe_events (REQUIRED — list of wardrobe change events: [{{"character_id": "...", "event": "remove_top" | "remove_bottom" | "remove_all" | "dress_all"}}], or empty list [] when nobody changes clothes)
 - clothing_state (e.g. "Canonical outfit from character reference" or "wearing the top of: ...; lower body bare" or "fully nude, bare skin")
 - pose_type (exact anatomical posture, e.g. "Lying down on bed", "Standing upright")
 - primary_motion (isolated kinetic movement description — MUST describe actual physical body movement only. NEVER use placeholder tags like motion_*, or any bracketed tokens. NEVER write camera verbs. Write the actual movement in plain English, e.g. "Character moves with steady continuous rhythm, maintaining deliberate physical pacing")
@@ -760,7 +760,7 @@ CRITICAL MOTION RULES:
 - primary_motion MUST describe actual physical body movement only. NEVER use placeholders like motion_*. NEVER use camera verbs. Write the exact movement in plain English: e.g. "Character moves with steady deliberate pacing, maintaining close physical contact on each movement."
 - motion_intensity MUST escalate across scenes. Use: "very slow" | "slow" | "medium" | "fast" | "deep and slow" | "rhythmic medium" | "final deep hold". Do NOT repeat "slow" for every scene.
 - act MUST be EXACTLY one of: "none", "kiss", "touch", "oral", "vaginal", "anal", "other_contact".
-- wardrobe_events MUST be a list of wardrobe events [{"character_id": "...", "event": "remove_top|remove_bottom|remove_all|dress_all"}] (empty list [] if no clothing change).
+- wardrobe_events MUST be a list of wardrobe events [{{"character_id": "...", "event": "remove_top|remove_bottom|remove_all|dress_all"}}] (empty list [] if no clothing change).
 - video_prompt MUST describe clear physical movement and character reaction matching the scene action.
 
 AUDIO REQUIREMENT:

@@ -1,34 +1,32 @@
 {
-  "title": "Sunny and Jhon's Intimate Encounter",
-  "summary": "A detailed account of Sunny and Jhon engaging in an intense anal sex scene.",
+  "title": "Intimate Night",
+  "summary": "A passionate night of intimate encounters between a woman and a muscular man in a simple bedroom setting.",
   "characters": [
     {
       "id": "character_001",
-      "name": "Sunny",
-      "appearance": "22-year-old woman with long wavy blonde hair, piercing blue eyes, fair smooth skin, slim athletic body and full perky breasts.",
-      "clothing": "Thin white thong",
-      "personality": "Energetic, adventurous, and responsive to Jhon's commands.",
-      "visual_anchor": "Adult woman, long wavy blonde hair, piercing blue eyes, fair smooth skin, slim athletic build, full perky breasts.",
-      "age": 22,
-      "gender": "female"
+      "name": "Lena",
+      "gender": "female",
+      "appearance": "Adult woman, long dark hair, olive skin, brown eyes, slender build, wearing a black lace bra and matching thong.",
+      "clothing": "Black lace bra and matching thong",
+      "personality": "Passionate and adventurous",
+      "visual_anchor": "Adult woman, long dark hair, olive skin, brown eyes, slender build, wearing a black lace bra and matching thong."
     },
     {
       "id": "character_002",
-      "name": "Jhon",
-      "appearance": "25-year-old man with short black hair, dark brown eyes, tanned skin, and muscular athletic build.",
-      "clothing": "Fully nude, completely unclothed, bare skin",
-      "personality": "Confident, dominant, and skilled in intimate encounters.",
-      "visual_anchor": "Adult man, short black hair, dark brown eyes, tanned skin, muscular athletic build.",
-      "age": 25,
-      "gender": "male"
+      "name": "Max",
+      "gender": "male",
+      "appearance": "Adult man, short black hair, brown eyes, olive skin, muscular build, wearing black swim trunks.",
+      "clothing": "Black swim trunks",
+      "personality": "Confident and dominant",
+      "visual_anchor": "Adult man, short black hair, brown eyes, olive skin, muscular build, wearing black swim trunks."
     }
   ],
   "locations": [
     {
       "id": "location_001",
-      "name": "Large Bed",
-      "description": "A spacious bed with a comfortable mattress and sheets.",
-      "visual_style": "Comfortable and inviting, with soft lighting."
+      "name": "Simple Bedroom",
+      "description": "A simple bedroom with a large bed covered in plain white sheets. Full even bright lighting fills the room — no shadows, no mirrors. Only the bed is visible.",
+      "visual_style": "Bright, even lighting, simple decor, large bed with white sheets."
     }
   ],
   "scenes": [
@@ -37,704 +35,459 @@
       "order": 1,
       "duration": 5.0,
       "location_id": "location_001",
-      "character_ids": [
-        "character_001",
-        "character_002"
-      ],
-      "clothing_state": "thin white thong",
-      "pose_type": "On all fours",
-      "penetration_state": "None",
-      "primary_motion": "Jhon slowly pulls the thong down Sunny's thighs in one continuous motion.",
-      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.",
-      "hand_positions": "Jhon: both hands gripping the waistband of her thong, sliding it down. Sunny: both hands planted firmly on the mattress.",
-      "genital_alignment": "None – thong waistband sliding down thighs",
-      "contact_zone": "Continuous solid skin-to-skin contact at hips and penetration point, no dark voids",
+      "character_ids": ["character_001", "character_002"],
+      "act": "oral",
+      "wardrobe_events": [],
+      "clothing_state": "Canonical outfit from character reference",
+      "pose_type": "Kneeling on bed, leaning forward",
+      "primary_motion": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing",
       "motion_intensity": "slow",
-      "expression": "Sunny: eyes closed, mouth open in anticipation. Jhon: focused expression",
-      "description": "Sunny kneels on all fours on a large bed, wearing a thin white thong. Jhon stands behind her, gripping her hips.",
-      "action": "Jhon pulls the thong down Sunny's thighs in one continuous motion while she arches her back on the bed.",
-      "camera": "Medium close-up, slow push-in, front-facing on bed (matches RIGHT PANEL Rear View)",
-      "lighting": "Soft ambient lighting, highlighting the bed and characters.",
-      "video_prompt": "Jhon slowly pulls the thong down Sunny's thighs in one continuous motion. Exact contact: None – thong waistband sliding down thighs. Hands: Jhon: both hands gripping the waistband of her thong, sliding it down. Sunny: both hands planted firmly on the mattress.. Bodies remain locked in Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.. Camera: Medium close-up, slow push-in, front-facing on bed (matches RIGHT PANEL Rear View).",
+      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
+      "description": "Lena kneels on the bed in front of Max, taking his hard cock into her mouth and starting a slow steady blowjob.",
+      "action": "Lena slides her lips up and down Max's shaft, her hand holding the base while she sucks him deeper.",
+      "camera": "Medium shot, low angle from behind, tight focus on Lena's mouth and Max's cock (matches RIGHT PANEL Rear View of turnaround sheet)",
+      "lighting": "Full even bright lighting, no shadows, no mirrors",
+      "video_prompt": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Kneeling on bed, leaning forward. Camera: Medium shot, low angle from behind, tight focus on Lena's mouth and Max's cock (matches RIGHT PANEL Rear View of turnaround sheet).",
       "audio": {
         "dialogue": [
           {
-            "character_id": "character_002",
-            "text": "Ass higher, Sunny."
-          },
-          {
             "character_id": "character_001",
-            "text": "Take it off."
+            "text": "Don't stop..."
           }
         ],
-        "sound_effects": [
-          "soft fabric sliding",
-          "quiet breathing",
-          "light bed creak"
-        ],
+        "sound_effects": [],
         "music": {
           "mood": "sensual",
           "intensity": "low"
         }
-      }
+      },
+      "penetration_state": "None",
+      "genital_alignment": "None",
+      "pose_lock": "Kneeling on bed, leaning forward",
+      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
+      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids"
     },
     {
       "id": "scene_002",
       "order": 2,
       "duration": 5.0,
       "location_id": "location_001",
-      "character_ids": [
-        "character_001",
-        "character_002"
-      ],
-      "clothing_state": "Fully nude, completely unclothed, bare skin",
-      "pose_type": "On all fours",
-      "penetration_state": "None",
-      "primary_motion": "Jhon slowly spreads Sunny's ass cheeks with both hands in one continuous motion.",
-      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.",
-      "hand_positions": "Jhon: both hands placed firmly on her buttocks, gently spreading her cheeks. Sunny: both hands planted on the mattress.",
-      "genital_alignment": "None – ass cheeks spread apart, anal entrance exposed",
-      "contact_zone": "Continuous solid skin-to-skin contact at hips and penetration point, no dark voids",
+      "character_ids": ["character_001", "character_002"],
+      "act": "oral",
+      "wardrobe_events": [],
+      "clothing_state": "Canonical outfit from character reference",
+      "pose_type": "Lying on bed, legs spread",
+      "primary_motion": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing",
       "motion_intensity": "slow",
-      "expression": "Sunny: eyes closed, mouth open in anticipation. Jhon: focused expression",
-      "description": "Sunny is now fully nude, on all fours with her ass raised high. Jhon kneels behind her, spreading her ass cheeks with both hands.",
-      "action": "Jhon kneels behind Sunny and spreads her ass cheeks with both hands in one continuous motion.",
-      "camera": "Low angle, steady hold, front-facing on bed (matches RIGHT PANEL Rear View)",
-      "lighting": "Soft ambient lighting, highlighting the bed and characters.",
-      "video_prompt": "Jhon slowly spreads Sunny's ass cheeks with both hands in one continuous motion. Exact contact: None – ass cheeks spread apart, anal entrance exposed. Hands: Jhon: both hands placed firmly on her buttocks, gently spreading her cheeks. Sunny: both hands planted on the mattress.. Bodies remain locked in Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.. Camera: Low angle, steady hold, front-facing on bed (matches RIGHT PANEL Rear View).",
+      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
+      "description": "Close-up of Lena's lips sliding up and down Max's shaft. Her hand holds the base while she sucks him deeper.",
+      "action": "Lena continues her blowjob, her hand holding the base of Max's cock while she sucks him deeper.",
+      "camera": "Close-up, front-facing eye-level, tracking face and chest expressions (matches LEFT PANEL Front View of turnaround sheet)",
+      "lighting": "Full even bright lighting, no shadows, no mirrors",
+      "video_prompt": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Lying on bed, legs spread. Camera: Close-up, front-facing eye-level, tracking face and chest expressions (matches LEFT PANEL Front View of turnaround sheet).",
       "audio": {
         "dialogue": [
           {
             "character_id": "character_001",
-            "text": "Open me up."
-          },
-          {
-            "character_id": "character_002",
-            "text": "Looking at that tight hole."
+            "text": "Don't stop..."
           }
         ],
-        "sound_effects": [
-          "skin contact",
-          "soft flesh stretch",
-          "low breath"
-        ],
+        "sound_effects": [],
         "music": {
           "mood": "sensual",
           "intensity": "low"
         }
       },
-      "previous_scene_context": "In scene 1, characters were in pose (On all fours). Clothing state: thin white thong. Genital alignment: None – thong waistband sliding down thighs. Last motion: Jhon slowly pulls the thong down Sunny's thighs in one continuous motion."
+      "penetration_state": "None",
+      "genital_alignment": "None",
+      "pose_lock": "Lying on bed, legs spread",
+      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
+      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
+      "previous_scene_context": "In scene 1, character was in pose (Kneeling on bed, leaning forward). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: Lena kneels on the bed in front of Max, taking his hard cock into her mouth and starting a slow steady blowjob."
     },
     {
       "id": "scene_003",
       "order": 3,
       "duration": 5.0,
       "location_id": "location_001",
-      "character_ids": [
-        "character_001",
-        "character_002"
-      ],
-      "clothing_state": "Fully nude, completely unclothed, bare skin",
-      "pose_type": "On all fours",
-      "penetration_state": "None",
-      "primary_motion": "Jhon leans in and slowly licks Sunny's tight asshole in one continuous wet stroke.",
-      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.",
-      "hand_positions": "Jhon: both hands firmly gripping her hips for support while leaning in to lick. Sunny: both hands planted on the mattress.",
-      "genital_alignment": "None – wet tongue contact licking anal entrance",
-      "contact_zone": "Continuous solid skin-to-skin contact at hips and penetration point, no dark voids",
+      "character_ids": ["character_001", "character_002"],
+      "act": "vaginal",
+      "wardrobe_events": [],
+      "clothing_state": "Canonical outfit from character reference",
+      "pose_type": "Cowgirl position, riding Max",
+      "primary_motion": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing",
       "motion_intensity": "slow",
-      "expression": "Sunny: eyes closed, mouth open in anticipation. Jhon: focused expression",
-      "description": "Sunny remains on all fours, fully nude. Jhon leans in and slowly licks her tight asshole.",
-      "action": "Jhon leans in and slowly licks Sunny's tight asshole in one continuous wet stroke.",
-      "camera": "Close-up rear, slow dolly-in, rear view (matches RIGHT PANEL Rear View)",
-      "lighting": "Soft ambient lighting, highlighting the bed and characters.",
-      "video_prompt": "Jhon leans in and slowly licks Sunny's tight asshole in one continuous wet stroke. Exact contact: None – wet tongue contact licking anal entrance. Hands: Jhon: both hands firmly gripping her hips for support while leaning in to lick. Sunny: both hands planted on the mattress.. Bodies remain locked in Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.. Camera: Close-up rear, slow dolly-in, rear view (matches RIGHT PANEL Rear View).",
+      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
+      "description": "Lena climbs on top in cowgirl position, guiding Max's cock inside her and begins riding him with slow hip movements.",
+      "action": "Lena guides Max's cock inside her and begins riding him with slow hip movements.",
+      "camera": "Medium shot, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
+      "lighting": "Full even bright lighting, no shadows, no mirrors",
+      "video_prompt": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Cowgirl position, riding Max. Camera: Medium shot, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
       "audio": {
         "dialogue": [
           {
             "character_id": "character_001",
-            "text": "Lick it deeper."
-          },
-          {
-            "character_id": "character_002",
-            "text": "Tasting this tight ass."
+            "text": "Don't stop..."
           }
         ],
-        "sound_effects": [
-          "wet licking",
-          "soft moan",
-          "skin contact"
-        ],
+        "sound_effects": [],
         "music": {
           "mood": "sensual",
           "intensity": "low"
         }
       },
-      "previous_scene_context": "In scene 2, characters were in pose (On all fours). Clothing state: Fully nude, completely unclothed, bare skin. Genital alignment: None – ass cheeks spread apart, anal entrance exposed. Last motion: Jhon slowly spreads Sunny's ass cheeks with both hands in one continuous motion."
+      "penetration_state": "None",
+      "genital_alignment": "None",
+      "pose_lock": "Cowgirl position, riding Max",
+      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
+      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
+      "previous_scene_context": "In scene 2, character was in pose (Lying on bed, legs spread). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: Close-up of Lena's lips sliding up and down Max's shaft. Her hand holds the base while she sucks him deeper."
     },
     {
       "id": "scene_004",
       "order": 4,
       "duration": 5.0,
       "location_id": "location_001",
-      "character_ids": [
-        "character_001",
-        "character_002"
-      ],
-      "clothing_state": "Fully nude, completely unclothed, bare skin",
-      "pose_type": "On all fours",
-      "penetration_state": "External contact at entrance",
-      "primary_motion": "Jhon positions the head of his thick erect cock against Sunny's tight asshole and holds firm contact in continuous alignment.",
-      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.",
-      "hand_positions": "Jhon: right hand guiding the head of his cock against her entrance, left hand gripping her hip. Sunny: both hands planted on mattress.",
-      "genital_alignment": "Cock head pressed firmly against anal entrance, zero penetration",
-      "contact_zone": "Continuous solid skin-to-skin contact at hips and penetration point, no dark voids",
+      "character_ids": ["character_001", "character_002"],
+      "act": "vaginal",
+      "wardrobe_events": [],
+      "clothing_state": "Canonical outfit from character reference",
+      "pose_type": "Cowgirl position, riding Max",
+      "primary_motion": "Lena bounces her hips up and down in continuous rhythm. Max's hands rest on her hips.",
       "motion_intensity": "slow",
-      "expression": "Sunny: eyes closed, mouth open in anticipation. Jhon: focused expression",
-      "description": "Sunny remains on all fours, fully nude. Jhon positions the swollen head of his thick erect cock against her tight asshole.",
-      "action": "Jhon positions the swollen head of his thick erect cock against Sunny's tight asshole and holds firm contact.",
-      "camera": "Close-up rear, steady hold, rear view (matches RIGHT PANEL Rear View)",
-      "lighting": "Soft ambient lighting, highlighting the bed and characters.",
-      "video_prompt": "Jhon positions the head of his thick erect cock against Sunny's tight asshole and holds firm contact in continuous alignment. Exact contact: Cock head pressed firmly against anal entrance, zero penetration. Hands: Jhon: right hand guiding the head of his cock against her entrance, left hand gripping her hip. Sunny: both hands planted on mattress.. Bodies remain locked in Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.. Camera: Close-up rear, steady hold, rear view (matches RIGHT PANEL Rear View).",
+      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
+      "description": "She rides him in cowgirl, bouncing her hips up and down in continuous rhythm. Her hands rest on his chest.",
+      "action": "Lena bounces her hips up and down in continuous rhythm, her hands resting on Max's chest.",
+      "camera": "Medium side angle, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
+      "lighting": "Full even bright lighting, no shadows, no mirrors",
+      "video_prompt": "Lena bounces her hips up and down in continuous rhythm. Max's hands rest on her hips. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Cowgirl position, riding Max. Camera: Medium side angle, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
       "audio": {
         "dialogue": [
           {
-            "character_id": "character_002",
-            "text": "Cock head right on your hole."
-          },
-          {
             "character_id": "character_001",
-            "text": "Push it in."
+            "text": "Don't stop..."
           }
         ],
-        "sound_effects": [
-          "soft skin press",
-          "heavy breathing",
-          "quiet tension"
-        ],
+        "sound_effects": [],
         "music": {
           "mood": "sensual",
-          "intensity": "low"
+          "intensity": "medium"
         }
       },
-      "previous_scene_context": "In scene 3, characters were in pose (On all fours). Clothing state: Fully nude, completely unclothed, bare skin. Genital alignment: None – wet tongue contact licking anal entrance. Last motion: Jhon leans in and slowly licks Sunny's tight asshole in one continuous wet stroke."
+      "penetration_state": "None",
+      "genital_alignment": "None",
+      "pose_lock": "Cowgirl position, riding Max",
+      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
+      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
+      "previous_scene_context": "In scene 3, character was in pose (Cowgirl position, riding Max). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: Lena climbs on top in cowgirl position, guiding Max's cock inside her and begins riding him with slow hip movements."
     },
     {
       "id": "scene_005",
       "order": 5,
       "duration": 5.0,
       "location_id": "location_001",
-      "character_ids": [
-        "character_001",
-        "character_002"
-      ],
-      "clothing_state": "Fully nude, completely unclothed, bare skin",
-      "pose_type": "On all fours",
-      "penetration_state": "Tip penetration past anal ring",
-      "primary_motion": "Jhon slowly presses the head of his thick erect cock forward until it stretches and sinks inside her tight asshole.",
-      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.",
-      "hand_positions": "Jhon: both hands gripping her hips firmly, pushing forward. Sunny: both hands planted on mattress, fingers gripping sheets.",
-      "genital_alignment": "Cock head just past the anal ring, 2 cm inside",
-      "contact_zone": "Continuous solid skin-to-skin contact at hips and penetration point, no dark voids",
-      "motion_intensity": "deep and slow",
-      "expression": "Sunny: eyes closed, mouth open in anticipation. Jhon: focused expression",
-      "description": "Sunny remains on all fours, fully nude. Jhon slowly presses the head of his thick erect cock forward until it stretches and sinks inside her tight asshole.",
-      "action": "Jhon slowly presses the head of his thick erect cock forward until it stretches and sinks inside her tight asshole.",
-      "camera": "Close-up rear, slow push-in, rear view (matches RIGHT PANEL Rear View)",
-      "lighting": "Soft ambient lighting, highlighting the bed and characters.",
-      "video_prompt": "Jhon slowly presses the head of his thick erect cock forward until it stretches and sinks inside her tight asshole. Exact contact: Cock head just past the anal ring, 2 cm inside. Hands: Jhon: both hands gripping her hips firmly, pushing forward. Sunny: both hands planted on mattress, fingers gripping sheets.. Bodies remain locked in Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.. Camera: Close-up rear, slow push-in, rear view (matches RIGHT PANEL Rear View).",
+      "character_ids": ["character_001", "character_002"],
+      "act": "vaginal",
+      "wardrobe_events": [],
+      "clothing_state": "Canonical outfit from character reference",
+      "pose_type": "Cowgirl position, riding Max",
+      "primary_motion": "Lena slides up and down on Max's cock with clear motion. Max's hands rest on her hips.",
+      "motion_intensity": "slow",
+      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
+      "description": "Side close-up shows her sliding up and down on his cock with clear motion. Her hands rest on his chest.",
+      "action": "Lena slides up and down on Max's cock with clear motion, her hands resting on his chest.",
+      "camera": "Close-up side angle, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
+      "lighting": "Full even bright lighting, no shadows, no mirrors",
+      "video_prompt": "Lena slides up and down on Max's cock with clear motion. Max's hands rest on her hips. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Cowgirl position, riding Max. Camera: Close-up side angle, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
       "audio": {
         "dialogue": [
           {
             "character_id": "character_001",
-            "text": "Oh fuck, the head is in."
-          },
-          {
-            "character_id": "character_002",
-            "text": "Taking the tip now."
+            "text": "Don't stop..."
           }
         ],
-        "sound_effects": [
-          "wet stretch friction",
-          "strained moan",
-          "deep breath"
-        ],
+        "sound_effects": [],
         "music": {
           "mood": "sensual",
           "intensity": "medium"
         }
       },
-      "previous_scene_context": "In scene 4, characters were in pose (On all fours). Clothing state: Fully nude, completely unclothed, bare skin. Genital alignment: Cock head pressed firmly against anal entrance, zero penetration. Last motion: Jhon positions the head of his thick erect cock against Sunny's tight asshole and holds firm contact in continuous alignment."
+      "penetration_state": "None",
+      "genital_alignment": "None",
+      "pose_lock": "Cowgirl position, riding Max",
+      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
+      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
+      "previous_scene_context": "In scene 4, character was in pose (Cowgirl position, riding Max). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: She rides him in cowgirl, bouncing her hips up and down in continuous rhythm. Her hands rest on his chest."
     },
     {
       "id": "scene_006",
       "order": 6,
       "duration": 5.0,
       "location_id": "location_001",
-      "character_ids": [
-        "character_001",
-        "character_002"
-      ],
-      "clothing_state": "Fully nude, completely unclothed, bare skin",
-      "pose_type": "On all fours",
-      "penetration_state": "Halfway penetration",
-      "primary_motion": "Jhon grips her hips and slowly pushes his thick erect cock deeper until half is buried inside her tight asshole.",
-      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.",
-      "hand_positions": "Jhon: both hands gripping her hips firmly, guiding cock deeper. Sunny: both hands planted on the mattress, back arched.",
-      "genital_alignment": "Thick erect cock halfway buried inside her ass, moderate depth",
-      "contact_zone": "Continuous solid skin-to-skin contact at hips and penetration point, no dark voids",
-      "motion_intensity": "deep and slow",
-      "expression": "Sunny: eyes closed, mouth open in anticipation. Jhon: focused expression",
-      "description": "Sunny remains on all fours, fully nude. Jhon grips her hips and slowly pushes his thick erect cock deeper until half is buried inside her tight asshole.",
-      "action": "Jhon grips her hips and slowly pushes his thick erect cock deeper until half is buried inside her tight asshole.",
-      "camera": "Side medium shot, gentle side track, side view (matches CENTER PANEL 3/4 Side View)",
-      "lighting": "Soft ambient lighting, highlighting the bed and characters.",
-      "video_prompt": "Jhon grips her hips and slowly pushes his thick erect cock deeper until half is buried inside her tight asshole. Exact contact: Thick erect cock halfway buried inside her ass, moderate depth. Hands: Jhon: both hands gripping her hips firmly, guiding cock deeper. Sunny: both hands planted on the mattress, back arched.. Bodies remain locked in Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.. Camera: Side medium shot, gentle side track, side view (matches CENTER PANEL 3/4 Side View).",
+      "character_ids": ["character_001", "character_002"],
+      "act": "vaginal",
+      "wardrobe_events": [],
+      "clothing_state": "Canonical outfit from character reference",
+      "pose_type": "Doggy position, Max behind Lena",
+      "primary_motion": "Max thrusts into Lena with steady deep thrusts. Lena's back arches as she pushes back against him.",
+      "motion_intensity": "slow",
+      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
+      "description": "He turns her onto all fours in doggy position. He kneels behind her, grips her hips, and thrusts into her from behind.",
+      "action": "Max thrusts into Lena with steady deep thrusts. Lena's back arches as she pushes back against him.",
+      "camera": "Medium shot, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
+      "lighting": "Full even bright lighting, no shadows, no mirrors",
+      "video_prompt": "Max thrusts into Lena with steady deep thrusts. Lena's back arches as she pushes back against him. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Doggy position, Max behind Lena. Camera: Medium shot, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
       "audio": {
         "dialogue": [
           {
-            "character_id": "character_002",
-            "text": "Halfway in your ass."
-          },
-          {
             "character_id": "character_001",
-            "text": "More, stretch me."
+            "text": "Don't stop..."
           }
         ],
-        "sound_effects": [
-          "wet sliding",
-          "prolonged moan",
-          "skin contact"
-        ],
+        "sound_effects": [],
         "music": {
           "mood": "sensual",
           "intensity": "medium"
         }
       },
-      "previous_scene_context": "In scene 5, characters were in pose (On all fours). Clothing state: Fully nude, completely unclothed, bare skin. Genital alignment: Cock head just past the anal ring, 2 cm inside. Last motion: Jhon slowly presses the head of his thick erect cock forward until it stretches and sinks inside her tight asshole."
+      "penetration_state": "None",
+      "genital_alignment": "None",
+      "pose_lock": "Doggy position, Max behind Lena",
+      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
+      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
+      "previous_scene_context": "In scene 5, character was in pose (Cowgirl position, riding Max). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: Side close-up shows her sliding up and down on his cock with clear motion. Her hands rest on his chest."
     },
     {
       "id": "scene_007",
       "order": 7,
       "duration": 5.0,
       "location_id": "location_001",
-      "character_ids": [
-        "character_001",
-        "character_002"
-      ],
-      "clothing_state": "Fully nude, completely unclothed, bare skin",
-      "pose_type": "On all fours",
-      "penetration_state": "Full penetration to hilt",
-      "primary_motion": "Jhon drives his hips forward until his thick erect cock is fully aligned and buried deep to the hilt inside her tight asshole.",
-      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.",
-      "hand_positions": "Jhon: both hands locked onto her hips, pulling her pelvis back against him. Sunny: both hands braced against mattress.",
-      "genital_alignment": "Thick erect cock fully buried to the hilt in her ass, slight upward angle",
-      "contact_zone": "Continuous solid skin-to-skin contact at hips and penetration point, no dark voids",
-      "motion_intensity": "deep and slow",
-      "expression": "Sunny: eyes closed, mouth open in anticipation. Jhon: focused expression",
-      "description": "Sunny remains on all fours, fully nude. Jhon drives forward until his thick erect cock is fully aligned and buried deep inside her tight asshole.",
-      "action": "Jhon drives forward until his thick erect cock is fully aligned and buried deep inside her tight asshole in one continuous thrust.",
-      "camera": "Overhead angle, slow zoom-in, rear view (matches RIGHT PANEL Rear View)",
-      "lighting": "Soft ambient lighting, highlighting the bed and characters.",
-      "video_prompt": "Jhon drives his hips forward until his thick erect cock is fully aligned and buried deep to the hilt inside her tight asshole. Exact contact: Thick erect cock fully buried to the hilt in her ass, slight upward angle. Hands: Jhon: both hands locked onto her hips, pulling her pelvis back against him. Sunny: both hands braced against mattress.. Bodies remain locked in Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.. Camera: Overhead angle, slow zoom-in, rear view (matches RIGHT PANEL Rear View).",
+      "character_ids": ["character_001", "character_002"],
+      "act": "vaginal",
+      "wardrobe_events": [],
+      "clothing_state": "Canonical outfit from character reference",
+      "pose_type": "Doggy position, Max behind Lena",
+      "primary_motion": "Max thrusts into Lena with steady deep thrusts. Lena's back arches as she pushes back against him.",
+      "motion_intensity": "slow",
+      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
+      "description": "He fucks her in doggy with steady deep thrusts. Her back arches as she pushes back against him.",
+      "action": "Max thrusts into Lena with steady deep thrusts. Lena's back arches as she pushes back against him.",
+      "camera": "Medium side angle, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
+      "lighting": "Full even bright lighting, no shadows, no mirrors",
+      "video_prompt": "Max thrusts into Lena with steady deep thrusts. Lena's back arches as she pushes back against him. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Doggy position, Max behind Lena. Camera: Medium side angle, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
       "audio": {
         "dialogue": [
           {
             "character_id": "character_001",
-            "text": "All the way in."
-          },
-          {
-            "character_id": "character_002",
-            "text": "Buried deep in your ass."
+            "text": "Don't stop..."
           }
         ],
-        "sound_effects": [
-          "wet full insertion",
-          "heavy gasp",
-          "skin slap"
-        ],
+        "sound_effects": [],
         "music": {
-          "mood": "sensual",
+          "mood": "rhythmic passionate",
           "intensity": "medium"
         }
       },
-      "previous_scene_context": "In scene 6, characters were in pose (On all fours). Clothing state: Fully nude, completely unclothed, bare skin. Genital alignment: Thick erect cock halfway buried inside her ass, moderate depth. Last motion: Jhon grips her hips and slowly pushes his thick erect cock deeper until half is buried inside her tight asshole."
+      "penetration_state": "None",
+      "genital_alignment": "None",
+      "pose_lock": "Doggy position, Max behind Lena",
+      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
+      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
+      "previous_scene_context": "In scene 6, character was in pose (Doggy position, Max behind Lena). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: He turns her onto all fours in doggy position. He kneels behind her, grips her hips, and thrusts into her from behind."
     },
     {
       "id": "scene_008",
       "order": 8,
       "duration": 5.0,
       "location_id": "location_001",
-      "character_ids": [
-        "character_001",
-        "character_002"
-      ],
-      "clothing_state": "Fully nude, completely unclothed, bare skin",
-      "pose_type": "On all fours",
-      "penetration_state": "Continuous rhythmic deep penetration",
-      "primary_motion": "Jhon drives his hips forward in steady rhythmic deep anal thrusts, cock burying deep inside her tight ass.",
-      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.",
-      "hand_positions": "Jhon: both hands firmly gripping her hips, driving hips forward. Sunny: both hands planted flat on mattress, fingers digging into sheets.",
-      "genital_alignment": "Thick erect cock fully buried to hilt on forward strokes with continuous skin-to-skin base contact",
-      "contact_zone": "Continuous solid skin-to-skin contact at hips and penetration point, no dark voids",
-      "motion_intensity": "rhythmic medium",
-      "expression": "Sunny: eyes closed, mouth open in anticipation. Jhon: focused expression",
-      "description": "Sunny remains on all fours, fully nude. Jhon initiates a continuous steady deep rhythmic anal thrusting, thrusting his thick erect cock deeply into her anal entrance.",
-      "action": "Jhon drives his hips forward in steady deep thrusts, cock burying deep inside Sunny's tight asshole.",
-      "camera": "Side medium shot, steady hold, side view (matches CENTER PANEL 3/4 Side View)",
-      "lighting": "Soft ambient lighting, highlighting the bed and characters.",
-      "video_prompt": "Jhon drives his hips forward in steady rhythmic deep anal thrusts, cock burying deep inside her tight ass. Exact contact: Thick erect cock fully buried to hilt on forward strokes with continuous skin-to-skin base contact. Hands: Jhon: both hands firmly gripping her hips, driving hips forward. Sunny: both hands planted flat on mattress, fingers digging into sheets.. Bodies remain locked in Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.. Camera: Side medium shot, steady hold, side view (matches CENTER PANEL 3/4 Side View).",
+      "character_ids": ["character_001", "character_002"],
+      "act": "vaginal",
+      "wardrobe_events": [],
+      "clothing_state": "Canonical outfit from character reference",
+      "pose_type": "Doggy position, Max behind Lena",
+      "primary_motion": "Max thrusts into Lena with steady deep thrusts. Lena's back arches as she pushes back against him.",
+      "motion_intensity": "slow",
+      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
+      "description": "Side close-up captures his cock sliding in and out of her from behind with every thrust.",
+      "action": "Max thrusts into Lena with steady deep thrusts. Lena's back arches as she pushes back against him.",
+      "camera": "Close-up side angle, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
+      "lighting": "Full even bright lighting, no shadows, no mirrors",
+      "video_prompt": "Max thrusts into Lena with steady deep thrusts. Lena's back arches as she pushes back against him. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Doggy position, Max behind Lena. Camera: Close-up side angle, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
       "audio": {
         "dialogue": [
           {
-            "character_id": "character_002",
-            "text": "Feel that cock pounding your ass."
-          },
-          {
             "character_id": "character_001",
-            "text": "Yes, keep thrusting."
+            "text": "Don't stop..."
           }
         ],
-        "sound_effects": [
-          "rhythmic wet thrusting",
-          "loud moans",
-          "skin slap"
-        ],
+        "sound_effects": [],
         "music": {
           "mood": "rhythmic passionate",
           "intensity": "medium"
         }
       },
-      "previous_scene_context": "In scene 7, characters were in pose (On all fours). Clothing state: Fully nude, completely unclothed, bare skin. Genital alignment: Thick erect cock fully buried to the hilt in her ass, slight upward angle. Last motion: Jhon drives his hips forward until his thick erect cock is fully aligned and buried deep to the hilt inside her tight asshole."
+      "penetration_state": "None",
+      "genital_alignment": "None",
+      "pose_lock": "Doggy position, Max behind Lena",
+      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
+      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
+      "previous_scene_context": "In scene 7, character was in pose (Doggy position, Max behind Lena). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: He fucks her in doggy with steady deep thrusts. Her back arches as she pushes back against him."
     },
     {
       "id": "scene_009",
       "order": 9,
       "duration": 5.0,
       "location_id": "location_001",
-      "character_ids": [
-        "character_001",
-        "character_002"
-      ],
-      "clothing_state": "Fully nude, completely unclothed, bare skin",
-      "pose_type": "On all fours",
-      "penetration_state": "Continuous rhythmic deep penetration",
-      "primary_motion": "Jhon continues steady rhythmic anal thrusting with controlled hip drive, pulling halfway back and driving forward to the hilt.",
-      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.",
-      "hand_positions": "Jhon: both hands gripping her hips firmly, guiding the stroke. Sunny: both hands planted on mattress, knuckles tensed.",
-      "genital_alignment": "Thick erect cock driving deep inside with continuous skin-to-skin contact at base",
-      "contact_zone": "Continuous solid skin-to-skin contact at hips and penetration point, no dark voids",
-      "motion_intensity": "rhythmic medium",
-      "expression": "Sunny: eyes closed, mouth open in anticipation. Jhon: focused expression",
-      "description": "Sunny remains on all fours, fully nude. Jhon continues the continuous steady deep rhythmic anal thrusting, driving his thick erect cock fully aligned and buried deep inside her stretched asshole.",
-      "action": "Jhon pulls back halfway and drives forward in steady rhythmic thrusts with continuous power.",
-      "camera": "Close-up rear, slow dolly-out, rear view (matches RIGHT PANEL Rear View)",
-      "lighting": "Soft ambient lighting, highlighting the bed and characters.",
-      "video_prompt": "Jhon continues steady rhythmic anal thrusting with controlled hip drive, pulling halfway back and driving forward to the hilt. Exact contact: Thick erect cock driving deep inside with continuous skin-to-skin contact at base. Hands: Jhon: both hands gripping her hips firmly, guiding the stroke. Sunny: both hands planted on mattress, knuckles tensed.. Bodies remain locked in Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.. Camera: Close-up rear, slow dolly-out, rear view (matches RIGHT PANEL Rear View).",
+      "character_ids": ["character_001", "character_002"],
+      "act": "oral",
+      "wardrobe_events": [],
+      "clothing_state": "Canonical outfit from character reference",
+      "pose_type": "Lena kneeling in front of Max",
+      "primary_motion": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing",
+      "motion_intensity": "slow",
+      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
+      "description": "She climbs off. He turns her onto all fours in doggy position. He kneels behind her, grips her hips, and thrusts into her from behind.",
+      "action": "Lena climbs off. He turns her onto all fours in doggy position. He kneels behind her, grips her hips, and thrusts into her from behind.",
+      "camera": "Medium shot, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
+      "lighting": "Full even bright lighting, no shadows, no mirrors",
+      "video_prompt": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Lena kneeling in front of Max. Camera: Medium shot, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
       "audio": {
         "dialogue": [
           {
             "character_id": "character_001",
-            "text": "Harder in my ass."
-          },
-          {
-            "character_id": "character_002",
-            "text": "Taking every thrust."
+            "text": "Don't stop..."
           }
         ],
-        "sound_effects": [
-          "wet rhythmic slap",
-          "deep breathing",
-          "intense moan"
-        ],
+        "sound_effects": [],
         "music": {
           "mood": "rhythmic passionate",
           "intensity": "medium"
         }
       },
-      "previous_scene_context": "In scene 8, characters were in pose (On all fours). Clothing state: Fully nude, completely unclothed, bare skin. Genital alignment: Thick erect cock fully buried to hilt on forward strokes with continuous skin-to-skin base contact. Last motion: Jhon drives his hips forward in steady rhythmic deep anal thrusts, cock burying deep inside her tight ass."
+      "penetration_state": "None",
+      "genital_alignment": "None",
+      "pose_lock": "Lena kneeling in front of Max",
+      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
+      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
+      "previous_scene_context": "In scene 8, character was in pose (Doggy position, Max behind Lena). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: Side close-up captures his cock sliding in and out of her from behind with every thrust."
     },
     {
       "id": "scene_010",
       "order": 10,
       "duration": 5.0,
       "location_id": "location_001",
-      "character_ids": [
-        "character_001",
-        "character_002"
-      ],
-      "clothing_state": "Fully nude, completely unclothed, bare skin",
-      "pose_type": "On all fours",
-      "penetration_state": "Continuous rhythmic deep penetration",
-      "primary_motion": "Jhon maintains powerful rhythmic hip thrusts, burying his thick erect cock fully aligned deep inside her ass on each stroke.",
-      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.",
-      "hand_positions": "Jhon: both hands locked onto her hips, pulling her back against each thrust. Sunny: both hands braced on mattress.",
-      "genital_alignment": "Thick erect cock fully aligned and buried deep inside on each forward stroke",
-      "contact_zone": "Continuous solid skin-to-skin contact at hips and penetration point, no dark voids",
-      "motion_intensity": "rhythmic medium",
-      "expression": "Sunny: eyes closed, mouth open in anticipation. Jhon: focused expression",
-      "description": "Sunny remains on all fours, fully nude. Jhon grips her waist and performs continuous steady deep rhythmic anal thrusting, thrusting his thick erect cock deeply into her anal entrance with steady power.",
-      "action": "Jhon drives his hips forward in steady deep strokes, burying his thick erect cock fully aligned deep inside her tight asshole on each stroke.",
-      "camera": "Low angle, gentle push-in, rear view (matches RIGHT PANEL Rear View)",
-      "lighting": "Soft ambient lighting, highlighting the bed and characters.",
-      "video_prompt": "Jhon maintains powerful rhythmic hip thrusts, burying his thick erect cock fully aligned deep inside her ass on each stroke. Exact contact: Thick erect cock fully aligned and buried deep inside on each forward stroke. Hands: Jhon: both hands locked onto her hips, pulling her back against each thrust. Sunny: both hands braced on mattress.. Bodies remain locked in Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.. Camera: Low angle, gentle push-in, rear view (matches RIGHT PANEL Rear View).",
+      "character_ids": ["character_001", "character_002"],
+      "act": "oral",
+      "wardrobe_events": [],
+      "clothing_state": "Canonical outfit from character reference",
+      "pose_type": "Lena kneeling in front of Max",
+      "primary_motion": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing",
+      "motion_intensity": "slow",
+      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
+      "description": "She turns around, kneels in front of him again, and takes his cock back into her mouth for another blowjob.",
+      "action": "Lena turns around, kneels in front of him again, and takes his cock back into her mouth for another blowjob.",
+      "camera": "Medium shot, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
+      "lighting": "Full even bright lighting, no shadows, no mirrors",
+      "video_prompt": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Lena kneeling in front of Max. Camera: Medium shot, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
       "audio": {
         "dialogue": [
           {
-            "character_id": "character_002",
-            "text": "Ass gripping my cock."
-          },
-          {
             "character_id": "character_001",
-            "text": "Fuck it deeper."
+            "text": "Don't stop..."
           }
         ],
-        "sound_effects": [
-          "heavy wet thrusts",
-          "skin impact",
-          "prolonged moan"
-        ],
+        "sound_effects": [],
         "music": {
-          "mood": "rhythmic passionate",
-          "intensity": "medium"
+          "mood": "intense passionate",
+          "intensity": "high"
         }
       },
-      "previous_scene_context": "In scene 9, characters were in pose (On all fours). Clothing state: Fully nude, completely unclothed, bare skin. Genital alignment: Thick erect cock driving deep inside with continuous skin-to-skin contact at base. Last motion: Jhon continues steady rhythmic anal thrusting with controlled hip drive, pulling halfway back and driving forward to the hilt."
+      "penetration_state": "None",
+      "genital_alignment": "None",
+      "pose_lock": "Lena kneeling in front of Max",
+      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
+      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
+      "previous_scene_context": "In scene 9, character was in pose (Lena kneeling in front of Max). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: She climbs off. He turns her onto all fours in doggy position. He kneels behind her, grips her hips, and thrusts into her from behind."
     },
     {
       "id": "scene_011",
       "order": 11,
       "duration": 5.0,
       "location_id": "location_001",
-      "character_ids": [
-        "character_001",
-        "character_002"
-      ],
-      "clothing_state": "Fully nude, completely unclothed, bare skin",
-      "pose_type": "On all fours",
-      "penetration_state": "Intense deep rhythmic penetration",
-      "primary_motion": "Jhon accelerates his hip thrusts in deep penetrating strokes, driving his thick erect cock deeply into her anal entrance.",
-      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.",
-      "hand_positions": "Jhon: both hands gripping her hips tightly with firm control. Sunny: both hands clutching mattress sheets.",
-      "genital_alignment": "Thick erect cock driving deep to the hilt with continuous skin contact",
-      "contact_zone": "Continuous solid skin-to-skin contact at hips and penetration point, no dark voids",
-      "motion_intensity": "fast",
-      "expression": "Sunny: eyes closed, mouth open in anticipation. Jhon: focused expression",
-      "description": "Sunny remains on all fours, fully nude. Jhon maintains continuous steady deep rhythmic anal thrusting, burying his thick erect cock fully aligned deep inside her tight asshole on each stroke.",
-      "action": "Jhon thrusts his thick erect cock deeply into her anal entrance with increasing force and tempo.",
-      "camera": "Side medium shot, slow track, side view (matches CENTER PANEL 3/4 Side View)",
-      "lighting": "Soft ambient lighting, highlighting the bed and characters.",
-      "video_prompt": "Jhon accelerates his hip thrusts in deep penetrating strokes, driving his thick erect cock deeply into her anal entrance. Exact contact: Thick erect cock driving deep to the hilt with continuous skin contact. Hands: Jhon: both hands gripping her hips tightly with firm control. Sunny: both hands clutching mattress sheets.. Bodies remain locked in Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.. Camera: Side medium shot, slow track, side view (matches CENTER PANEL 3/4 Side View).",
+      "character_ids": ["character_001", "character_002"],
+      "act": "oral",
+      "wardrobe_events": [],
+      "clothing_state": "Canonical outfit from character reference",
+      "pose_type": "Lena kneeling in front of Max",
+      "primary_motion": "Max reaches climax and cums in her mouth. She keeps him inside as he finishes.",
+      "motion_intensity": "slow",
+      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
+      "description": "He pulls out. She turns around, kneels in front of him again, and takes his cock back into her mouth for another blowjob.",
+      "action": "Max reaches climax and cums in her mouth. She keeps him inside as he finishes.",
+      "camera": "Medium close-up, front-facing eye-level, tracking face and chest expressions (matches LEFT PANEL Front View of turnaround sheet)",
+      "lighting": "Full even bright lighting, no shadows, no mirrors",
+      "video_prompt": "Max reaches climax and cums in her mouth. She keeps him inside as he finishes. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Lena kneeling in front of Max. Camera: Medium close-up, front-facing eye-level, tracking face and chest expressions (matches LEFT PANEL Front View of turnaround sheet).",
       "audio": {
         "dialogue": [
           {
             "character_id": "character_001",
-            "text": "So full every time."
-          },
-          {
-            "character_id": "character_002",
-            "text": "Your ass is perfect."
+            "text": "Don't stop..."
           }
         ],
-        "sound_effects": [
-          "rhythmic wet friction",
-          "heavy breathing",
-          "sharp moan"
-        ],
+        "sound_effects": [],
         "music": {
-          "mood": "intense passionate",
-          "intensity": "high"
+          "mood": "climactic passionate",
+          "intensity": "very high"
         }
       },
-      "previous_scene_context": "In scene 10, characters were in pose (On all fours). Clothing state: Fully nude, completely unclothed, bare skin. Genital alignment: Thick erect cock fully aligned and buried deep inside on each forward stroke. Last motion: Jhon maintains powerful rhythmic hip thrusts, burying his thick erect cock fully aligned deep inside her ass on each stroke."
+      "penetration_state": "None",
+      "genital_alignment": "None",
+      "pose_lock": "Lena kneeling in front of Max",
+      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
+      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
+      "previous_scene_context": "In scene 10, character was in pose (Lena kneeling in front of Max). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: She turns around, kneels in front of him again, and takes his cock back into her mouth for another blowjob."
     },
     {
       "id": "scene_012",
       "order": 12,
       "duration": 5.0,
       "location_id": "location_001",
-      "character_ids": [
-        "character_001",
-        "character_002"
-      ],
-      "clothing_state": "Fully nude, completely unclothed, bare skin",
-      "pose_type": "On all fours",
-      "penetration_state": "Intense rapid deep penetration",
-      "primary_motion": "Jhon drives his hips forward with rapid, forceful anal thrusts, pounding deep inside with steady power.",
-      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.",
-      "hand_positions": "Jhon: both hands gripping her hips firmly, pulling her ass against his pelvis. Sunny: both hands braced firmly on mattress.",
-      "genital_alignment": "Thick erect cock slamming fully into her ass to the hilt on every thrust",
-      "contact_zone": "Continuous solid skin-to-skin contact at hips and penetration point, no dark voids",
-      "motion_intensity": "fast",
-      "expression": "Sunny: eyes closed, mouth open in anticipation. Jhon: focused expression",
-      "description": "Sunny remains on all fours, fully nude. Jhon accelerates the continuous steady deep rhythmic anal thrusting, thrusting his thick erect cock deeply into her anal entrance with increasing force.",
-      "action": "Jhon accelerates his thrusts with increasing force, pounding deep into her tight asshole.",
-      "camera": "Overhead angle, steady hold, rear view (matches RIGHT PANEL Rear View)",
-      "lighting": "Soft ambient lighting, highlighting the bed and characters.",
-      "video_prompt": "Jhon drives his hips forward with rapid, forceful anal thrusts, pounding deep inside with steady power. Exact contact: Thick erect cock slamming fully into her ass to the hilt on every thrust. Hands: Jhon: both hands gripping her hips firmly, pulling her ass against his pelvis. Sunny: both hands braced firmly on mattress.. Bodies remain locked in Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.. Camera: Overhead angle, steady hold, rear view (matches RIGHT PANEL Rear View).",
-      "audio": {
-        "dialogue": [
-          {
-            "character_id": "character_002",
-            "text": "Taking this hard now."
-          },
-          {
-            "character_id": "character_001",
-            "text": "Yes, pound my ass."
-          }
-        ],
-        "sound_effects": [
-          "faster wet slaps",
-          "loud moans",
-          "skin impact"
-        ],
-        "music": {
-          "mood": "intense passionate",
-          "intensity": "high"
-        }
-      },
-      "previous_scene_context": "In scene 11, characters were in pose (On all fours). Clothing state: Fully nude, completely unclothed, bare skin. Genital alignment: Thick erect cock driving deep to the hilt with continuous skin contact. Last motion: Jhon accelerates his hip thrusts in deep penetrating strokes, driving his thick erect cock deeply into her anal entrance."
-    },
-    {
-      "id": "scene_013",
-      "order": 13,
-      "duration": 5.0,
-      "location_id": "location_001",
-      "character_ids": [
-        "character_001",
-        "character_002"
-      ],
-      "clothing_state": "Fully nude, completely unclothed, bare skin",
-      "pose_type": "On all fours",
-      "penetration_state": "Intense heavy deep penetration",
-      "primary_motion": "Jhon delivers heavy deep anal thrusts with full pelvis contact, driving his thick erect cock to the hilt on every stroke.",
-      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.",
-      "hand_positions": "Jhon: both hands locked onto her hips, fingers pressed into her skin. Sunny: both hands clutching mattress sheets.",
-      "genital_alignment": "Thick erect cock buried deep to the hilt, pubic bone pressed against her buttocks",
-      "contact_zone": "Continuous solid skin-to-skin contact at hips and penetration point, no dark voids",
-      "motion_intensity": "fast",
-      "expression": "Sunny: eyes closed, mouth open in anticipation. Jhon: focused expression",
-      "description": "Sunny remains on all fours, fully nude. Jhon delivers continuous steady deep rhythmic anal thrusting, driving his thick erect cock fully aligned and buried deep inside her stretched asshole.",
-      "action": "Jhon delivers powerful rhythmic thrusts, driving his thick erect cock fully aligned and buried deep inside her stretched asshole.",
-      "camera": "Close-up rear, slow zoom-in, rear view (matches RIGHT PANEL Rear View)",
-      "lighting": "Soft ambient lighting, highlighting the bed and characters.",
-      "video_prompt": "Jhon delivers heavy deep anal thrusts with full pelvis contact, driving his thick erect cock to the hilt on every stroke. Exact contact: Thick erect cock buried deep to the hilt, pubic bone pressed against her buttocks. Hands: Jhon: both hands locked onto her hips, fingers pressed into her skin. Sunny: both hands clutching mattress sheets.. Bodies remain locked in Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.. Camera: Close-up rear, slow zoom-in, rear view (matches RIGHT PANEL Rear View).",
+      "character_ids": ["character_001", "character_002"],
+      "act": "other_contact",
+      "wardrobe_events": [],
+      "clothing_state": "Canonical outfit from character reference",
+      "pose_type": "Side by side on bed",
+      "primary_motion": "They lie side by side on the white bed in a quiet embrace, both breathing softly",
+      "motion_intensity": "very slow",
+      "expression": "Both: soft smiles, relaxed expressions",
+      "description": "The woman with long dark hair slowly pulls back and swallows. The muscular man gently pulls her up into his arms. They lie side by side on the white bed in a quiet embrace, both breathing softly as the scene ends under the bright even light.",
+      "action": "They lie side by side on the white bed in a quiet embrace, both breathing softly.",
+      "camera": "Medium shot, front-facing eye-level, capturing both in a quiet embrace (matches LEFT PANEL Front View of turnaround sheet)",
+      "lighting": "Full even bright lighting, no shadows, no mirrors",
+      "video_prompt": "They lie side by side on the white bed in a quiet embrace, both breathing softly. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Side by side on bed. Camera: Medium shot, front-facing eye-level, capturing both in a quiet embrace (matches LEFT PANEL Front View of turnaround sheet).",
       "audio": {
         "dialogue": [
           {
             "character_id": "character_001",
-            "text": "Don't stop fucking my ass."
+            "text": "Thank you..."
           },
           {
             "character_id": "character_002",
-            "text": "Deep strokes only."
+            "text": "Anytime..."
           }
         ],
-        "sound_effects": [
-          "intense wet thrusting",
-          "strained breathing",
-          "deep moan"
-        ],
-        "music": {
-          "mood": "intense passionate",
-          "intensity": "high"
-        }
-      },
-      "previous_scene_context": "In scene 12, characters were in pose (On all fours). Clothing state: Fully nude, completely unclothed, bare skin. Genital alignment: Thick erect cock slamming fully into her ass to the hilt on every thrust. Last motion: Jhon drives his hips forward with rapid, forceful anal thrusts, pounding deep inside with steady power."
-    },
-    {
-      "id": "scene_014",
-      "order": 14,
-      "duration": 5.0,
-      "location_id": "location_001",
-      "character_ids": [
-        "character_001",
-        "character_002"
-      ],
-      "clothing_state": "Fully nude, completely unclothed, bare skin",
-      "pose_type": "On all fours",
-      "penetration_state": "Continuous powerful deep penetration",
-      "primary_motion": "Jhon drives forward in continuous intense anal thrusting, cock buried deep as her hips rock against his pelvis.",
-      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.",
-      "hand_positions": "Jhon: both hands gripping her hips firmly, stabilizing her body. Sunny: both hands planted flat on the mattress.",
-      "genital_alignment": "Thick erect cock driving fully to the hilt, continuous tight anal grip",
-      "contact_zone": "Continuous solid skin-to-skin contact at hips and penetration point, no dark voids",
-      "motion_intensity": "fast",
-      "expression": "Sunny: eyes closed, mouth open in anticipation. Jhon: focused expression",
-      "description": "Sunny remains on all fours, fully nude. Jhon continues continuous steady deep rhythmic anal thrusting, thrusting his thick erect cock deeply into her anal entrance as her body rocks forward.",
-      "action": "Jhon continues powerful rhythmic thrusting, cock buried deep as Sunny's body rocks forward against the bed.",
-      "camera": "Side medium shot, gentle side track, side view (matches CENTER PANEL 3/4 Side View)",
-      "lighting": "Soft ambient lighting, highlighting the bed and characters.",
-      "video_prompt": "Jhon drives forward in continuous intense anal thrusting, cock buried deep as her hips rock against his pelvis. Exact contact: Thick erect cock driving fully to the hilt, continuous tight anal grip. Hands: Jhon: both hands gripping her hips firmly, stabilizing her body. Sunny: both hands planted flat on the mattress.. Bodies remain locked in Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.. Camera: Side medium shot, gentle side track, side view (matches CENTER PANEL 3/4 Side View).",
-      "audio": {
-        "dialogue": [
-          {
-            "character_id": "character_002",
-            "text": "Almost there, tight ass."
-          },
-          {
-            "character_id": "character_001",
-            "text": "Fill me up."
-          }
-        ],
-        "sound_effects": [
-          "rhythmic wet impact",
-          "heavy gasps",
-          "rising moan"
-        ],
-        "music": {
-          "mood": "intense passionate",
-          "intensity": "high"
-        }
-      },
-      "previous_scene_context": "In scene 13, characters were in pose (On all fours). Clothing state: Fully nude, completely unclothed, bare skin. Genital alignment: Thick erect cock buried deep to the hilt, pubic bone pressed against her buttocks. Last motion: Jhon delivers heavy deep anal thrusts with full pelvis contact, driving his thick erect cock to the hilt on every stroke."
-    },
-    {
-      "id": "scene_015",
-      "order": 15,
-      "duration": 5.0,
-      "location_id": "location_001",
-      "character_ids": [
-        "character_001",
-        "character_002"
-      ],
-      "clothing_state": "Fully nude, completely unclothed, bare skin",
-      "pose_type": "On all fours",
-      "penetration_state": "Full depth hilt hold during climax",
-      "primary_motion": "Jhon performs one final deep thrust and holds his thick erect cock buried to the hilt inside her tight ass as he cums.",
-      "pose_lock": "Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.",
-      "hand_positions": "Jhon: both hands clutching her hips tightly, holding her pinned against his pelvis. Sunny: both hands gripping mattress sheets.",
-      "genital_alignment": "Thick erect cock buried fully to the hilt, hips locked together in final climax hold",
-      "contact_zone": "Continuous solid skin-to-skin contact at hips and penetration point, no dark voids",
-      "motion_intensity": "final deep hold",
-      "expression": "Sunny: eyes closed, mouth open in anticipation. Jhon: focused expression",
-      "description": "Sunny remains on all fours, fully nude. Jhon performs one final deep continuous steady deep rhythmic anal thrusting, thrusting his thick erect cock fully aligned and buried deep inside her tight asshole as he cumms.",
-      "action": "Jhon drives his thick erect cock fully to the hilt in one final deep thrust and holds deep inside her tight asshole as he climaxes.",
-      "camera": "Overhead angle, slow zoom-out, rear view (matches RIGHT PANEL Rear View)",
-      "lighting": "Soft ambient lighting, highlighting the bed and characters.",
-      "video_prompt": "Jhon performs one final deep thrust and holds his thick erect cock buried to the hilt inside her tight ass as he cums. Exact contact: Thick erect cock buried fully to the hilt, hips locked together in final climax hold. Hands: Jhon: both hands clutching her hips tightly, holding her pinned against his pelvis. Sunny: both hands gripping mattress sheets.. Bodies remain locked in Woman on all fours, knees spread, back arched, ass raised. Man kneeling directly behind her.. Camera: Overhead angle, slow zoom-out, rear view (matches RIGHT PANEL Rear View).",
-      "audio": {
-        "dialogue": [
-          {
-            "character_id": "character_001",
-            "text": "Cum deep in my ass."
-          },
-          {
-            "character_id": "character_002",
-            "text": "Filling your hole now."
-          }
-        ],
-        "sound_effects": [
-          "final wet thrust",
-          "loud climax moan",
-          "heavy breathing"
-        ],
+        "sound_effects": [],
         "music": {
           "mood": "climactic passionate",
           "intensity": "very high"
         }
       },
-      "previous_scene_context": "In scene 14, characters were in pose (On all fours). Clothing state: Fully nude, completely unclothed, bare skin. Genital alignment: Thick erect cock driving fully to the hilt, continuous tight anal grip. Last motion: Jhon drives forward in continuous intense anal thrusting, cock buried deep as her hips rock against his pelvis."
+      "penetration_state": "None",
+      "genital_alignment": "None",
+      "pose_lock": "Side by side on bed",
+      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
+      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
+      "previous_scene_context": "In scene 11, character was in pose (Lena kneeling in front of Max). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: He pulls out. She turns around, kneels in front of him again, and takes his cock back into her mouth for another blowjob."
     }
   ]
 }
