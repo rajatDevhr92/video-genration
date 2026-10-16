@@ -3,6 +3,7 @@ import logging
 import os
 import shutil
 from pathlib import Path
+from typing import Dict, Any, Optional, List
 
 from .composition_generator import CompositionGenerator
 from .config import OUTPUT_DIR
