@@ -437,6 +437,13 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
             for s in scenes:
                 if int(s.get("order", 0)) < start_scene:
                     tracker.advance(s)
+            prev_order = start_scene - 1
+            if prev_order >= 1 and prev_order <= len(scenes):
+                prev_scene_obj = scenes[prev_order - 1]
+                prev_sid = prev_scene_obj.get("id", f"scene_{prev_order:03d}")
+                candidate_frame = job_dir / "scenes" / prev_sid / "last_frame.png"
+                if candidate_frame.exists():
+                    previous_last_frame = candidate_frame
 
         for scene in scenes:
             order = int(scene["order"])

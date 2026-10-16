@@ -81,19 +81,129 @@ class ContinuityTracker:
 
     # ---- called once per scene, in order -------------------------------
     def advance(self, scene: dict) -> Dict[str, CharState]:
-        events = scene.get("wardrobe_events") or []
-        if not events:
+        raw_events = scene.get("wardrobe_events")
+        if raw_events is None or (isinstance(raw_events, list) and not raw_events):
             events = self._fallback_events(scene)
+        else:
+            events = self._normalize_events(raw_events, scene)
+
         for ev in events:
-            cs = self.state.get(ev.get("character_id"))
-            if cs and ev.get("event") in EVENTS:
-                cs.apply(ev["event"])
+            if isinstance(ev, dict):
+                cs = self.state.get(ev.get("character_id"))
+                event_name = ev.get("event")
+                if cs and event_name in EVENTS:
+                    cs.apply(event_name)
+
+        # Preserve normalized structured events in the scene
+        scene["wardrobe_events"] = events
         scene_cids = scene.get("character_ids") or list(self.state.keys())
         scene["clothing_state_by_char"] = {
             cid: self.state[cid].clothing_text()
             for cid in scene_cids if cid in self.state}
         return {cid: self.state[cid] for cid in scene_cids
                 if cid in self.state}
+
+    def _normalize_events(self, raw_events, scene: dict) -> List[Dict[str, str]]:
+        if isinstance(raw_events, (dict, str)):
+            raw_list = [raw_events]
+        elif isinstance(raw_events, (list, tuple)):
+            raw_list = list(raw_events)
+        else:
+            return []
+
+        text = f"{scene.get('description', '')} {scene.get('action', '')} {scene.get('primary_motion', '')}"
+        scene_cids = [cid for cid in scene.get("character_ids", []) if cid in self.state] or list(self.state.keys())
+        normalized = []
+
+        for item in raw_list:
+            cid = None
+            ev_name = None
+
+            if isinstance(item, dict):
+                cid = item.get("character_id") or item.get("character") or item.get("id")
+                ev_name = item.get("event") or item.get("action") or item.get("type")
+            elif isinstance(item, str):
+                s = item.strip()
+                if ":" in s:
+                    parts = s.split(":", 1)
+                    cid, ev_name = parts[0].strip(), parts[1].strip()
+                elif " - " in s:
+                    parts = s.split(" - ", 1)
+                    cid, ev_name = parts[0].strip(), parts[1].strip()
+                else:
+                    ev_name = s
+
+            # Resolve canonical event name
+            if ev_name:
+                cleaned_ev = str(ev_name).lower().strip().replace("-", "_").replace(" ", "_")
+                if cleaned_ev in EVENTS:
+                    ev_name = cleaned_ev
+                elif any(k in cleaned_ev for k in ("remove_all", "undress", "strip", "nude", "naked")):
+                    ev_name = "remove_all"
+                elif any(k in cleaned_ev for k in ("dress_all", "clothe", "get_dressed")):
+                    ev_name = "dress_all"
+                elif any(k in cleaned_ev for k in ("remove_top", "shirt", "blouse", "bra", "jacket", "top")):
+                    ev_name = "remove_top"
+                elif any(k in cleaned_ev for k in ("remove_bottom", "pants", "trousers", "skirt", "shorts", "thong", "panties", "underwear", "boxers", "briefs", "bottom")):
+                    ev_name = "remove_bottom"
+                else:
+                    ev_name = None
+
+            if not ev_name:
+                continue
+
+            # Match character ID or Name
+            target_cid = None
+            if cid:
+                c_str = str(cid).strip().lower()
+                for scid, cs in self.state.items():
+                    if scid.lower() == c_str or cs.name.lower() == c_str:
+                        target_cid = scid
+                        break
+
+            if not target_cid:
+                if len(scene_cids) == 1:
+                    target_cid = scene_cids[0]
+                else:
+                    # 1. Possessive check in scene text: e.g. "Sunny's blouse", "Jhone's shirt"
+                    for scid in scene_cids:
+                        cname = self.state[scid].name.lower()
+                        if re.search(rf"\b{re.escape(cname)}'s\b", text, re.I):
+                            target_cid = scid
+                            break
+
+                    # 2. Gendered pronoun check in scene text
+                    if not target_cid:
+                        females = [c for c in scene_cids if self.state[c].gender == "female"]
+                        males = [c for c in scene_cids if self.state[c].gender == "male"]
+                        has_fem = bool(re.search(r"\b(her|she)\s+(?:[a-z]+\s+)*(?:shirt|blouse|top|jacket|dress|bra|pants|trousers|skirt|shorts|thong|panties|underwear|boxers|briefs|shoulders|arms|hips|thighs|legs|body)\b", text, re.I))
+                        has_masc = bool(re.search(r"\b(his|he|him)\s+(?:[a-z]+\s+)*(?:shirt|blouse|top|jacket|dress|bra|pants|trousers|skirt|shorts|thong|panties|underwear|boxers|briefs|shoulders|arms|hips|thighs|legs|body)\b", text, re.I))
+                        if has_fem and not has_masc and females:
+                            target_cid = females[0]
+                        elif has_masc and not has_fem and males:
+                            target_cid = males[0]
+
+                    # 3. Check current state (which character still has this clothing item on)
+                    if not target_cid:
+                        if ev_name == "remove_top":
+                            wearing = [c for c in scene_cids if self.state[c].top_on]
+                            if len(wearing) == 1:
+                                target_cid = wearing[0]
+                        elif ev_name == "remove_bottom":
+                            wearing = [c for c in scene_cids if self.state[c].bottom_on]
+                            if len(wearing) == 1:
+                                target_cid = wearing[0]
+                        elif ev_name == "remove_all":
+                            wearing = [c for c in scene_cids if not self.state[c].nude]
+                            if len(wearing) == 1:
+                                target_cid = wearing[0]
+
+                    if not target_cid:
+                        target_cid = scene_cids[0]
+
+            normalized.append({"character_id": target_cid, "event": ev_name})
+
+        return normalized
 
     # ---- last-resort fallback: sentence-level, word-boundary only ------
     _VERB = re.compile(

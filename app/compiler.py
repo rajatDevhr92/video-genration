@@ -172,8 +172,11 @@ def enforce_wardrobe(compiled_scenes: List[Dict[str, Any]]) -> None:
         if s.get("act") in EXPOSED_ACTS:
             for cid in s.get("character_ids", []):
                 already_removed = any(
-                    e.get("character_id") == cid
-                    and e.get("event") in ("remove_bottom", "remove_all")
+                    (
+                        (e.get("character_id") == cid and e.get("event") in ("remove_bottom", "remove_all"))
+                        if isinstance(e, dict)
+                        else (str(e) in ("remove_bottom", "remove_all"))
+                    )
                     for sc in compiled_scenes
                     if sc.get("order", 0) <= s.get("order", 0)
                     for e in sc.get("wardrobe_events", [])

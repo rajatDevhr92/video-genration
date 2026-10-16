@@ -70,7 +70,27 @@ def main():
     assert "CHARACTER BODY SEPARATION" in motion_prompt, "Motion prompt missing character body separation!"
     assert "smooth skin texture" in motion_prompt.lower(), "Motion prompt missing smooth skin directive!"
     assert "flawless" in motion_prompt.lower(), "Motion prompt missing flawless skin directive!"
-    logger.info("✅ Adult visual detail & character body separation prompt tests passed.")
+    # 5. Test ContinuityTracker handling string & dict wardrobe events
+    from app.continuity import ContinuityTracker
+    test_chars = [
+        {"id": "character_001", "name": "Sunny", "gender": "female", "clothing": "silk blouse and skirt"},
+        {"id": "character_002", "name": "Jhone", "gender": "male", "clothing": "shirt and trousers"},
+    ]
+    tracker = ContinuityTracker(test_chars)
+    scene_str_event = {
+        "id": "scene_004",
+        "order": 4,
+        "character_ids": ["character_001", "character_002"],
+        "description": "Jhone slides the blouse off Sunny's shoulders and down her arms.",
+        "action": "Jhone continuously slides Sunny's blouse off her arms.",
+        "wardrobe_events": ["remove_top"],
+    }
+    states = tracker.advance(scene_str_event)
+    assert states["character_001"].top_on is False, "Sunny's top should have been removed!"
+    assert states["character_002"].top_on is True, "Jhone's top should still be on!"
+    assert isinstance(scene_str_event["wardrobe_events"][0], dict), "Wardrobe event should be normalized to dict!"
+    assert scene_str_event["wardrobe_events"][0]["character_id"] == "character_001"
+    logger.info("✅ Continuity tracker string-event normalization test passed.")
 
     logger.info("🎉 ALL LOCAL VERIFICATION CHECKS PASSED!")
 

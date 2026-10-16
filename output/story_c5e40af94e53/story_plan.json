@@ -1,32 +1,32 @@
 {
-  "title": "Intimate Night",
-  "summary": "A passionate night of intimate encounters between a woman and a muscular man in a simple bedroom setting.",
+  "title": "Sunny and Jhone - Intimate Anal Cowgirl Encounter",
+  "summary": "In a warmly lit indoor bedroom, 22-year-old Sunny and 24-year-old Jhone share a passionate escalation from tender contact to fully nude anal cowgirl on the bed. The sequence builds through sequential undressing and positioning into continuous deep rhythmic anal thrusting.",
   "characters": [
     {
       "id": "character_001",
-      "name": "Lena",
+      "name": "Sunny",
       "gender": "female",
-      "appearance": "Adult woman, long dark hair, olive skin, brown eyes, slender build, wearing a black lace bra and matching thong.",
-      "clothing": "Black lace bra and matching thong",
-      "personality": "Passionate and adventurous",
-      "visual_anchor": "Adult woman, long dark hair, olive skin, brown eyes, slender build, wearing a black lace bra and matching thong."
+      "appearance": "22 years old, long straight black hair cascading past shoulders, dark brown eyes, East Asian features with high cheekbones and full lips, slender athletic build with C-cup breasts, smooth fair skin tone",
+      "clothing": "fitted black silk blouse, matching black skirt, black lace lingerie set underneath, bare feet",
+      "personality": "Expressive, sensual, confident",
+      "visual_anchor": "Long straight black hair, dark brown eyes, high cheekbones, full lips, slender athletic frame with C-cup breasts"
     },
     {
       "id": "character_002",
-      "name": "Max",
+      "name": "Jhone",
       "gender": "male",
-      "appearance": "Adult man, short black hair, brown eyes, olive skin, muscular build, wearing black swim trunks.",
-      "clothing": "Black swim trunks",
-      "personality": "Confident and dominant",
-      "visual_anchor": "Adult man, short black hair, brown eyes, olive skin, muscular build, wearing black swim trunks."
+      "appearance": "24 years old, short dark brown hair, light stubble, athletic muscular build with defined abs and broad shoulders, thick erect cock approximately 7.5 inches long with prominent veins and flushed head",
+      "clothing": "dark gray button-down shirt unbuttoned at the collar, black trousers, no shoes",
+      "personality": "Dominant, attentive, passionate",
+      "visual_anchor": "Short dark brown hair, light stubble, muscular athletic torso, thick veined erect cock"
     }
   ],
   "locations": [
     {
       "id": "location_001",
-      "name": "Simple Bedroom",
-      "description": "A simple bedroom with a large bed covered in plain white sheets. Full even bright lighting fills the room — no shadows, no mirrors. Only the bed is visible.",
-      "visual_style": "Bright, even lighting, simple decor, large bed with white sheets."
+      "name": "Indoor Bedroom",
+      "description": "Medium-sized bedroom with a large platform bed centered against the far wall, soft white duvet and pillows, wooden nightstands with warm bedside lamps, neutral beige walls, large window with sheer curtains filtering soft daylight, hardwood floor",
+      "visual_style": "Cinematic photorealistic 8k, warm atmospheric lighting, shallow depth of field"
     }
   ],
   "scenes": [
@@ -36,36 +36,41 @@
       "duration": 5.0,
       "location_id": "location_001",
       "character_ids": ["character_001", "character_002"],
-      "act": "oral",
-      "wardrobe_events": [],
-      "clothing_state": "Canonical outfit from character reference",
-      "pose_type": "Kneeling on bed, leaning forward",
-      "primary_motion": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing",
+      "description": "Sunny and Jhone stand facing each other near the foot of the bed in the softly lit bedroom, beginning a slow intimate approach.",
+      "action": "Jhone steps forward and gently pulls Sunny into a close standing embrace.",
+      "camera": "Medium shot, front angle (matches LEFT PANEL Front View of turnaround sheet)",
+      "camera_size": "medium",
+      "camera_angle": "front",
+      "turnaround_panel": "LEFT PANEL Front View",
+      "lighting": "Soft warm indoor cinematic lighting with shallow depth of field",
+      "video_prompt": "Sunny and Jhone: slow forward step into embrace. Exact contact: Bodies moving into full frontal contact. Hands: Jhone hands resting on Sunny's waist; Sunny hands rising to his chest. Bodies remain locked in standing embrace facing each other. Camera: Medium shot, front angle (matches LEFT PANEL Front View of turnaround sheet).",
+      "pose_lock": "standing embrace facing each other",
+      "pose_changed": true,
+      "hands": "Jhone: hands on her waist. Sunny: hands resting on his chest.",
+      "hand_positions": "Jhone: hands on her waist. Sunny: hands resting on his chest.",
+      "contact_zone": "approaching",
+      "contact_state": "approaching",
       "motion_intensity": "slow",
-      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
-      "description": "Lena kneels on the bed in front of Max, taking his hard cock into her mouth and starting a slow steady blowjob.",
-      "action": "Lena slides her lips up and down Max's shaft, her hand holding the base while she sucks him deeper.",
-      "camera": "Medium shot, low angle from behind, tight focus on Lena's mouth and Max's cock (matches RIGHT PANEL Rear View of turnaround sheet)",
-      "lighting": "Full even bright lighting, no shadows, no mirrors",
-      "video_prompt": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Kneeling on bed, leaning forward. Camera: Medium shot, low angle from behind, tight focus on Lena's mouth and Max's cock (matches RIGHT PANEL Rear View of turnaround sheet).",
+      "primary_motion": "slow forward step into embrace",
+      "act": "touch",
+      "wardrobe_events": [],
+      "clothing_state": "wearing initial outfits",
+      "expression": "intense, emotionally grounded gaze",
       "audio": {
+        "narration": [],
         "dialogue": [
           {
             "character_id": "character_001",
-            "text": "Don't stop..."
+            "text": "I've been waiting for this all day."
           }
         ],
-        "sound_effects": [],
+        "sound_effects": ["soft footsteps on hardwood", "gentle fabric rustle"],
         "music": {
           "mood": "sensual",
-          "intensity": "low"
+          "intensity": "slow"
         }
       },
-      "penetration_state": "None",
-      "genital_alignment": "None",
-      "pose_lock": "Kneeling on bed, leaning forward",
-      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
-      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids"
+      "continuity": {}
     },
     {
       "id": "scene_002",
@@ -73,37 +78,36 @@
       "duration": 5.0,
       "location_id": "location_001",
       "character_ids": ["character_001", "character_002"],
-      "act": "oral",
-      "wardrobe_events": [],
-      "clothing_state": "Canonical outfit from character reference",
-      "pose_type": "Lying on bed, legs spread",
-      "primary_motion": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing",
+      "description": "Still in standing embrace, Jhone leans in and initiates a deep continuous kiss while holding Sunny close.",
+      "action": "Jhone and Sunny share a continuous deep passionate kiss with slight head tilts.",
+      "camera": "Close-up, front angle (matches LEFT PANEL Front View of turnaround sheet)",
+      "camera_size": "close-up",
+      "camera_angle": "front",
+      "turnaround_panel": "LEFT PANEL Front View",
+      "lighting": "Soft warm indoor cinematic lighting with shallow depth of field",
+      "video_prompt": "Sunny and Jhone: continuous deep passionate kissing motion. Exact contact: Lips locked in continuous kiss, bodies pressed together. Hands: Jhone hands firmly on her lower back; Sunny hands sliding up around his neck. Bodies remain locked in standing embrace facing each other. Camera: Close-up, front angle (matches LEFT PANEL Front View of turnaround sheet).",
+      "pose_lock": "standing embrace facing each other",
+      "pose_changed": false,
+      "hands": "Jhone: hands firmly on her lower back. Sunny: hands around his neck.",
+      "hand_positions": "Jhone: hands firmly on her lower back. Sunny: hands around his neck.",
+      "contact_zone": "lips and torsos",
+      "contact_state": "engaged_moving",
       "motion_intensity": "slow",
-      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
-      "description": "Close-up of Lena's lips sliding up and down Max's shaft. Her hand holds the base while she sucks him deeper.",
-      "action": "Lena continues her blowjob, her hand holding the base of Max's cock while she sucks him deeper.",
-      "camera": "Close-up, front-facing eye-level, tracking face and chest expressions (matches LEFT PANEL Front View of turnaround sheet)",
-      "lighting": "Full even bright lighting, no shadows, no mirrors",
-      "video_prompt": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Lying on bed, legs spread. Camera: Close-up, front-facing eye-level, tracking face and chest expressions (matches LEFT PANEL Front View of turnaround sheet).",
+      "primary_motion": "continuous deep passionate kissing",
+      "act": "kiss",
+      "wardrobe_events": [],
+      "clothing_state": "wearing initial outfits",
+      "expression": "eyes half-closed in focused intensity",
       "audio": {
-        "dialogue": [
-          {
-            "character_id": "character_001",
-            "text": "Don't stop..."
-          }
-        ],
-        "sound_effects": [],
+        "narration": [],
+        "dialogue": [],
+        "sound_effects": ["soft wet kissing sounds", "quiet breathing"],
         "music": {
           "mood": "sensual",
-          "intensity": "low"
+          "intensity": "slow"
         }
       },
-      "penetration_state": "None",
-      "genital_alignment": "None",
-      "pose_lock": "Lying on bed, legs spread",
-      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
-      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
-      "previous_scene_context": "In scene 1, character was in pose (Kneeling on bed, leaning forward). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: Lena kneels on the bed in front of Max, taking his hard cock into her mouth and starting a slow steady blowjob."
+      "continuity": {}
     },
     {
       "id": "scene_003",
@@ -111,37 +115,41 @@
       "duration": 5.0,
       "location_id": "location_001",
       "character_ids": ["character_001", "character_002"],
-      "act": "vaginal",
-      "wardrobe_events": [],
-      "clothing_state": "Canonical outfit from character reference",
-      "pose_type": "Cowgirl position, riding Max",
-      "primary_motion": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing",
+      "description": "Jhone's hands move to the buttons of Sunny's black silk blouse and begin unfastening them one by one while they remain close.",
+      "action": "Jhone continuously unbuttons Sunny's silk blouse from top to bottom with both hands.",
+      "camera": "Medium shot, 3/4 side angle (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
+      "camera_size": "medium",
+      "camera_angle": "side",
+      "turnaround_panel": "CENTER PANEL 3/4 Side View",
+      "lighting": "Soft warm indoor cinematic lighting with shallow depth of field",
+      "video_prompt": "Sunny and Jhone: continuous unbuttoning of blouse. Exact contact: Hands working the buttons while torsos remain close. Hands: Jhone both hands methodically opening her blouse buttons; Sunny hands resting lightly on his forearms. Bodies remain locked in standing close contact facing each other. Camera: Medium shot, 3/4 side angle (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
+      "pose_lock": "standing close contact facing each other",
+      "pose_changed": false,
+      "hands": "Jhone: both hands unbuttoning her blouse. Sunny: hands resting on his forearms.",
+      "hand_positions": "Jhone: both hands unbuttoning her blouse. Sunny: hands resting on his forearms.",
+      "contact_zone": "torso",
+      "contact_state": "engaged_moving",
       "motion_intensity": "slow",
-      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
-      "description": "Lena climbs on top in cowgirl position, guiding Max's cock inside her and begins riding him with slow hip movements.",
-      "action": "Lena guides Max's cock inside her and begins riding him with slow hip movements.",
-      "camera": "Medium shot, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
-      "lighting": "Full even bright lighting, no shadows, no mirrors",
-      "video_prompt": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Cowgirl position, riding Max. Camera: Medium shot, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
+      "primary_motion": "continuous unbuttoning of blouse",
+      "act": "touch",
+      "wardrobe_events": [],
+      "clothing_state": "wearing initial outfits",
+      "expression": "anticipatory soft smile",
       "audio": {
+        "narration": [],
         "dialogue": [
           {
-            "character_id": "character_001",
-            "text": "Don't stop..."
+            "character_id": "character_002",
+            "text": "Let me take this off you."
           }
         ],
-        "sound_effects": [],
+        "sound_effects": ["soft fabric shifting", "small button clicks"],
         "music": {
           "mood": "sensual",
-          "intensity": "low"
+          "intensity": "slow"
         }
       },
-      "penetration_state": "None",
-      "genital_alignment": "None",
-      "pose_lock": "Cowgirl position, riding Max",
-      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
-      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
-      "previous_scene_context": "In scene 2, character was in pose (Lying on bed, legs spread). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: Close-up of Lena's lips sliding up and down Max's shaft. Her hand holds the base while she sucks him deeper."
+      "continuity": {}
     },
     {
       "id": "scene_004",
@@ -149,37 +157,36 @@
       "duration": 5.0,
       "location_id": "location_001",
       "character_ids": ["character_001", "character_002"],
-      "act": "vaginal",
-      "wardrobe_events": [],
-      "clothing_state": "Canonical outfit from character reference",
-      "pose_type": "Cowgirl position, riding Max",
-      "primary_motion": "Lena bounces her hips up and down in continuous rhythm. Max's hands rest on her hips.",
+      "description": "Jhone slides the opened black silk blouse off Sunny's shoulders and down her arms until it falls away.",
+      "action": "Jhone continuously slides the blouse off Sunny's shoulders and arms in one smooth motion.",
+      "camera": "Medium shot, front angle (matches LEFT PANEL Front View of turnaround sheet)",
+      "camera_size": "medium",
+      "camera_angle": "front",
+      "turnaround_panel": "LEFT PANEL Front View",
+      "lighting": "Soft warm indoor cinematic lighting with shallow depth of field",
+      "video_prompt": "Sunny and Jhone: continuous sliding of blouse off shoulders. Exact contact: Hands guiding fabric down her arms while chests remain near. Hands: Jhone hands sliding the blouse down her arms; Sunny arms slightly raised to assist. Bodies remain locked in standing close contact. Camera: Medium shot, front angle (matches LEFT PANEL Front View of turnaround sheet).",
+      "pose_lock": "standing close contact",
+      "pose_changed": false,
+      "hands": "Jhone: hands sliding blouse down her arms. Sunny: arms slightly raised.",
+      "hand_positions": "Jhone: hands sliding blouse down her arms. Sunny: arms slightly raised.",
+      "contact_zone": "shoulders and arms",
+      "contact_state": "engaged_moving",
       "motion_intensity": "slow",
-      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
-      "description": "She rides him in cowgirl, bouncing her hips up and down in continuous rhythm. Her hands rest on his chest.",
-      "action": "Lena bounces her hips up and down in continuous rhythm, her hands resting on Max's chest.",
-      "camera": "Medium side angle, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
-      "lighting": "Full even bright lighting, no shadows, no mirrors",
-      "video_prompt": "Lena bounces her hips up and down in continuous rhythm. Max's hands rest on her hips. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Cowgirl position, riding Max. Camera: Medium side angle, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
+      "primary_motion": "continuous sliding of blouse off shoulders",
+      "act": "touch",
+      "wardrobe_events": ["remove_top"],
+      "clothing_state": "blouse removed, still wearing skirt and lingerie",
+      "expression": "soft anticipatory gaze",
       "audio": {
-        "dialogue": [
-          {
-            "character_id": "character_001",
-            "text": "Don't stop..."
-          }
-        ],
-        "sound_effects": [],
+        "narration": [],
+        "dialogue": [],
+        "sound_effects": ["silk fabric sliding", "soft fabric drop"],
         "music": {
           "mood": "sensual",
-          "intensity": "medium"
+          "intensity": "slow"
         }
       },
-      "penetration_state": "None",
-      "genital_alignment": "None",
-      "pose_lock": "Cowgirl position, riding Max",
-      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
-      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
-      "previous_scene_context": "In scene 3, character was in pose (Cowgirl position, riding Max). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: Lena climbs on top in cowgirl position, guiding Max's cock inside her and begins riding him with slow hip movements."
+      "continuity": {}
     },
     {
       "id": "scene_005",
@@ -187,37 +194,41 @@
       "duration": 5.0,
       "location_id": "location_001",
       "character_ids": ["character_001", "character_002"],
-      "act": "vaginal",
-      "wardrobe_events": [],
-      "clothing_state": "Canonical outfit from character reference",
-      "pose_type": "Cowgirl position, riding Max",
-      "primary_motion": "Lena slides up and down on Max's cock with clear motion. Max's hands rest on her hips.",
+      "description": "Jhone reaches behind Sunny and unzips her black skirt, then guides it down over her hips.",
+      "action": "Jhone continuously unzips and slides Sunny's skirt down over her hips in one fluid motion.",
+      "camera": "Medium shot, 3/4 side angle (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
+      "camera_size": "medium",
+      "camera_angle": "side",
+      "turnaround_panel": "CENTER PANEL 3/4 Side View",
+      "lighting": "Soft warm indoor cinematic lighting with shallow depth of field",
+      "video_prompt": "Sunny and Jhone: continuous unzipping and sliding of skirt downward. Exact contact: Hands guiding skirt over hips while bodies stay close. Hands: Jhone hands working the zipper then pushing skirt down; Sunny hands resting on his shoulders for balance. Bodies remain locked in standing close contact. Camera: Medium shot, 3/4 side angle (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
+      "pose_lock": "standing close contact",
+      "pose_changed": false,
+      "hands": "Jhone: hands unzipping and sliding skirt down. Sunny: hands on his shoulders.",
+      "hand_positions": "Jhone: hands unzipping and sliding skirt down. Sunny: hands on his shoulders.",
+      "contact_zone": "hips",
+      "contact_state": "engaged_moving",
       "motion_intensity": "slow",
-      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
-      "description": "Side close-up shows her sliding up and down on his cock with clear motion. Her hands rest on his chest.",
-      "action": "Lena slides up and down on Max's cock with clear motion, her hands resting on his chest.",
-      "camera": "Close-up side angle, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
-      "lighting": "Full even bright lighting, no shadows, no mirrors",
-      "video_prompt": "Lena slides up and down on Max's cock with clear motion. Max's hands rest on her hips. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Cowgirl position, riding Max. Camera: Close-up side angle, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
+      "primary_motion": "continuous unzipping and sliding of skirt downward",
+      "act": "touch",
+      "wardrobe_events": ["remove_bottom"],
+      "clothing_state": "skirt removed, wearing black lace lingerie only",
+      "expression": "focused sensual look",
       "audio": {
+        "narration": [],
         "dialogue": [
           {
             "character_id": "character_001",
-            "text": "Don't stop..."
+            "text": "Yes... keep going."
           }
         ],
-        "sound_effects": [],
+        "sound_effects": ["zipper sound", "fabric sliding over skin"],
         "music": {
           "mood": "sensual",
           "intensity": "medium"
         }
       },
-      "penetration_state": "None",
-      "genital_alignment": "None",
-      "pose_lock": "Cowgirl position, riding Max",
-      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
-      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
-      "previous_scene_context": "In scene 4, character was in pose (Cowgirl position, riding Max). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: She rides him in cowgirl, bouncing her hips up and down in continuous rhythm. Her hands rest on his chest."
+      "continuity": {}
     },
     {
       "id": "scene_006",
@@ -225,37 +236,36 @@
       "duration": 5.0,
       "location_id": "location_001",
       "character_ids": ["character_001", "character_002"],
-      "act": "vaginal",
-      "wardrobe_events": [],
-      "clothing_state": "Canonical outfit from character reference",
-      "pose_type": "Doggy position, Max behind Lena",
-      "primary_motion": "Max thrusts into Lena with steady deep thrusts. Lena's back arches as she pushes back against him.",
+      "description": "Sunny reaches forward and unbuttons Jhone's dark gray shirt, then pushes it open and off his shoulders.",
+      "action": "Sunny continuously unbuttons and removes Jhone's shirt in one continuous motion.",
+      "camera": "Medium shot, front angle (matches LEFT PANEL Front View of turnaround sheet)",
+      "camera_size": "medium",
+      "camera_angle": "front",
+      "turnaround_panel": "LEFT PANEL Front View",
+      "lighting": "Soft warm indoor cinematic lighting with shallow depth of field",
+      "video_prompt": "Sunny and Jhone: continuous unbuttoning and removal of his shirt. Exact contact: Hands working buttons then pushing fabric off shoulders. Hands: Sunny both hands opening his shirt and sliding it down his arms; Jhone arms slightly back to assist. Bodies remain locked in standing close contact. Camera: Medium shot, front angle (matches LEFT PANEL Front View of turnaround sheet).",
+      "pose_lock": "standing close contact",
+      "pose_changed": false,
+      "hands": "Sunny: both hands removing his shirt. Jhone: arms slightly back.",
+      "hand_positions": "Sunny: both hands removing his shirt. Jhone: arms slightly back.",
+      "contact_zone": "chest and shoulders",
+      "contact_state": "engaged_moving",
       "motion_intensity": "slow",
-      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
-      "description": "He turns her onto all fours in doggy position. He kneels behind her, grips her hips, and thrusts into her from behind.",
-      "action": "Max thrusts into Lena with steady deep thrusts. Lena's back arches as she pushes back against him.",
-      "camera": "Medium shot, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
-      "lighting": "Full even bright lighting, no shadows, no mirrors",
-      "video_prompt": "Max thrusts into Lena with steady deep thrusts. Lena's back arches as she pushes back against him. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Doggy position, Max behind Lena. Camera: Medium shot, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
+      "primary_motion": "continuous unbuttoning and removal of his shirt",
+      "act": "touch",
+      "wardrobe_events": ["remove_top"],
+      "clothing_state": "Jhone shirt removed, Sunny in lingerie, Jhone still in trousers",
+      "expression": "hungry focused gaze",
       "audio": {
-        "dialogue": [
-          {
-            "character_id": "character_001",
-            "text": "Don't stop..."
-          }
-        ],
-        "sound_effects": [],
+        "narration": [],
+        "dialogue": [],
+        "sound_effects": ["button clicks", "shirt fabric sliding"],
         "music": {
           "mood": "sensual",
           "intensity": "medium"
         }
       },
-      "penetration_state": "None",
-      "genital_alignment": "None",
-      "pose_lock": "Doggy position, Max behind Lena",
-      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
-      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
-      "previous_scene_context": "In scene 5, character was in pose (Cowgirl position, riding Max). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: Side close-up shows her sliding up and down on his cock with clear motion. Her hands rest on his chest."
+      "continuity": {}
     },
     {
       "id": "scene_007",
@@ -263,37 +273,41 @@
       "duration": 5.0,
       "location_id": "location_001",
       "character_ids": ["character_001", "character_002"],
-      "act": "vaginal",
-      "wardrobe_events": [],
-      "clothing_state": "Canonical outfit from character reference",
-      "pose_type": "Doggy position, Max behind Lena",
-      "primary_motion": "Max thrusts into Lena with steady deep thrusts. Lena's back arches as she pushes back against him.",
+      "description": "Sunny unfastens Jhone's trousers and guides them down over his hips, revealing his erect cock.",
+      "action": "Sunny continuously unfastens and slides Jhone's trousers down in one smooth motion.",
+      "camera": "Medium shot, 3/4 side angle (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
+      "camera_size": "medium",
+      "camera_angle": "side",
+      "turnaround_panel": "CENTER PANEL 3/4 Side View",
+      "lighting": "Soft warm indoor cinematic lighting with shallow depth of field",
+      "video_prompt": "Sunny and Jhone: continuous sliding of trousers downward. Exact contact: Hands guiding fabric over hips while bodies stay near. Hands: Sunny hands unfastening and pushing trousers down; Jhone hands resting on her hips. Bodies remain locked in standing close contact. Camera: Medium shot, 3/4 side angle (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
+      "pose_lock": "standing close contact",
+      "pose_changed": false,
+      "hands": "Sunny: hands sliding trousers down. Jhone: hands on her hips.",
+      "hand_positions": "Sunny: hands sliding trousers down. Jhone: hands on her hips.",
+      "contact_zone": "hips",
+      "contact_state": "engaged_moving",
       "motion_intensity": "slow",
-      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
-      "description": "He fucks her in doggy with steady deep thrusts. Her back arches as she pushes back against him.",
-      "action": "Max thrusts into Lena with steady deep thrusts. Lena's back arches as she pushes back against him.",
-      "camera": "Medium side angle, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
-      "lighting": "Full even bright lighting, no shadows, no mirrors",
-      "video_prompt": "Max thrusts into Lena with steady deep thrusts. Lena's back arches as she pushes back against him. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Doggy position, Max behind Lena. Camera: Medium side angle, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
+      "primary_motion": "continuous sliding of trousers downward",
+      "act": "touch",
+      "wardrobe_events": ["remove_bottom"],
+      "clothing_state": "Jhone trousers removed, both nearly nude except Sunny's lingerie",
+      "expression": "eager anticipatory expression",
       "audio": {
+        "narration": [],
         "dialogue": [
           {
-            "character_id": "character_001",
-            "text": "Don't stop..."
+            "character_id": "character_002",
+            "text": "Your turn now."
           }
         ],
-        "sound_effects": [],
+        "sound_effects": ["trouser fabric sliding", "soft belt sound"],
         "music": {
-          "mood": "rhythmic passionate",
+          "mood": "sensual",
           "intensity": "medium"
         }
       },
-      "penetration_state": "None",
-      "genital_alignment": "None",
-      "pose_lock": "Doggy position, Max behind Lena",
-      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
-      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
-      "previous_scene_context": "In scene 6, character was in pose (Doggy position, Max behind Lena). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: He turns her onto all fours in doggy position. He kneels behind her, grips her hips, and thrusts into her from behind."
+      "continuity": {}
     },
     {
       "id": "scene_008",
@@ -301,37 +315,36 @@
       "duration": 5.0,
       "location_id": "location_001",
       "character_ids": ["character_001", "character_002"],
-      "act": "vaginal",
-      "wardrobe_events": [],
-      "clothing_state": "Canonical outfit from character reference",
-      "pose_type": "Doggy position, Max behind Lena",
-      "primary_motion": "Max thrusts into Lena with steady deep thrusts. Lena's back arches as she pushes back against him.",
+      "description": "Jhone reaches behind Sunny and unhooks her black lace bra, then slides the straps down her arms until it falls away.",
+      "action": "Jhone continuously unhooks and removes Sunny's bra in one fluid motion.",
+      "camera": "Medium shot, front angle (matches LEFT PANEL Front View of turnaround sheet)",
+      "camera_size": "medium",
+      "camera_angle": "front",
+      "turnaround_panel": "LEFT PANEL Front View",
+      "lighting": "Soft warm indoor cinematic lighting with shallow depth of field",
+      "video_prompt": "Sunny and Jhone: continuous unhooking and removal of bra. Exact contact: Hands working the clasp then guiding straps down. Hands: Jhone hands unhooking and sliding bra straps off; Sunny arms slightly forward. Bodies remain locked in standing close contact. Camera: Medium shot, front angle (matches LEFT PANEL Front View of turnaround sheet).",
+      "pose_lock": "standing close contact",
+      "pose_changed": false,
+      "hands": "Jhone: hands removing her bra. Sunny: arms slightly forward.",
+      "hand_positions": "Jhone: hands removing her bra. Sunny: arms slightly forward.",
+      "contact_zone": "back and shoulders",
+      "contact_state": "engaged_moving",
       "motion_intensity": "slow",
-      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
-      "description": "Side close-up captures his cock sliding in and out of her from behind with every thrust.",
-      "action": "Max thrusts into Lena with steady deep thrusts. Lena's back arches as she pushes back against him.",
-      "camera": "Close-up side angle, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
-      "lighting": "Full even bright lighting, no shadows, no mirrors",
-      "video_prompt": "Max thrusts into Lena with steady deep thrusts. Lena's back arches as she pushes back against him. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Doggy position, Max behind Lena. Camera: Close-up side angle, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
+      "primary_motion": "continuous unhooking and removal of bra",
+      "act": "touch",
+      "wardrobe_events": ["remove_top"],
+      "clothing_state": "bra removed, Sunny wearing only black lace panties",
+      "expression": "soft vulnerable intensity",
       "audio": {
-        "dialogue": [
-          {
-            "character_id": "character_001",
-            "text": "Don't stop..."
-          }
-        ],
-        "sound_effects": [],
+        "narration": [],
+        "dialogue": [],
+        "sound_effects": ["bra clasp click", "lace sliding"],
         "music": {
-          "mood": "rhythmic passionate",
+          "mood": "sensual",
           "intensity": "medium"
         }
       },
-      "penetration_state": "None",
-      "genital_alignment": "None",
-      "pose_lock": "Doggy position, Max behind Lena",
-      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
-      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
-      "previous_scene_context": "In scene 7, character was in pose (Doggy position, Max behind Lena). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: He fucks her in doggy with steady deep thrusts. Her back arches as she pushes back against him."
+      "continuity": {}
     },
     {
       "id": "scene_009",
@@ -339,37 +352,41 @@
       "duration": 5.0,
       "location_id": "location_001",
       "character_ids": ["character_001", "character_002"],
-      "act": "oral",
-      "wardrobe_events": [],
-      "clothing_state": "Canonical outfit from character reference",
-      "pose_type": "Lena kneeling in front of Max",
-      "primary_motion": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing",
+      "description": "Jhone hooks his fingers into the sides of Sunny's black lace panties and slowly slides them down her thighs until they drop to the floor.",
+      "action": "Jhone continuously slides Sunny's panties down her legs in one smooth continuous motion.",
+      "camera": "Medium shot, 3/4 side angle (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
+      "camera_size": "medium",
+      "camera_angle": "side",
+      "turnaround_panel": "CENTER PANEL 3/4 Side View",
+      "lighting": "Soft warm indoor cinematic lighting with shallow depth of field",
+      "video_prompt": "Sunny and Jhone: continuous sliding of panties downward. Exact contact: Hands guiding fabric over hips and thighs. Hands: Jhone hands pulling panties down; Sunny hands resting on his shoulders for balance. Bodies remain locked in standing close contact. Camera: Medium shot, 3/4 side angle (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
+      "pose_lock": "standing close contact",
+      "pose_changed": false,
+      "hands": "Jhone: hands sliding panties down. Sunny: hands on his shoulders.",
+      "hand_positions": "Jhone: hands sliding panties down. Sunny: hands on his shoulders.",
+      "contact_zone": "hips and thighs",
+      "contact_state": "engaged_moving",
       "motion_intensity": "slow",
-      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
-      "description": "She climbs off. He turns her onto all fours in doggy position. He kneels behind her, grips her hips, and thrusts into her from behind.",
-      "action": "Lena climbs off. He turns her onto all fours in doggy position. He kneels behind her, grips her hips, and thrusts into her from behind.",
-      "camera": "Medium shot, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
-      "lighting": "Full even bright lighting, no shadows, no mirrors",
-      "video_prompt": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Lena kneeling in front of Max. Camera: Medium shot, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
+      "primary_motion": "continuous sliding of panties downward",
+      "act": "touch",
+      "wardrobe_events": ["remove_all"],
+      "clothing_state": "fully nude, bare skin, completely unclothed, no underwear or accessories",
+      "expression": "eager anticipatory look",
       "audio": {
+        "narration": [],
         "dialogue": [
           {
             "character_id": "character_001",
-            "text": "Don't stop..."
+            "text": "I'm ready for you."
           }
         ],
-        "sound_effects": [],
+        "sound_effects": ["lace fabric sliding", "soft fabric drop"],
         "music": {
-          "mood": "rhythmic passionate",
+          "mood": "sensual",
           "intensity": "medium"
         }
       },
-      "penetration_state": "None",
-      "genital_alignment": "None",
-      "pose_lock": "Lena kneeling in front of Max",
-      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
-      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
-      "previous_scene_context": "In scene 8, character was in pose (Doggy position, Max behind Lena). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: Side close-up captures his cock sliding in and out of her from behind with every thrust."
+      "continuity": {}
     },
     {
       "id": "scene_010",
@@ -377,37 +394,41 @@
       "duration": 5.0,
       "location_id": "location_001",
       "character_ids": ["character_001", "character_002"],
-      "act": "oral",
-      "wardrobe_events": [],
-      "clothing_state": "Canonical outfit from character reference",
-      "pose_type": "Lena kneeling in front of Max",
-      "primary_motion": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing",
+      "description": "Both fully nude, Jhone sits on the edge of the bed and guides Sunny to straddle his lap facing him in preparation for cowgirl position.",
+      "action": "Sunny continuously climbs onto Jhone's lap into a straddling cowgirl position facing him.",
+      "camera": "Medium shot, front angle (matches LEFT PANEL Front View of turnaround sheet)",
+      "camera_size": "medium",
+      "camera_angle": "front",
+      "turnaround_panel": "LEFT PANEL Front View",
+      "lighting": "Soft warm indoor cinematic lighting with shallow depth of field",
+      "video_prompt": "Sunny and Jhone: continuous climb into straddling position. Exact contact: Sunny settling onto his lap facing him. Hands: Jhone hands guiding her hips downward; Sunny hands on his shoulders for support. Bodies remain locked in seated cowgirl straddle facing each other. Camera: Medium shot, front angle (matches LEFT PANEL Front View of turnaround sheet).",
+      "pose_lock": "seated cowgirl straddle facing each other",
+      "pose_changed": true,
+      "hands": "Jhone: hands guiding her hips. Sunny: hands on his shoulders.",
+      "hand_positions": "Jhone: hands guiding her hips. Sunny: hands on his shoulders.",
+      "contact_zone": "hips and thighs",
+      "contact_state": "engaged_still",
       "motion_intensity": "slow",
-      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
-      "description": "She turns around, kneels in front of him again, and takes his cock back into her mouth for another blowjob.",
-      "action": "Lena turns around, kneels in front of him again, and takes his cock back into her mouth for another blowjob.",
-      "camera": "Medium shot, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
-      "lighting": "Full even bright lighting, no shadows, no mirrors",
-      "video_prompt": "Lena moves with steady continuous rhythm, maintaining deliberate physical pacing. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Lena kneeling in front of Max. Camera: Medium shot, 3/4 side angle, low position capturing profile on bed (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
+      "primary_motion": "continuous climb into straddling position",
+      "act": "touch",
+      "wardrobe_events": [],
+      "clothing_state": "fully nude, bare skin, completely unclothed, no underwear or accessories",
+      "expression": "focused intense eye contact",
       "audio": {
+        "narration": [],
         "dialogue": [
           {
-            "character_id": "character_001",
-            "text": "Don't stop..."
+            "character_id": "character_002",
+            "text": "Sit on me. Just like that."
           }
         ],
-        "sound_effects": [],
+        "sound_effects": ["soft bed creak", "skin contact shift"],
         "music": {
-          "mood": "intense passionate",
-          "intensity": "high"
+          "mood": "sensual",
+          "intensity": "medium"
         }
       },
-      "penetration_state": "None",
-      "genital_alignment": "None",
-      "pose_lock": "Lena kneeling in front of Max",
-      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
-      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
-      "previous_scene_context": "In scene 9, character was in pose (Lena kneeling in front of Max). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: She climbs off. He turns her onto all fours in doggy position. He kneels behind her, grips her hips, and thrusts into her from behind."
+      "continuity": {}
     },
     {
       "id": "scene_011",
@@ -415,37 +436,41 @@
       "duration": 5.0,
       "location_id": "location_001",
       "character_ids": ["character_001", "character_002"],
-      "act": "oral",
-      "wardrobe_events": [],
-      "clothing_state": "Canonical outfit from character reference",
-      "pose_type": "Lena kneeling in front of Max",
-      "primary_motion": "Max reaches climax and cums in her mouth. She keeps him inside as he finishes.",
+      "description": "In cowgirl position facing each other, Jhone reaches between them and aligns his erect cock with Sunny's anal entrance, pressing the tip firmly against it.",
+      "action": "Jhone continuously aligns and presses the tip of his erect cock against Sunny's anal entrance.",
+      "camera": "Close-up, 3/4 side angle (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
+      "camera_size": "close-up",
+      "camera_angle": "side",
+      "turnaround_panel": "CENTER PANEL 3/4 Side View",
+      "lighting": "Soft warm indoor cinematic lighting with shallow depth of field",
+      "video_prompt": "Sunny and Jhone: continuous alignment of cock tip to anal entrance. Exact contact: Tip of erect cock pressed firmly against anal entrance. Hands: Jhone one hand gripping base of cock, other hand on her hip; Sunny hands braced on his chest. Bodies remain locked in seated cowgirl straddle facing each other. Camera: Close-up, 3/4 side angle (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
+      "pose_lock": "seated cowgirl straddle facing each other",
+      "pose_changed": false,
+      "hands": "Jhone: one hand on cock base, other on her hip. Sunny: hands on his chest.",
+      "hand_positions": "Jhone: one hand on cock base, other on her hip. Sunny: hands on his chest.",
+      "contact_zone": "anal entrance",
+      "contact_state": "approaching",
       "motion_intensity": "slow",
-      "expression": "Lena: eyes closed, soft smile. Max: focused expression",
-      "description": "He pulls out. She turns around, kneels in front of him again, and takes his cock back into her mouth for another blowjob.",
-      "action": "Max reaches climax and cums in her mouth. She keeps him inside as he finishes.",
-      "camera": "Medium close-up, front-facing eye-level, tracking face and chest expressions (matches LEFT PANEL Front View of turnaround sheet)",
-      "lighting": "Full even bright lighting, no shadows, no mirrors",
-      "video_prompt": "Max reaches climax and cums in her mouth. She keeps him inside as he finishes. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Lena kneeling in front of Max. Camera: Medium close-up, front-facing eye-level, tracking face and chest expressions (matches LEFT PANEL Front View of turnaround sheet).",
+      "primary_motion": "continuous alignment of cock tip to anal entrance",
+      "act": "anal",
+      "wardrobe_events": [],
+      "clothing_state": "fully nude, bare skin, completely unclothed, no underwear or accessories",
+      "expression": "concentrated anticipatory expression",
       "audio": {
+        "narration": [],
         "dialogue": [
           {
             "character_id": "character_001",
-            "text": "Don't stop..."
+            "text": "Go slow... put it in."
           }
         ],
-        "sound_effects": [],
+        "sound_effects": ["soft breathing", "skin contact"],
         "music": {
-          "mood": "climactic passionate",
-          "intensity": "very high"
+          "mood": "sensual",
+          "intensity": "building"
         }
       },
-      "penetration_state": "None",
-      "genital_alignment": "None",
-      "pose_lock": "Lena kneeling in front of Max",
-      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
-      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
-      "previous_scene_context": "In scene 10, character was in pose (Lena kneeling in front of Max). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: She turns around, kneels in front of him again, and takes his cock back into her mouth for another blowjob."
+      "continuity": {}
     },
     {
       "id": "scene_012",
@@ -453,41 +478,183 @@
       "duration": 5.0,
       "location_id": "location_001",
       "character_ids": ["character_001", "character_002"],
-      "act": "other_contact",
+      "description": "Sunny slowly sinks down, taking Jhone's erect cock fully into her anal entrance until she is seated flush against him.",
+      "action": "Sunny continuously sinks downward, taking his cock fully into her anus in one continuous motion.",
+      "camera": "Medium shot, front angle (matches LEFT PANEL Front View of turnaround sheet)",
+      "camera_size": "medium",
+      "camera_angle": "front",
+      "turnaround_panel": "LEFT PANEL Front View",
+      "lighting": "Soft warm indoor cinematic lighting with shallow depth of field",
+      "video_prompt": "Sunny and Jhone: continuous slow downward sink onto cock. Exact contact: Erect cock gliding fully into anal entrance until hips meet. Hands: Jhone both hands firmly gripping her hips; Sunny hands braced on his shoulders. Bodies remain locked in seated cowgirl straddle facing each other. Camera: Medium shot, front angle (matches LEFT PANEL Front View of turnaround sheet).",
+      "pose_lock": "seated cowgirl straddle facing each other",
+      "pose_changed": false,
+      "hands": "Jhone: both hands gripping her hips. Sunny: hands on his shoulders.",
+      "hand_positions": "Jhone: both hands gripping her hips. Sunny: hands on his shoulders.",
+      "contact_zone": "anal penetration",
+      "contact_state": "engaged_moving",
+      "motion_intensity": "slow",
+      "primary_motion": "continuous slow downward sink onto cock",
+      "act": "anal",
       "wardrobe_events": [],
-      "clothing_state": "Canonical outfit from character reference",
-      "pose_type": "Side by side on bed",
-      "primary_motion": "They lie side by side on the white bed in a quiet embrace, both breathing softly",
-      "motion_intensity": "very slow",
-      "expression": "Both: soft smiles, relaxed expressions",
-      "description": "The woman with long dark hair slowly pulls back and swallows. The muscular man gently pulls her up into his arms. They lie side by side on the white bed in a quiet embrace, both breathing softly as the scene ends under the bright even light.",
-      "action": "They lie side by side on the white bed in a quiet embrace, both breathing softly.",
-      "camera": "Medium shot, front-facing eye-level, capturing both in a quiet embrace (matches LEFT PANEL Front View of turnaround sheet)",
-      "lighting": "Full even bright lighting, no shadows, no mirrors",
-      "video_prompt": "They lie side by side on the white bed in a quiet embrace, both breathing softly. Exact contact: None. Hands: Hands anchored naturally on body or mattress as described in action. Bodies remain locked in Side by side on bed. Camera: Medium shot, front-facing eye-level, capturing both in a quiet embrace (matches LEFT PANEL Front View of turnaround sheet).",
+      "clothing_state": "fully nude, bare skin, completely unclothed, no underwear or accessories",
+      "expression": "eyes closing in intense sensation",
       "audio": {
+        "narration": [],
         "dialogue": [
           {
             "character_id": "character_001",
-            "text": "Thank you..."
+            "text": "Ah... it's so deep."
+          }
+        ],
+        "sound_effects": ["soft wet skin contact", "quiet moan", "bed creak"],
+        "music": {
+          "mood": "sensual",
+          "intensity": "building"
+        }
+      },
+      "continuity": {}
+    },
+    {
+      "id": "scene_013",
+      "order": 13,
+      "duration": 5.0,
+      "location_id": "location_001",
+      "character_ids": ["character_001", "character_002"],
+      "description": "Fully seated in anal cowgirl, Sunny begins a continuous slow rhythmic up-and-down motion while Jhone holds her hips steady.",
+      "action": "Sunny initiates continuous slow rhythmic up-and-down motion_anal_thrust_action while fully impaled.",
+      "camera": "Medium shot, 3/4 side angle (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
+      "camera_size": "medium",
+      "camera_angle": "side",
+      "turnaround_panel": "CENTER PANEL 3/4 Side View",
+      "lighting": "Soft warm indoor cinematic lighting with shallow depth of field",
+      "video_prompt": "Sunny and Jhone: continuous slow rhythmic motion_anal_thrust_action. Exact contact: Erect cock gliding deeply in and out of anal entrance with each rise and fall. Hands: Jhone hands firmly gripping her hips guiding the rhythm; Sunny hands braced on his chest. Bodies remain locked in seated cowgirl straddle facing each other. Camera: Medium shot, 3/4 side angle (matches CENTER PANEL 3/4 Side View of turnaround sheet).",
+      "pose_lock": "seated cowgirl straddle facing each other",
+      "pose_changed": false,
+      "hands": "Jhone: hands gripping her hips. Sunny: hands on his chest.",
+      "hand_positions": "Jhone: hands gripping her hips. Sunny: hands on his chest.",
+      "contact_zone": "anal penetration",
+      "contact_state": "engaged_moving",
+      "motion_intensity": "slow",
+      "primary_motion": "continuous slow rhythmic motion_anal_thrust_action",
+      "act": "anal",
+      "wardrobe_events": [],
+      "clothing_state": "fully nude, bare skin, completely unclothed, no underwear or accessories",
+      "expression": "mouth slightly open in focused pleasure",
+      "audio": {
+        "narration": [],
+        "dialogue": [
+          {
+            "character_id": "character_002",
+            "text": "That's it... ride me slow."
+          }
+        ],
+        "sound_effects": [
+          "rhythmic wet skin slap",
+          "heavy breathing",
+          "soft moans"
+        ],
+        "music": {
+          "mood": "sensual",
+          "intensity": "building"
+        }
+      },
+      "continuity": {}
+    },
+    {
+      "id": "scene_014",
+      "order": 14,
+      "duration": 5.0,
+      "location_id": "location_001",
+      "character_ids": ["character_001", "character_002"],
+      "description": "The rhythm intensifies as Sunny continues the continuous deep motion_anal_thrust_action, rising and sinking fully onto Jhone's cock with increasing speed.",
+      "action": "Sunny maintains continuous deeper rhythmic motion_anal_thrust_action with increased intensity.",
+      "camera": "Medium shot, front angle (matches LEFT PANEL Front View of turnaround sheet)",
+      "camera_size": "medium",
+      "camera_angle": "front",
+      "turnaround_panel": "LEFT PANEL Front View",
+      "lighting": "Soft warm indoor cinematic lighting with shallow depth of field",
+      "video_prompt": "Sunny and Jhone: continuous deeper rhythmic motion_anal_thrust_action. Exact contact: Thick erect cock sliding fully in and out of her anal entrance with each powerful rise and fall. Hands: Jhone hands locked tightly on her hips; Sunny hands gripping his shoulders for leverage. Bodies remain locked in seated cowgirl straddle facing each other. Camera: Medium shot, front angle (matches LEFT PANEL Front View of turnaround sheet).",
+      "pose_lock": "seated cowgirl straddle facing each other",
+      "pose_changed": false,
+      "hands": "Jhone: hands locked on her hips. Sunny: hands gripping his shoulders.",
+      "hand_positions": "Jhone: hands locked on her hips. Sunny: hands gripping his shoulders.",
+      "contact_zone": "anal penetration",
+      "contact_state": "engaged_moving",
+      "motion_intensity": "medium",
+      "primary_motion": "continuous deeper rhythmic motion_anal_thrust_action",
+      "act": "anal",
+      "wardrobe_events": [],
+      "clothing_state": "fully nude, bare skin, completely unclothed, no underwear or accessories",
+      "expression": "intense pleasure with parted lips",
+      "audio": {
+        "narration": [],
+        "dialogue": [
+          {
+            "character_id": "character_001",
+            "text": "Harder... don't stop."
+          }
+        ],
+        "sound_effects": [
+          "louder rhythmic skin slap",
+          "heavy breathing",
+          "moans"
+        ],
+        "music": {
+          "mood": "sensual",
+          "intensity": "high"
+        }
+      },
+      "continuity": {}
+    },
+    {
+      "id": "scene_015",
+      "order": 15,
+      "duration": 5.0,
+      "location_id": "location_001",
+      "character_ids": ["character_001", "character_002"],
+      "description": "Sunny reaches the peak of the continuous motion_anal_thrust_action, driving down hard and holding fully seated as both bodies tense in climax while still connected.",
+      "action": "Sunny drives down into a continuous final deep motion_anal_thrust_action and holds fully seated in climax.",
+      "camera": "Close-up, front angle (matches LEFT PANEL Front View of turnaround sheet)",
+      "camera_size": "close-up",
+      "camera_angle": "front",
+      "turnaround_panel": "LEFT PANEL Front View",
+      "lighting": "Soft warm indoor cinematic lighting with shallow depth of field",
+      "video_prompt": "Sunny and Jhone: continuous final deep motion_anal_thrust_action into held climax. Exact contact: Erect cock buried fully inside anal entrance, bodies locked tight. Hands: Jhone hands gripping her hips tightly; Sunny arms wrapped around his neck. Bodies remain locked in seated cowgirl straddle facing each other. Camera: Close-up, front angle (matches LEFT PANEL Front View of turnaround sheet).",
+      "pose_lock": "seated cowgirl straddle facing each other",
+      "pose_changed": false,
+      "hands": "Jhone: hands gripping her hips tightly. Sunny: arms around his neck.",
+      "hand_positions": "Jhone: hands gripping her hips tightly. Sunny: arms around his neck.",
+      "contact_zone": "anal penetration",
+      "contact_state": "engaged_still",
+      "motion_intensity": "high",
+      "primary_motion": "continuous final deep motion_anal_thrust_action into held climax",
+      "act": "anal",
+      "wardrobe_events": [],
+      "clothing_state": "fully nude, bare skin, completely unclothed, no underwear or accessories",
+      "expression": "eyes tightly closed in intense climax",
+      "audio": {
+        "narration": [],
+        "dialogue": [
+          {
+            "character_id": "character_001",
+            "text": "I'm coming..."
           },
           {
             "character_id": "character_002",
-            "text": "Anytime..."
+            "text": "Me too... stay right there."
           }
         ],
-        "sound_effects": [],
+        "sound_effects": [
+          "heavy final breathing",
+          "prolonged moan",
+          "skin contact hold"
+        ],
         "music": {
-          "mood": "climactic passionate",
-          "intensity": "very high"
+          "mood": "sensual",
+          "intensity": "peak"
         }
       },
-      "penetration_state": "None",
-      "genital_alignment": "None",
-      "pose_lock": "Side by side on bed",
-      "hand_positions": "Hands anchored naturally on body or mattress as described in action",
-      "contact_zone": "Continuous solid skin-to-skin contact between bodies, no dark voids",
-      "previous_scene_context": "In scene 11, character was in pose (Lena kneeling in front of Max). Clothing state: Canonical outfit from character reference. Genital alignment: None. Context: He pulls out. She turns around, kneels in front of him again, and takes his cock back into her mouth for another blowjob."
+      "continuity": {}
     }
   ]
 }
