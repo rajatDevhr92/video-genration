@@ -1,5 +1,124 @@
-from typing import Dict, Any, List
+import json
+import logging
+import re
+from typing import Dict, Any, List, Optional
 from .continuity import ACTS, EVENTS, normalize_gender
+from .story_parser import parse_story
+from .compiler import compile_scene, enforce_wardrobe
+from .facts import extract_facts
+
+logger = logging.getLogger(__name__)
+
+CAST_PROMPT = """Read this story and extract the characters and the primary setting.
+Return JSON ONLY with this schema:
+{{
+  "title": "Story Title",
+  "setting": "Description of the primary environment/room",
+  "characters": [
+    {{
+      "id": "character_001",
+      "name": "Character Name",
+      "gender": "female or male",
+      "appearance": "Physical appearance (age, hair, ethnicity, build)",
+      "clothing": "Starting outfit ONLY",
+      "visual_anchor": "Key facial and physical anchors"
+    }}
+  ]
+}}
+
+Story:
+{story}
+"""
+
+
+def build_plan(
+    provider: Any,
+    story: str,
+    target_scenes: int | None = None,
+) -> Dict[str, Any]:
+    """
+    Modular, deterministic pipeline:
+    1. Parser (code) -> scenes, durations, shot hints
+    2. Cast/setting (1 small LLM call)
+    3. Facts per scene (small LLM calls with closed enums & local retries)
+    4. Compiler (code) -> video_prompt, camera turnaround panel, pose lock, hands
+    5. Wardrobe enforcer (code) -> guarantees bottom removal for exposed acts
+    """
+    meta, preamble, parsed_scenes = parse_story(story, target_scenes=target_scenes)
+    if not parsed_scenes:
+        raise ValueError("No scenes could be parsed from the story.")
+
+    print(f"[PLANNER] Parsed {len(parsed_scenes)} scenes from story text.")
+    print("[PLANNER] Extracting cast and setting...")
+    cast_res = provider.generate_json(CAST_PROMPT.format(story=story))
+    if not isinstance(cast_res, dict):
+        cast_res = {}
+
+    cast = cast_res.get("characters") or cast_res.get("cast") or []
+    if not cast:
+        cast = [
+            {
+                "id": "character_001",
+                "name": "Protagonist",
+                "gender": "female",
+                "appearance": "Adult woman, 28 years old, athletic build",
+                "clothing": "Casual outfit",
+                "visual_anchor": "Adult woman, athletic build",
+            }
+        ]
+
+    for i, c in enumerate(cast):
+        if not c.get("id"):
+            c["id"] = f"character_{i+1:03d}"
+        if not c.get("gender") or c.get("gender") not in {"female", "male"}:
+            c["gender"] = normalize_gender(
+                c.get("appearance", ""),
+                c.get("visual_anchor", ""),
+                c.get("name", ""),
+            )
+        if not c.get("visual_anchor"):
+            c["visual_anchor"] = f"{c.get('appearance', '')}, {c.get('clothing', '')}"
+        if not c.get("personality"):
+            c["personality"] = "Expressive and natural"
+
+    cast_by_id = {c["id"]: c for c in cast}
+    location_id = "location_001"
+    setting_desc = (
+        meta.get("setting")
+        or cast_res.get("setting")
+        or "Cinematic interior environment with warm atmospheric lighting"
+    )
+    title = meta.get("title") or cast_res.get("title") or "Cinematic Story"
+
+    out = []
+    prev_facts = None
+    prev_compiled = None
+
+    for sc in parsed_scenes:
+        order = sc.get("order", len(out) + 1)
+        print(f"[PLANNER] Extracting closed facts for Scene {order}/{len(parsed_scenes)}...")
+        facts = extract_facts(provider, sc, cast, prev_facts)
+        comp = compile_scene(sc, facts, prev_compiled, cast_by_id, location_id=location_id)
+        out.append(comp)
+        prev_facts = facts
+        prev_compiled = comp
+
+    enforce_wardrobe(out)
+
+    return {
+        "title": title,
+        "summary": f"{title} - cinematic visual narrative",
+        "characters": cast,
+        "locations": [
+            {
+                "id": location_id,
+                "name": meta.get("setting", "Main Setting"),
+                "description": setting_desc,
+                "visual_style": "cinematic photorealistic 8k lighting and composition",
+            }
+        ],
+        "scenes": out,
+    }
 
 
 class StoryPlanValidationError(ValueError):
@@ -86,13 +205,24 @@ class StoryPlanner:
                 "Story cannot be empty."
             )
 
+        try:
+            print("[DEBUG] Running modular build_plan...")
+            plan = build_plan(self.provider, story, target_scenes=target_scenes)
+            self._validate(plan)
+            return plan
+        except Exception as modular_err:
+            print(
+                f"[PLANNER] Modular build_plan failed ({modular_err}). "
+                "Falling back to monolithic generation..."
+            )
+
         base_prompt = self._build_prompt(
             story,
             target_scenes=target_scenes,
         )
 
         print(
-            "[DEBUG] Calling StoryPlanner..."
+            "[DEBUG] Calling StoryPlanner monolithic..."
         )
 
         result = self.provider.generate_json(

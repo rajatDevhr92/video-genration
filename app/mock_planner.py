@@ -3,7 +3,7 @@ from .llm_provider import LLMProvider
 
 class MockLLMProvider(LLMProvider):
 
-    def generate_json(self, prompt: str):
+    def generate_json(self, prompt: str, **kwargs):
 
         return {
             "title": "The Rainy Detective",

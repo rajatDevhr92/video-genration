@@ -85,6 +85,14 @@ class StoryRequest(BaseModel):
         default=None,
         description="Optional target scene count for the story planner.",
     )
+    target_scene: int | None = Field(
+        default=None,
+        description="Optional alias for target_scenes.",
+    )
+
+    @property
+    def effective_target_scenes(self) -> int | None:
+        return self.target_scenes if self.target_scenes is not None else self.target_scene
 
 
 # ============================================================
@@ -422,7 +430,7 @@ def create_story(request: StoryRequest):
         generate_story_job,
         job_id,
         story,
-        request.target_scenes,
+        request.effective_target_scenes,
     )
 
     return {

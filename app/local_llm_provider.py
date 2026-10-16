@@ -152,7 +152,7 @@ class LocalLLMProvider(LLMProvider):
             "Could not extract valid JSON from model output."
         )
 
-    def generate_json(self, prompt: str):
+    def generate_json(self, prompt: str, temperature: float = None, **kwargs):
 
         messages = [
             {
@@ -193,25 +193,34 @@ class LocalLLMProvider(LLMProvider):
 
         input_length = inputs["input_ids"].shape[-1]
 
+        max_tokens = kwargs.get("max_new_tokens", self.max_new_tokens)
         print(
             f"[LLM] Prompt tokens: {input_length}"
         )
 
         print(
             f"[LLM] Max new tokens: "
-            f"{self.max_new_tokens}"
+            f"{max_tokens}"
         )
+
+        gen_kwargs = {
+            "max_new_tokens": max_tokens,
+            "pad_token_id": (
+                self.tokenizer.pad_token_id
+                or self.tokenizer.eos_token_id
+            ),
+        }
+        if temperature is not None and float(temperature) > 0:
+            gen_kwargs["do_sample"] = True
+            gen_kwargs["temperature"] = float(temperature)
+        else:
+            gen_kwargs["do_sample"] = False
 
         with torch.inference_mode():
 
             outputs = self.model.generate(
                 **inputs,
-                max_new_tokens=self.max_new_tokens,
-                do_sample=False,
-                pad_token_id=(
-                    self.tokenizer.pad_token_id
-                    or self.tokenizer.eos_token_id
-                ),
+                **gen_kwargs,
             )
 
         generated_tokens = outputs[

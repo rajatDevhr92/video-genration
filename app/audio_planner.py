@@ -2,12 +2,20 @@ import json
 import os
 from pathlib import Path
 
-from openai import OpenAI
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
 
 
 class AudioPlanner:
 
     def __init__(self):
+        if OpenAI is None:
+            raise RuntimeError(
+                "openai package is not installed."
+            )
+
         api_key = os.getenv("OPENAI_API_KEY")
 
         if not api_key:

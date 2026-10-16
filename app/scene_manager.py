@@ -21,7 +21,34 @@ from .continuity import (
 logger = logging.getLogger(__name__)
 
 
+def plan_keyframe(cur: Dict[str, Any], prev: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """
+    Deterministically computes keyframe generation mode and denoise level from scene state:
+    - Initial scene -> T2I composition at 0.70 denoise
+    - Real posture transition (pose_changed=True) -> regenerate at 0.85 denoise
+    - Framing/camera size change with same pose (e.g. medium -> close-up) -> crop_zoom at 0.30 denoise
+    - Same pose, same framing -> subtle motion continuity at 0.35 denoise
+    """
+    if prev is None:
+        return {"mode": "t2i", "denoise": 0.70}
+
+    # Explicit pose transition flag from compiler
+    if cur.get("pose_changed", True):
+        return {"mode": "regenerate", "denoise": 0.85}
+
+    cur_size = cur.get("camera_size")
+    prev_size = prev.get("camera_size") if prev else None
+
+    # Framing cut while posture remains identical
+    if cur_size and prev_size and cur_size != prev_size:
+        return {"mode": "crop_zoom", "denoise": 0.30}
+
+    # Same pose and same framing: minimal denoise for stability
+    return {"mode": "regenerate", "denoise": 0.35}
+
+
 class SceneManager:
+    plan_keyframe = staticmethod(plan_keyframe)
 
     def __init__(
         self,
@@ -511,16 +538,23 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                 logger.info(f"[GENITAL REF] Scene {scene_id} is not sexual/nude -> skipping genital references.")
 
             # Determine adaptive denoise level & setup stage 1
-            prev_loc = previous_scene_state.get("location") if previous_scene_state else None
-            curr_loc = location_id
+            prev_scene_dict = scenes[order - 2] if order > 1 and len(scenes) >= (order - 1) else None
+            kf_plan = plan_keyframe(scene, prev_scene_dict)
+            active_denoise = kf_plan["denoise"]
+            plan_mode = kf_plan["mode"]
 
-            has_pose_transition = self.detect_pose_or_angle_transition(
-                scene=scene,
-                previous_scene_state=previous_scene_state,
-                previous_character_states=previous_character_states,
-            )
+            # Maintain has_pose_transition flag for logging and metadata
+            has_pose_transition = scene.get("pose_changed")
+            if has_pose_transition is None:
+                has_pose_transition = self.detect_pose_or_angle_transition(
+                    scene=scene,
+                    previous_scene_state=previous_scene_state,
+                    previous_character_states=previous_character_states,
+                )
+                if has_pose_transition:
+                    active_denoise = 0.85
 
-            if previous_last_frame is None:
+            if previous_last_frame is None or plan_mode == "t2i":
                 # Opening scene
                 active_denoise = 0.70
                 print()
@@ -537,58 +571,32 @@ STRICT ANATOMICAL STABILITY & CHARACTER SEPARATION RULES:
                 base_image = composition_path
                 base_source = "qwen_t2i"
             else:
-                # Subsequent scene
-                cam_text = f"{scene.get('camera', '')} {scene.get('description', '')}".lower()
-                is_close_up = any(w in cam_text for w in ["close-up", "close up", "extreme close-up", "macro", "tight shot"])
-                is_wide_or_full = any(w in cam_text for w in ["wide shot", "wide angle", "full shot", "medium full shot", "full-body frame", "full body shot"])
-
-                # Check if previous scene was a close-up
-                prev_cam_text = ""
-                if order > 1 and len(scenes) >= (order - 1):
-                    prev_scene_obj = scenes[order - 2]
-                    prev_cam_text = f"{prev_scene_obj.get('camera', '')} {prev_scene_obj.get('description', '')}".lower()
-                prev_was_close_up = any(w in prev_cam_text for w in ["close-up", "close up", "extreme close-up", "macro", "tight shot"])
-
-                if prev_loc and curr_loc and prev_loc == curr_loc:
-                    if is_close_up or (is_wide_or_full and prev_was_close_up):
-                        active_denoise = 0.85
-                        logger.info(
-                            f"[DENOISE] Camera cut/framing transition (is_close_up={is_close_up}, prev_was_close_up={prev_was_close_up}) in scene {order} -> boosted denoise to {active_denoise}"
-                        )
-                    elif has_pose_transition:
-                        active_denoise = 0.85
-                        logger.info(
-                            f"[DENOISE] Same location but pose/angle transition detected in scene {order} -> boosted denoise to {active_denoise} for clean pose re-orientation"
-                        )
-                    else:
-                        active_denoise = 0.40
-                else:
-                    # New location -> allow room transition
-                    active_denoise = 0.85 if (is_close_up or is_wide_or_full) else 0.65
-
-                # Force lower denoise (max 0.40) for close body contact / penetration scenes
-                contact_keywords = [
-                    "penetrat", "entering", "slides inside", "thrust", "cock inside",
-                    "pussy contact", "groin pressed", "hips pressed", "skin to skin",
-                    "intimate contact", "doggystyle", "cowgirl", "missionary", "grinding",
-                    "against her wet pussy", "thrusting", "fucking", "penetration", "sex"
-                ]
-                full_text = f"{scene.get('description', '')} {scene.get('action', '')} {scene.get('video_prompt', '')}".lower()
-                is_contact_scene = any(w in full_text for w in contact_keywords)
-
-                if is_contact_scene:
-                    active_denoise = min(active_denoise, 0.40)
-                    logger.info(
-                        f"[DENOISE] Body contact/penetration detected in scene {order} -> capped denoise to {active_denoise} to prevent pose drift and black holes"
-                    )
-
                 print()
                 print("=" * 80)
-                print(f"SCENE {order}: USING PREVIOUS VIDEO LAST FRAME (denoise={active_denoise}, pose_transition={has_pose_transition})")
+                print(
+                    f"SCENE {order}: USING PREVIOUS VIDEO LAST FRAME "
+                    f"(mode={plan_mode}, denoise={active_denoise}, pose_transition={has_pose_transition})"
+                )
                 print("=" * 80)
                 print("Previous last frame:", previous_last_frame)
 
-                shutil.copy2(previous_last_frame, composition_path)
+                if plan_mode == "crop_zoom":
+                    try:
+                        from PIL import Image
+                        with Image.open(previous_last_frame) as img:
+                            w, h = img.size
+                            crop_w, crop_h = int(w * 0.75), int(h * 0.75)
+                            left = (w - crop_w) // 2
+                            top = (h - crop_h) // 2
+                            cropped = img.crop((left, top, left + crop_w, top + crop_h))
+                            resized = cropped.resize((w, h), Image.Resampling.LANCZOS)
+                            resized.save(composition_path)
+                    except Exception as e:
+                        logger.warning(f"PIL crop_zoom fallback to direct copy: {e}")
+                        shutil.copy2(previous_last_frame, composition_path)
+                else:
+                    shutil.copy2(previous_last_frame, composition_path)
+
                 base_image = composition_path
                 base_source = "previous_video_last_frame"
                 composition_result = {"prompt_id": None}

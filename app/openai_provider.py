@@ -1,7 +1,10 @@
 import json
 import os
 
-from openai import OpenAI
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
 
 from .llm_provider import LLMProvider
 
@@ -9,6 +12,11 @@ from .llm_provider import LLMProvider
 class OpenAIProvider(LLMProvider):
 
     def __init__(self, model=None):
+        if OpenAI is None:
+            raise RuntimeError(
+                "openai package is not installed."
+            )
+
         self.model = model or os.getenv(
             "STORY_PLANNER_MODEL",
             "gpt-5.6",
@@ -25,7 +33,7 @@ class OpenAIProvider(LLMProvider):
             api_key=api_key
         )
 
-    def generate_json(self, prompt: str):
+    def generate_json(self, prompt: str, temperature: float = None, **kwargs):
 
         response = self.client.responses.create(
             model=self.model,
@@ -46,4 +54,3 @@ class OpenAIProvider(LLMProvider):
             raise RuntimeError(
                 "OpenAI returned invalid JSON.\n\n"
                 f"Response:\n{text}"
-            ) from exc
