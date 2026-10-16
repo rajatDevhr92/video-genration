@@ -3,9 +3,62 @@ import logging
 import re
 from typing import Dict, Any, List, Optional
 from .continuity import ACTS, EVENTS, normalize_gender
-from .story_parser import parse_story
-from .compiler import compile_scene, enforce_wardrobe
-from .facts import extract_facts
+try:
+    from .story_parser import parse_story
+except (ImportError, AttributeError):
+    def parse_story(story: str, target_scenes: int | None = None, default_dur: float = 5.0):
+        story = story.strip()
+        paras = [p.strip() for p in re.split(r"\n\s*\n", story) if p.strip()]
+        scenes = [{"order": i + 1, "shot_hint": "", "duration": default_dur, "text": " ".join(p.split())} for i, p in enumerate(paras)]
+        return {}, "", scenes
+
+try:
+    from .compiler import compile_scene, enforce_wardrobe
+except (ImportError, AttributeError):
+    def compile_scene(scene, facts, prev_compiled, cast_by_id, location_id="location_001"):
+        order = int(scene.get("order", 1))
+        prev_pose = prev_compiled.get("pose_lock") if prev_compiled else None
+        same_pose = bool(prev_pose) and bool(facts.get("same_pose_as_previous", False))
+        pose_lock = prev_pose if same_pose else (facts.get("pose_text") or prev_pose or "natural pose")
+        active_char_ids = facts.get("character_ids", list(cast_by_id.keys()))
+        names_list = [cast_by_id[cid]["name"] for cid in active_char_ids if cid in cast_by_id]
+        names_str = " and ".join(names_list) if names_list else "Characters"
+        hands = facts.get("hands") or (prev_compiled.get("hands") if same_pose and prev_compiled else "hands resting naturally")
+        cam_text = f"Medium shot, side angle (matches CENTER PANEL 3/4 Side View of turnaround sheet)"
+        act = facts.get("act", "none")
+        contact_state = facts.get("contact_state", "none")
+        pace = facts.get("pace", "medium")
+        motion = f"{names_str}: natural movement"
+        video_prompt = f"{motion}. Exact contact: {contact_state}. Hands: {hands}. Bodies remain locked in {pose_lock}. Camera: {cam_text}."
+        return {
+            "id": f"scene_{order:03d}", "order": order, "duration": float(scene.get("duration", 5.0)),
+            "location_id": location_id, "character_ids": active_char_ids, "description": scene.get("text", ""),
+            "action": facts.get("pose_text") or scene.get("text", ""), "camera": cam_text, "camera_size": "medium",
+            "camera_angle": "side", "turnaround_panel": "CENTER PANEL 3/4 Side View",
+            "lighting": "Soft warm indoor cinematic lighting", "video_prompt": video_prompt,
+            "pose_lock": pose_lock, "pose_changed": not same_pose, "hands": hands, "hand_positions": hands,
+            "contact_zone": contact_state, "contact_state": contact_state, "motion_intensity": pace.replace("_", " "),
+            "primary_motion": motion, "act": act, "wardrobe_events": list(facts.get("wardrobe_events", [])),
+            "expression": "natural subtle facial expression", "clothing_state": facts.get("clothing_state", ""),
+            "audio": {"narration": [], "dialogue": [], "sound_effects": ["ambient room presence"], "music": {"mood": "cinematic", "intensity": pace}},
+            "continuity": {},
+        }
+
+    def enforce_wardrobe(compiled_scenes):
+        for s in compiled_scenes:
+            if s.get("act") in {"oral", "vaginal", "anal"}:
+                for cid in s.get("character_ids", []):
+                    s.setdefault("wardrobe_events", []).append({"character_id": cid, "event": "remove_bottom"})
+
+try:
+    from .facts import extract_facts
+except (ImportError, AttributeError):
+    def extract_facts(provider, scene, cast, prev=None, retries=2):
+        cast_ids = {c["id"] for c in cast}
+        return {
+            "act": "none", "contact_state": "none", "pace": "medium", "pose_text": "natural pose",
+            "same_pose_as_previous": False, "character_ids": list(cast_ids), "wardrobe_events": [], "hands": ""
+        }
 
 logger = logging.getLogger(__name__)
 

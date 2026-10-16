@@ -1,6 +1,8 @@
 import re
 from typing import Dict, Any, List, Optional
 
+__all__ = ["compile_camera", "compile_scene", "enforce_wardrobe"]
+
 SIZES = [
     ("extreme close-up", r"extreme\s+close"),
     ("close-up", r"close|tight"),
