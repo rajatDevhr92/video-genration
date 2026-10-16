@@ -95,4 +95,3 @@ class OpenAIProvider(LLMProvider):
                     f"Response:\n{locals().get('text', '')}"
                 ) from exc
             raise
-                f"Response:\n{text}"
