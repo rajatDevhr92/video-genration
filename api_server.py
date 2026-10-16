@@ -135,8 +135,9 @@ def run_command(command):
 
 def generate_story_job(
     job_id,
-    story,
+    story=None,
     target_scenes=None,
+    plan=None,
 ):
     job_dir = OUTPUT_DIR / job_id
     job_dir.mkdir(
@@ -167,28 +168,31 @@ def generate_story_job(
         # 1. Story planning
         # ----------------------------------------------------
 
-        update_job(
-            job_id,
-            status="planning",
-        )
+        if plan is None:
+            update_job(
+                job_id,
+                status="planning",
+            )
 
-        log("Creating story plan...")
+            log("Creating story plan...")
 
-        use_openai = os.getenv("USE_OPENAI_PLANNER", "false").lower() in ("true", "1")
-        if use_openai:
-            from app.openai_provider import OpenAIProvider
-            provider = OpenAIProvider()
+            use_openai = os.getenv("USE_OPENAI_PLANNER", "false").lower() in ("true", "1")
+            if use_openai:
+                from app.openai_provider import OpenAIProvider
+                provider = OpenAIProvider()
+            else:
+                provider = LocalLLMProvider()
+
+            planner = StoryPlanner(
+                provider=provider
+            )
+
+            plan = planner.build(
+                story,
+                target_scenes=target_scenes,
+            )
         else:
-            provider = LocalLLMProvider()
-
-        planner = StoryPlanner(
-            provider=provider
-        )
-
-        plan = planner.build(
-            story,
-            target_scenes=target_scenes,
-        )
+            log("Using directly submitted story plan (skipping LLM planning step)...")
 
         plan_path = (
             job_dir
@@ -443,6 +447,61 @@ def create_story(request: StoryRequest):
         "status_url": (
             f"/api/v1/stories/{job_id}"
         ),
+    }
+
+
+@app.post("/api/v1/stories/plan")
+@app.post("/api/v1/stories/from-plan")
+def submit_story_plan(payload: dict):
+    """
+    Directly submits an existing story_plan.json object, skipping the LLM story planning step.
+    Begins immediately with character turnaround reference generation, keyframes, and video generation.
+    """
+    plan_data = payload.get("plan") if isinstance(payload.get("plan"), dict) else payload
+
+    if not isinstance(plan_data, dict):
+        raise HTTPException(
+            status_code=422,
+            detail="Payload must be a valid JSON object containing story plan data.",
+        )
+
+    scenes = plan_data.get("scenes")
+    if not isinstance(scenes, list) or not scenes:
+        raise HTTPException(
+            status_code=422,
+            detail="Story plan must contain a non-empty 'scenes' list.",
+        )
+
+    characters = plan_data.get("characters")
+    if not isinstance(characters, list) or not characters:
+        raise HTTPException(
+            status_code=422,
+            detail="Story plan must contain a non-empty 'characters' list.",
+        )
+
+    job_id = f"story_{uuid.uuid4().hex[:12]}"
+
+    with jobs_lock:
+        jobs[job_id] = {
+            "job_id": job_id,
+            "status": "queued",
+            "title": plan_data.get("title", "Custom Story Plan"),
+            "scenes": len(scenes),
+        }
+
+    executor.submit(
+        generate_story_job,
+        job_id=job_id,
+        story=None,
+        target_scenes=None,
+        plan=plan_data,
+    )
+
+    return {
+        "job_id": job_id,
+        "status": "queued",
+        "message": "Custom story plan accepted. Direct video generation has started.",
+        "status_url": f"/api/v1/stories/{job_id}",
     }
 
 
