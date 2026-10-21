@@ -48,7 +48,7 @@ Your pipeline design is sound, and the new modular planner plus continuity track
 ### 4. Keyframes
 
 - Qwen Edit runs 40 steps at cfg 4.0 with no speed-up LoRA. It is the slowest image step. A 4- or 8-step Lightning LoRA for Qwen-Image-Edit would cut keyframe time several times with small quality loss. Test it on a few scenes first.
-- The workflow has one reference image slot. Scenes with two characters need both identities in one image. Check how your code combines them (a merged sheet or a second reference input); this is where a second character most often takes the first character's face.
+- The workflow file has only image1, but keyframe\_generator.py adds image2 and image3 when it runs, and cuts the list to 2 references. A scene with 3 characters loses the third, and a scene with 2 characters leaves no slot for anatomy references in Stage A. Watch for the second character taking the first character's face.
 - Output size follows the reference image, not 1280x720. Make sure the keyframe is resized to 16:9 before video, or Wan will crop or stretch.
 
 ### 5. Video
@@ -272,7 +272,7 @@ This phase fixes faces and clothing drifting between scenes.
 
 1. **Wire in the face check.** Register each character's reference sheet in `IdentityChecker`, call `generate_with_retry` around keyframe generation, and keep the best of up to 3 tries. Start with the threshold at 0.38, then adjust using your 5 test stories: raise it if wrong faces pass, lower it if good frames are rejected.
 2. **Per-outfit references.** Use `ReferenceBook` so each outfit state of a character has its own reference sheet, and pick the one that matches the tracker's state for that scene.
-3. **Two-character scenes.** The Qwen Edit workflow has one reference slot. Either merge both characters into one reference image, or add the second image input in the text-encode nodes, and test that neither face swaps.
+3. **Two-character scenes.** The keyframe generator fills reference slots image2 and image3 at run time and silently keeps only 2 references in total, while scene\_manager.py allows up to 3 characters. Raise the generator cap, or merge references, and test that neither face swaps.
 4. **Resize to 16:9.** Make the keyframe 1280x720 before sending it to Wan, so there is no stretch or crop.
 5. **Re-anchor the chain.** Chaining each scene from the previous last frame passes drift forward. Every 3 to 4 scenes, restart from the character reference instead of the last frame.
 6. **Fix the seeds.** With stable seeds from Phase 1, keep the same base seed per character and change only the retry offset.
@@ -409,9 +409,21 @@ Test: build the workflow with and without a LoRA and print the node graph; with 
 **Fix 8: wire the face check (keyframe generation)**
 
 ```text
-identity_check.py exists but is not used.
-Task: in keyframe generation, after loading character references call IdentityChecker.register(character_id, reference_sheet) once per character. Wrap the existing generate call with generate_with_retry(generate_fn, expected_ids, base_seed, max_tries=3). Keep the best-scoring attempt and write each attempt's score to the scene's metadata. If every attempt fails, keep the best one and mark the scene "identity_warning" instead of stopping.
-Test: a scene with a deliberately wrong reference must show low scores and the warning.
+Host file: app/scene_manager.py, method generate_keyframes (the Stage A / Stage B section). Do NOT put identity logic in keyframe_generator.py; it stays a thin ComfyUI wrapper. identity_check.py is already in app/.
+
+1. Create one IdentityChecker(threshold=0.38) per generate_keyframes call. Import it inside a try block; if insightface is missing, log a warning and skip the check instead of crashing.
+2. After the ContinuityTracker is created, call checker.register(char_id, references[char_id]) once for every character in character_map (references[...] is the same reference-sheet path already used for character_refs).
+3. Where Stage A and Stage B run, define a local function make_keyframe(seed) that:
+   - runs Stage A with seed=seed and writes scene_dir / f"stage_a_try_{seed}.png";
+   - if needs_anatomy_pass(...) is true, runs Stage B with seed=seed+1; otherwise copies the Stage A file;
+   - writes the final image to scene_dir / f"keyframe_try_{seed}.png" (every attempt gets its own file, so a good earlier attempt is never overwritten);
+   - stores the result dict in attempts[seed] and returns the Path of the final image.
+4. Call best = checker.generate_with_retry(make_keyframe, expected_ids=scene_character_ids, base_seed=2000003 + order * 7919, max_tries=3). The first attempt must use exactly the current seed, so behaviour without retries is unchanged.
+5. Copy best["path"] to keyframe_path with shutil.copy2, copy the winning stage A file to stage_a_keyframe_path, and set keyframe_result = attempts[best["seed"]].
+6. Add to the scene metadata: identity_scores = best["report"]["scores"], identity_seed = best["seed"], identity_warning = best["identity_warning"].
+7. Delete the losing attempt files after the copy.
+8. If every attempt fails, keep the best one, set identity_warning, and continue; do not stop the job.
+Test: use a scene whose reference sheet belongs to a different character; the log must show low scores for all tries and identity_warning must be true.
 ```
 
 **Fix 9: per-scene location and lighting (`story_planner.py`, `compiler.py`)**
@@ -453,7 +465,7 @@ These are the remaining ideas from the review. They are mostly workflow-level ch
 | Workflow | What I saw | What to do |
 | --- | --- | --- |
 | `krea2_t2i_api.json` | Contains a hard-coded example prompt (detective in an observatory) and a negative prompt at cfg 1.0 | Confirm the code always overwrites the prompt node; a failed overwrite would silently render the example. Drop the negative prompt or raise cfg if you want it used |
-| `qwen_image_edit_2511_api.json` | One image slot (`image1`); the negative-side text node holds a default "maintain identity" sentence; the starting latent comes from the reference image at denoise 1.0 | Confirm what text your code writes into the negative node. Test a real negative or an empty one. Check output size, since it follows the reference image |
+| `qwen_image_edit_2511_api.json` | `Template has image1 only, and the code adds image2/image3 (max 2 references`); the negative-side text node holds a default "maintain identity" sentence; the starting latent comes from the reference image at denoise 1.0 | Confirm what text your code writes into the negative node. Test a real negative or an empty one. Check output size, since it follows the reference image |
 | `wan2.2_i2v_api.json` | Lightning on both experts, 4 steps split 2 and 2, cfg 1.0, fixed 1280x720, 81 frames at 16 fps | Keep. Remember the negative prompt has no effect at cfg 1.0 |
 | `wan2.2_t2v_14b_api.json` | Has a Lightning on/off switch that is set to off (20 steps, cfg 3.5) | Confirm whether the code uses this file at all. If not, delete it |
 | `juggernaut_xl_t2i_api.json` | Empty prompts, 35 steps, SDXL checkpoint | Confirm it is still used. If Qwen-Image-2512 replaced it, delete it |
@@ -534,3 +546,52 @@ This list is the single place to track everything. Tick items as you finish them
 - [ ] Character LoRA for recurring characters
 - [ ] Plan preview before generation
 - [ ] Per-scene cost log
+
+## Using Antigravity: which model, and the master prompt
+
+The model list you showed has four options. These picks come from general strengths of each model family, not from a test on your code, so run Fix 1 with two models and compare before committing to one.
+
+| Model | Use it for | Avoid it for |
+| --- | --- | --- |
+| Claude Opus 4.6 (Thinking) | Changes that touch several files or need careful reasoning: Fix 4, 5, 8, 9 (planner, tracker, face check, per-scene location) | Tiny edits, where it costs more quota than needed |
+| Claude Sonnet 4.6 (Thinking) | Small, single-file fixes: Fix 1, 2, 3, 6, 7, 10 and cleanup | Large cross-file redesigns |
+| Gemini 3.8 Flash | Fast, mechanical work: deleting dead files, renaming, writing test stories, reading a whole folder | Anything where a subtle logic mistake would be costly |
+| GPT-OSS 120B | Not recommended here | Planner, tracker and ComfyUI wiring |
+
+The "Notice" label next to some models is likely a usage or quota warning. Click it to see what it says before a long session.
+
+### How to run it
+
+1. Save this document in the repo, for example as `docs/PIPELINE_REVIEW.md`, and commit it.
+2. Open a new Antigravity session for each fix. Do not chain several fixes in one long chat.
+3. Paste the master prompt below, then name the fix number.
+4. Read the diff, run the test it gives you, commit, then start the next session.
+
+### Master prompt (paste at the start of each session)
+
+```text
+You are fixing a Python story-to-video pipeline (FastAPI, ComfyUI, Wan 2.2, Qwen).
+Read docs/PIPELINE_REVIEW.md first. It is the single source of truth.
+
+Today's task: implement ONLY "Fix <NUMBER>" from the section
+"Instructions to give a coding LLM, fix by fix".
+
+Rules:
+1. Read the named files fully before editing. Do not guess function names; open them.
+2. Change only what the fix names. No refactors, renames or formatting changes elsewhere.
+3. Keep public function names, arguments and return shapes unchanged.
+4. No new dependencies unless the fix says so.
+5. Never hide errors with a bare except or silent default. Log and raise.
+6. Closed lists (acts, events, genders, cameras) come from vocab.json. Do not copy them.
+7. Before editing, write a 5-line plan: files to touch, what changes, what stays.
+8. After editing, show the diff, then list: what changed, what you did NOT change, and one test command I can run.
+9. If the doc and the code disagree, stop and ask me.
+10. Tick the matching item in the Master checklist only after I confirm the test passed.
+```
+
+### Safe-edit habits in Antigravity
+
+- Work on a git branch per fix (`fix-03-anatomy-fallback`), so a bad change is one command to undo.
+- Ask the model to run the test itself if the tool allows terminal access, but still read the output yourself.
+- If the model starts editing files you did not name, stop the run and restate rule 2.
+- If a model keeps failing the same fix twice, switch to Opus 4.6 for that fix rather than retrying the same model.
