@@ -1,4 +1,6 @@
+import logging
 import os
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -12,6 +14,8 @@ except ImportError:
 PROJECT_ROOT = Path("/workspace/story-video-engine")
 
 load_dotenv(PROJECT_ROOT / ".env")
+
+logger = logging.getLogger(__name__)
 
 
 __all__ = [
@@ -38,15 +42,39 @@ def resolve_character_voice(
     """
     gender = None
     if character_obj:
-        appearance = str(character_obj.get("appearance", "")).lower()
-        anchor = str(character_obj.get("visual_anchor", "")).lower()
-        name = str(character_obj.get("name", "")).lower()
-        full_text = f"{name} {appearance} {anchor}"
+        # Prefer explicit gender from the plan / continuity tracker
+        explicit_gender = str(character_obj.get("gender", "")).lower().strip()
+        if explicit_gender in ("female", "male"):
+            gender = explicit_gender
+            logger.debug(
+                "Voice for %s: using explicit gender '%s' from plan",
+                character_id, gender,
+            )
+        else:
+            # Last-resort: whole-word match on appearance / anchor / name
+            appearance = str(character_obj.get("appearance", "")).lower()
+            anchor = str(character_obj.get("visual_anchor", "")).lower()
+            name = str(character_obj.get("name", "")).lower()
+            full_text = f"{name} {appearance} {anchor}"
 
-        if any(w in full_text for w in ["female", "woman", "girl", "lady", "she", "her"]):
-            gender = "female"
-        elif any(w in full_text for w in ["male", "man", "boy", "guy", "he", "his"]):
-            gender = "male"
+            _FEMALE_WORDS = r"\b(?:female|woman|girl|lady|she|her)\b"
+            _MALE_WORDS = r"\b(?:male|man|boy|guy|he|his)\b"
+
+            if re.search(_FEMALE_WORDS, full_text, re.IGNORECASE):
+                gender = "female"
+            elif re.search(_MALE_WORDS, full_text, re.IGNORECASE):
+                gender = "male"
+
+            if gender:
+                logger.debug(
+                    "Voice for %s: inferred gender '%s' from text (no explicit gender)",
+                    character_id, gender,
+                )
+            else:
+                logger.warning(
+                    "Voice for %s: could not determine gender from plan or text",
+                    character_id,
+                )
 
     if requested_voice and requested_voice.lower() != "alloy":
         req_lower = requested_voice.lower()

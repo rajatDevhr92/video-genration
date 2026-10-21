@@ -78,6 +78,16 @@ class VideoGenerator:
                 }
                 workflow["7"]["inputs"]["model"] = ["500", 0]
 
+                workflow["501"] = {
+                    "class_type": "LoraLoaderModelOnly",
+                    "inputs": {
+                        "model": ["6", 0],
+                        "lora_name": motion_lora_name,
+                        "strength_model": float(motion_lora_strength),
+                    },
+                }
+                workflow["8"]["inputs"]["model"] = ["501", 0]
+
             workflow["11"]["inputs"]["width"] = VIDEO_WIDTH
             workflow["11"]["inputs"]["height"] = VIDEO_HEIGHT
 

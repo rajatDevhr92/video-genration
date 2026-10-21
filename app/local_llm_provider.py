@@ -4,14 +4,26 @@ import os
 import re
 from pathlib import Path
 
-import torch
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-)
+try:
+    import torch
+except ImportError:
+    torch = None
+
+try:
+    from transformers import (
+        AutoModelForCausalLM,
+        AutoTokenizer,
+    )
+except ImportError:
+    AutoModelForCausalLM = None
+    AutoTokenizer = None
 
 from .llm_provider import LLMProvider
-from .gpu_memory import prepare_for_local_llm
+from .gpu_memory import (
+    check_free_gpu_memory,
+    get_free_gpu_memory,
+    prepare_for_local_llm,
+)
 
 
 class LocalLLMProvider(LLMProvider):
@@ -280,73 +292,66 @@ class LocalLLMProvider(LLMProvider):
                 f"Parser error: {error}"
             ) from error
 
-    def unload(self):
+    def unload(self, min_free_gb: float = None, min_free_bytes: int = None):
 
         print()
         print("=" * 70)
         print("LOCAL LLM MEMORY RELEASE")
         print("=" * 70)
 
-        try:
-
-            if hasattr(self, "model"):
-
+        # Log free memory before unload
+        if torch is not None and torch.cuda.is_available():
+            try:
+                free_before, total_before = torch.cuda.mem_get_info()
                 print(
-                    "[LLM] Deleting local model..."
+                    f"[MEMORY] Free GPU memory before unload: "
+                    f"{free_before / (1024**3):.2f} GB / {total_before / (1024**3):.2f} GB"
                 )
+            except Exception as e:
+                print(f"[MEMORY] Could not read GPU memory before unload: {e}")
+                raise
+        else:
+            print("[MEMORY] Before unload: CUDA unavailable")
 
+        if hasattr(self, "model") and self.model is not None:
+            print("[LLM] Deleting local model...")
+            try:
                 del self.model
+            except Exception as error:
+                print(f"[LLM] Model delete warning: {error}")
+                raise
+            self.model = None
 
-        except Exception as error:
-
-            print(
-                f"[LLM] Model delete warning: {error}"
-            )
-
-        try:
-
-            if hasattr(self, "tokenizer"):
-
+        if hasattr(self, "tokenizer") and self.tokenizer is not None:
+            print("[LLM] Deleting tokenizer...")
+            try:
                 del self.tokenizer
-
-        except Exception:
-            pass
+            except Exception as error:
+                print(f"[LLM] Tokenizer delete warning: {error}")
+                raise
+            self.tokenizer = None
 
         gc.collect()
 
-        if torch.cuda.is_available():
-
+        if torch is not None and torch.cuda.is_available():
             torch.cuda.empty_cache()
-
             try:
                 torch.cuda.ipc_collect()
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[MEMORY] CUDA ipc_collect warning: {e}")
 
-        if torch.cuda.is_available():
-
-            allocated = (
-                torch.cuda.memory_allocated()
-                / 1024**3
+        # Check free GPU memory after unload with torch.cuda.mem_get_info() and verify against configurable minimum
+        if torch is not None and torch.cuda.is_available():
+            free_after, total_after = check_free_gpu_memory(
+                min_free_gb=min_free_gb,
+                min_free_bytes=min_free_bytes,
             )
-
-            reserved = (
-                torch.cuda.memory_reserved()
-                / 1024**3
-            )
-
-            total = (
-                torch.cuda.get_device_properties(0)
-                .total_memory
-                / 1024**3
-            )
-
             print(
-                "[MEMORY] After Local LLM unload: "
-                f"allocated={allocated:.2f} GB, "
-                f"reserved={reserved:.2f} GB, "
-                f"total={total:.2f} GB"
+                f"[MEMORY] Free GPU memory after unload: "
+                f"{free_after / (1024**3):.2f} GB / {total_after / (1024**3):.2f} GB"
             )
+        else:
+            print("[MEMORY] After unload: CUDA unavailable")
 
         print(
             "[LLM] Local model memory released."

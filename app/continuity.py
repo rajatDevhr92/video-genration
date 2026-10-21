@@ -14,6 +14,7 @@ from typing import Dict, List, Optional
 
 ACTS = {"none", "kiss", "touch", "oral", "vaginal", "anal", "other_contact"}
 EVENTS = {"remove_top", "remove_bottom", "remove_all", "dress_all"}
+ANATOMY_ACTS = {"oral", "vaginal", "anal"}
 
 _FEMALE = re.compile(r"\b(female|woman|women|girl|lady|she|her)\b", re.I)
 _MALE = re.compile(r"\b(male|man|men|guy|boy|he|him|his)\b", re.I)
@@ -336,11 +337,7 @@ def characters_who_undress(scenes: List[dict], tracker_factory) -> set:
 def needs_anatomy_pass(act: str, states: Dict[str, CharState], scene: Optional[dict] = None) -> bool:
     """Stage B only when an act involving exposed anatomy is happening
     AND the relevant characters are actually unclothed - not keyword guessing."""
-    act_str = str(act).lower() if act else ""
-    if act_str not in {"oral", "vaginal", "anal"}:
-        if scene:
-            pen_text = f"{scene.get('penetration_state', '')} {scene.get('description', '')} {scene.get('action', '')}".lower()
-            if any(w in pen_text for w in ["penetrat", "thrust", "cock", "dick", "pussy", "vagina", "anal", "oral", "doggystyle", "cowgirl"]):
-                return any(not cs.bottom_on for cs in states.values())
+    act_str = str(act).strip().lower() if act else ""
+    if act_str not in ANATOMY_ACTS:
         return False
     return any(not cs.bottom_on for cs in states.values())

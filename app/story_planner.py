@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 import logging
 import re
 from typing import Dict, Any, List, Optional
@@ -174,7 +175,51 @@ def build_plan(
     }
 
 
-class StoryPlanValidationError(ValueError):
+class PlanError(ValueError):
+    """Raised when plan validation fails or when a field falls back in strict mode."""
+    pass
+
+
+class FallbackCounts(dict):
+    """Fallback counts by field and total; compares equal to int total for convenience."""
+
+    def __init__(self, total: int = 0, by_field: Optional[Dict[str, int]] = None):
+        by_field = by_field or {}
+        super().__init__(by_field)
+        self["total"] = total
+        self["by_field"] = by_field
+        self.total = total
+
+    def __eq__(self, other):
+        if isinstance(other, int):
+            return self.total == other
+        return super().__eq__(other)
+
+    def __int__(self):
+        return self.total
+
+    def __gt__(self, other):
+        if isinstance(other, (int, float)):
+            return self.total > other
+        return super().__gt__(other)
+
+    def __ge__(self, other):
+        if isinstance(other, (int, float)):
+            return self.total >= other
+        return super().__ge__(other)
+
+    def __lt__(self, other):
+        if isinstance(other, (int, float)):
+            return self.total < other
+        return super().__lt__(other)
+
+    def __le__(self, other):
+        if isinstance(other, (int, float)):
+            return self.total <= other
+        return super().__le__(other)
+
+
+class StoryPlanValidationError(PlanError):
 
     def __init__(
         self,
@@ -242,18 +287,69 @@ class StoryPlanner:
         "audio",
     ]
 
-    def __init__(self, provider):
-
+    def __init__(
+        self,
+        provider: Any = None,
+        strict: bool = True,
+        job_dir: Optional[Any] = None,
+    ):
         self.provider = provider
+        self.strict = strict
+        self.job_dir = Path(job_dir) if job_dir else None
+
+    def validate(
+        self,
+        result: Any,
+        strict: Optional[bool] = None,
+        job_dir: Optional[Any] = None,
+    ) -> Dict[str, Any]:
+        self._validate(result, strict=strict, job_dir=job_dir)
+        return result
+
+    def _handle_fallback(
+        self,
+        scene_num: Any,
+        field: str,
+        reason: str,
+        default_val: Any,
+        strict: bool,
+        fallbacks: List[Dict[str, Any]],
+        job_dir: Optional[Path],
+    ) -> Any:
+        if strict:
+            prefix = f"Scene {scene_num}: " if scene_num is not None else ""
+            raise PlanError(f"{prefix}field '{field}' is missing or invalid ({reason})")
+
+        fallbacks.append({"scene": scene_num, "field": field, "reason": reason})
+        scene_tag = f"Scene {scene_num}" if scene_num is not None else "Plan"
+        log_line = f"{scene_tag}: field '{field}' fell back to default ({reason})"
+        logger.warning(f"[PLANNER FALLBACK] {log_line}")
+
+        log_path = (Path(job_dir) if job_dir else Path(".")) / "fallbacks.log"
+        try:
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(log_line + "\n")
+        except Exception as err:
+            logger.error(f"Failed writing fallback to {log_path}: {err}")
+
+        return default_val
 
     def build(
         self,
         story: str,
         target_scenes: int = None,
+        strict: Optional[bool] = None,
+        job_dir: Optional[Any] = None,
     ) -> Dict[str, Any]:
+        if strict is None:
+            strict = self.strict
+        if job_dir is None:
+            job_dir = self.job_dir
+        else:
+            job_dir = Path(job_dir)
 
         if not story or not story.strip():
-
             raise ValueError(
                 "Story cannot be empty."
             )
@@ -261,9 +357,11 @@ class StoryPlanner:
         try:
             print("[DEBUG] Running modular build_plan...")
             plan = build_plan(self.provider, story, target_scenes=target_scenes)
-            self._validate(plan)
+            self._validate(plan, strict=strict, job_dir=job_dir)
             return plan
         except Exception as modular_err:
+            if strict and isinstance(modular_err, PlanError):
+                raise
             print(
                 f"[PLANNER] Modular build_plan failed ({modular_err}). "
                 "Falling back to monolithic generation..."
@@ -283,17 +381,14 @@ class StoryPlanner:
         )
 
         try:
-
-            self._validate(result)
-
+            self._validate(result, strict=strict, job_dir=job_dir)
             return result
-
         except ValueError as first_error:
-
+            if strict and isinstance(first_error, PlanError):
+                raise
             print(
                 "[PLANNER] First plan failed validation."
             )
-
             print(
                 f"[PLANNER] Error: {first_error}"
             )
@@ -317,15 +412,15 @@ class StoryPlanner:
             )
 
             try:
-
                 self._validate(
-                    retry_result
+                    retry_result,
+                    strict=strict,
+                    job_dir=job_dir,
                 )
-
                 return retry_result
-
             except ValueError as second_error:
-
+                if isinstance(second_error, PlanError):
+                    raise
                 raise StoryPlanValidationError(
                     message=(
                         "The story planner returned "
@@ -970,26 +1065,51 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
     def _validate(
         self,
         result: Any,
+        strict: Optional[bool] = None,
+        job_dir: Optional[Any] = None,
     ):
+        if strict is None:
+            strict = self.strict
+        if job_dir is None:
+            job_dir = self.job_dir
+        else:
+            job_dir = Path(job_dir)
+
+        fallbacks: List[Dict[str, Any]] = []
 
         if not isinstance(
             result,
             dict,
         ):
-
-            raise ValueError(
+            raise PlanError(
                 "Plan must be a JSON object."
             )
 
         if "title" not in result or not result["title"]:
-            result["title"] = "Cinematic Story Plan"
+            result["title"] = self._handle_fallback(
+                scene_num=None,
+                field="title",
+                reason="missing or empty title",
+                default_val="Cinematic Story Plan",
+                strict=strict,
+                fallbacks=fallbacks,
+                job_dir=job_dir,
+            )
 
         if "summary" not in result or not result["summary"]:
-            result["summary"] = "Cinematic video production plan."
+            result["summary"] = self._handle_fallback(
+                scene_num=None,
+                field="summary",
+                reason="missing or empty summary",
+                default_val="Cinematic video production plan.",
+                strict=strict,
+                fallbacks=fallbacks,
+                job_dir=job_dir,
+            )
 
         for field in self.REQUIRED_PLAN_FIELDS:
             if field not in result:
-                raise ValueError(
+                raise PlanError(
                     f"Missing top-level field: {field}"
                 )
 
@@ -997,8 +1117,7 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
             result["characters"],
             list,
         ):
-
-            raise ValueError(
+            raise PlanError(
                 "'characters' must be a list."
             )
 
@@ -1006,8 +1125,7 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
             result["locations"],
             list,
         ):
-
-            raise ValueError(
+            raise PlanError(
                 "'locations' must be a list."
             )
 
@@ -1015,14 +1133,12 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
             result["scenes"],
             list,
         ):
-
-            raise ValueError(
+            raise PlanError(
                 "'scenes' must be a list."
             )
 
         if not result["scenes"]:
-
-            raise ValueError(
+            raise PlanError(
                 "At least one scene is required."
             )
 
@@ -1034,45 +1150,144 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
 
         for idx, character in enumerate(result["characters"], start=1):
             if not isinstance(character, dict):
-                raise ValueError("Character must be an object.")
+                raise PlanError("Character must be an object.")
+
+            char_id = character.get("id") or f"char_{idx:03d}"
 
             if not character.get("id"):
-                character["id"] = f"char_{idx:03d}"
+                character["id"] = self._handle_fallback(
+                    scene_num=None,
+                    field="id",
+                    reason=f"missing character id for character {idx}",
+                    default_val=f"char_{idx:03d}",
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             if not character.get("name"):
-                character["name"] = f"Character {idx}"
+                character["name"] = self._handle_fallback(
+                    scene_num=None,
+                    field="name",
+                    reason=f"missing character name for {char_id}",
+                    default_val=f"Character {idx}",
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
+
+            char_id = character.get("id") or f"char_{idx:03d}"
+            char_name = character.get("name") or char_id
+            char_label = f"'{char_name}' ({char_id})" if char_name != char_id else f"'{char_id}'"
+
+            # Adult-age rule: require integer age >= 18 (do not guess or default)
+            if "age" not in character or character.get("age") is None or character.get("age") == "":
+                raise PlanError(
+                    f"Character {char_label}: age is missing. Every character must have an integer age of 18 or more."
+                )
+
+            raw_age = character["age"]
+            if isinstance(raw_age, bool):
+                raise PlanError(
+                    f"Character {char_label}: age is unclear ({raw_age!r}). Every character must have an integer age of 18 or more."
+                )
+
+            if isinstance(raw_age, int):
+                age_val = raw_age
+            elif isinstance(raw_age, str) and raw_age.strip().isdigit():
+                age_val = int(raw_age.strip())
+                character["age"] = age_val
+            else:
+                raise PlanError(
+                    f"Character {char_label}: age is unclear ({raw_age!r}). Every character must have an integer age of 18 or more."
+                )
+
+            if age_val < 18:
+                raise PlanError(
+                    f"Character {char_label}: age {age_val} is below 18. Every character must have an integer age of 18 or more."
+                )
 
             if not character.get("appearance"):
-                character["appearance"] = "Adult person, dark hair, expressive eyes, athletic build"
+                character["appearance"] = self._handle_fallback(
+                    scene_num=None,
+                    field="appearance",
+                    reason=f"missing appearance for {char_id}",
+                    default_val="Adult person, dark hair, expressive eyes, athletic build",
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             if not character.get("clothing"):
-                character["clothing"] = "Casual everyday outfit"
+                character["clothing"] = self._handle_fallback(
+                    scene_num=None,
+                    field="clothing",
+                    reason=f"missing clothing for {char_id}",
+                    default_val="Casual everyday outfit",
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             if not character.get("personality"):
-                character["personality"] = "Passionate and expressive"
+                character["personality"] = self._handle_fallback(
+                    scene_num=None,
+                    field="personality",
+                    reason=f"missing personality for {char_id}",
+                    default_val="Passionate and expressive",
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             if not character.get("visual_anchor"):
-                character["visual_anchor"] = character.get("appearance")
+                character["visual_anchor"] = self._handle_fallback(
+                    scene_num=None,
+                    field="visual_anchor",
+                    reason=f"missing visual_anchor for {char_id}",
+                    default_val=character.get("appearance", "Adult person"),
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             if not character.get("gender"):
-                character["gender"] = normalize_gender(
+                norm_g = normalize_gender(
                     character.get("visual_anchor", ""),
                     character.get("appearance", ""),
                     character.get("name", ""),
                 )
+                character["gender"] = self._handle_fallback(
+                    scene_num=None,
+                    field="gender",
+                    reason=f"missing gender for {char_id}",
+                    default_val=norm_g if norm_g in {"female", "male"} else "female",
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
             elif character.get("gender") not in {"female", "male"}:
-                character["gender"] = normalize_gender(character.get("gender", ""))
+                norm_g = normalize_gender(character.get("gender", ""))
+                character["gender"] = self._handle_fallback(
+                    scene_num=None,
+                    field="gender",
+                    reason=f"invalid gender '{character.get('gender')}' for {char_id}",
+                    default_val=norm_g if norm_g in {"female", "male"} else "female",
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             if character.get("gender") not in {"female", "male"}:
-                raise ValueError(f"Character {character.get('id')} has invalid gender: {character.get('gender')}. Must be 'female' or 'male'.")
+                raise PlanError(f"Character {character.get('id')} has invalid gender: {character.get('gender')}. Must be 'female' or 'male'.")
 
             for field in self.REQUIRED_CHARACTER_FIELDS:
                 if field not in character:
-                    raise ValueError(f"Character missing field: {field}")
+                    raise PlanError(f"Character missing field: {field}")
 
             character_id = character["id"]
             if character_id in character_ids:
-                raise ValueError(f"Duplicate character id: {character_id}")
+                raise PlanError(f"Duplicate character id: {character_id}")
             character_ids.add(character_id)
 
         # --------------------------------------------------
@@ -1082,66 +1297,192 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
 
         for idx, scene in enumerate(result["scenes"], start=1):
             if not isinstance(scene, dict):
-                raise ValueError("Scene must be an object.")
+                raise PlanError("Scene must be an object.")
+
+            sc_num = scene.get("order", idx)
 
             if not scene.get("id"):
-                scene["id"] = f"scene_{idx:03d}"
-
-            import re
+                scene["id"] = self._handle_fallback(
+                    scene_num=sc_num,
+                    field="id",
+                    reason="missing scene id",
+                    default_val=f"scene_{idx:03d}",
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             raw_order = scene.get("order")
             if raw_order is None or raw_order == "":
-                scene["order"] = idx
+                scene["order"] = self._handle_fallback(
+                    scene_num=idx,
+                    field="order",
+                    reason="missing order",
+                    default_val=idx,
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
             else:
                 try:
                     scene["order"] = int(raw_order)
                 except (ValueError, TypeError):
                     cleaned_order = re.sub(r"[^\d]", "", str(raw_order))
-                    scene["order"] = int(cleaned_order) if cleaned_order else idx
+                    if cleaned_order:
+                        scene["order"] = int(cleaned_order)
+                    else:
+                        scene["order"] = self._handle_fallback(
+                            scene_num=idx,
+                            field="order",
+                            reason=f"invalid order '{raw_order}'",
+                            default_val=idx,
+                            strict=strict,
+                            fallbacks=fallbacks,
+                            job_dir=job_dir,
+                        )
+
+            sc_num = scene.get("order", idx)
 
             raw_duration = scene.get("duration")
             if raw_duration is None or raw_duration == "":
-                scene["duration"] = 5.0
+                scene["duration"] = self._handle_fallback(
+                    scene_num=sc_num,
+                    field="duration",
+                    reason="missing duration",
+                    default_val=5.0,
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
             else:
                 try:
                     scene["duration"] = float(raw_duration)
                 except (ValueError, TypeError):
                     cleaned_dur = re.sub(r"[^\d.]", "", str(raw_duration))
                     try:
-                        scene["duration"] = float(cleaned_dur) if cleaned_dur else 5.0
+                        if cleaned_dur:
+                            scene["duration"] = float(cleaned_dur)
+                        else:
+                            scene["duration"] = self._handle_fallback(
+                                scene_num=sc_num,
+                                field="duration",
+                                reason=f"invalid duration '{raw_duration}'",
+                                default_val=5.0,
+                                strict=strict,
+                                fallbacks=fallbacks,
+                                job_dir=job_dir,
+                            )
                     except ValueError:
-                        scene["duration"] = 5.0
+                        scene["duration"] = self._handle_fallback(
+                            scene_num=sc_num,
+                            field="duration",
+                            reason=f"invalid duration '{raw_duration}'",
+                            default_val=5.0,
+                            strict=strict,
+                            fallbacks=fallbacks,
+                            job_dir=job_dir,
+                        )
 
             if not scene.get("location_id"):
-                scene["location_id"] = (
+                default_loc = (
                     result["locations"][0]["id"] if result.get("locations") else "loc_001"
+                )
+                scene["location_id"] = self._handle_fallback(
+                    scene_num=sc_num,
+                    field="location_id",
+                    reason="missing location_id",
+                    default_val=default_loc,
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
                 )
 
             if not scene.get("character_ids"):
-                scene["character_ids"] = [c["id"] for c in result.get("characters", [])]
+                default_cids = [c["id"] for c in result.get("characters", [])]
+                scene["character_ids"] = self._handle_fallback(
+                    scene_num=sc_num,
+                    field="character_ids",
+                    reason="missing character_ids",
+                    default_val=default_cids,
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             if not scene.get("description"):
-                scene["description"] = scene.get("action", "Cinematic scene action.")
+                default_desc = scene.get("action", "Cinematic scene action.")
+                scene["description"] = self._handle_fallback(
+                    scene_num=sc_num,
+                    field="description",
+                    reason="missing description",
+                    default_val=default_desc,
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             if not scene.get("action"):
-                scene["action"] = scene.get("description", "Physical movement.")
+                default_act = scene.get("description", "Physical movement.")
+                scene["action"] = self._handle_fallback(
+                    scene_num=sc_num,
+                    field="action",
+                    reason="missing action",
+                    default_val=default_act,
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             if not scene.get("camera"):
-                scene["camera"] = "Medium shot, eye-level tracking shot (matches CENTER PANEL 3/4 Side View of turnaround sheet)"
+                scene["camera"] = self._handle_fallback(
+                    scene_num=sc_num,
+                    field="camera",
+                    reason="missing camera",
+                    default_val="Medium shot, eye-level tracking shot (matches CENTER PANEL 3/4 Side View of turnaround sheet)",
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             if not scene.get("lighting"):
-                scene["lighting"] = "Warm cinematic lighting"
+                scene["lighting"] = self._handle_fallback(
+                    scene_num=sc_num,
+                    field="lighting",
+                    reason="missing lighting",
+                    default_val="Warm cinematic lighting",
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             if not scene.get("video_prompt"):
-                scene["video_prompt"] = scene.get("action", "Smooth continuous physical motion")
+                default_vp = scene.get("action", "Smooth continuous physical motion")
+                scene["video_prompt"] = self._handle_fallback(
+                    scene_num=sc_num,
+                    field="video_prompt",
+                    reason="missing video_prompt",
+                    default_val=default_vp,
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             if not scene.get("audio") or not isinstance(scene.get("audio"), dict):
-                scene["audio"] = {
+                default_audio = {
                     "narration": [],
                     "dialogue": [],
                     "sound_effects": ["soft breathing"],
                     "music": {"mood": "sensual", "intensity": "medium"},
                 }
+                scene["audio"] = self._handle_fallback(
+                    scene_num=sc_num,
+                    field="audio",
+                    reason="missing or invalid audio object",
+                    default_val=default_audio,
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             # --------------------------------------------------
             # Auto-populate keyframe-enrichment scene fields if missing / clean placeholders
@@ -1158,25 +1499,68 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
 
             from .continuity import ACTS, EVENTS
             if scene.get("act") not in ACTS:
-                raise ValueError(f"Scene {scene.get('id', idx)}: act must be one of {sorted(ACTS)}")
+                scene["act"] = self._handle_fallback(
+                    scene_num=sc_num,
+                    field="act",
+                    reason=f"act '{scene.get('act')}' must be one of {sorted(ACTS)}",
+                    default_val="none",
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
-            scene.setdefault("wardrobe_events", [])
-            if not isinstance(scene["wardrobe_events"], list):
-                raise ValueError(f"Scene {scene.get('id', idx)}: wardrobe_events must be a list")
-            for ev in scene["wardrobe_events"]:
-                if (
-                    not isinstance(ev, dict)
-                    or ev.get("event") not in EVENTS
-                    or ev.get("character_id") not in character_ids
-                ):
-                    raise ValueError(f"Scene {scene.get('id', idx)}: bad wardrobe event {ev}")
+            if "wardrobe_events" not in scene:
+                scene["wardrobe_events"] = self._handle_fallback(
+                    scene_num=sc_num,
+                    field="wardrobe_events",
+                    reason="missing wardrobe_events",
+                    default_val=[],
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
+            elif not isinstance(scene["wardrobe_events"], list):
+                scene["wardrobe_events"] = self._handle_fallback(
+                    scene_num=sc_num,
+                    field="wardrobe_events",
+                    reason="wardrobe_events must be a list",
+                    default_val=[],
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
+            else:
+                for ev in scene["wardrobe_events"]:
+                    if (
+                        not isinstance(ev, dict)
+                        or ev.get("event") not in EVENTS
+                        or ev.get("character_id") not in character_ids
+                    ):
+                        raise PlanError(f"Scene {scene.get('id', idx)}: bad wardrobe event {ev}")
 
             # Safe non-overwriting defaults if fields are missing
             if not scene.get("clothing_state"):
-                scene["clothing_state"] = "Canonical outfit from character reference"
+                scene["clothing_state"] = self._handle_fallback(
+                    scene_num=sc_num,
+                    field="clothing_state",
+                    reason="missing clothing_state",
+                    default_val="Canonical outfit from character reference",
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             if not scene.get("pose_type"):
-                scene["pose_type"] = (scene.get("action") or scene.get("description") or "Standing upright")
+                default_pose = (scene.get("action") or scene.get("description") or "Standing upright")
+                scene["pose_type"] = self._handle_fallback(
+                    scene_num=sc_num,
+                    field="pose_type",
+                    reason="missing pose_type",
+                    default_val=default_pose,
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             if not scene.get("penetration_state"):
                 scene["penetration_state"] = "None"
@@ -1185,7 +1569,16 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                 scene["genital_alignment"] = "None"
 
             if not scene.get("primary_motion"):
-                scene["primary_motion"] = (scene.get("video_prompt") or scene.get("action") or "")
+                default_pm = (scene.get("video_prompt") or scene.get("action") or "")
+                scene["primary_motion"] = self._handle_fallback(
+                    scene_num=sc_num,
+                    field="primary_motion",
+                    reason="missing primary_motion",
+                    default_val=default_pm,
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             if not scene.get("pose_lock"):
                 scene["pose_lock"] = scene.get("pose_type", scene.get("action", ""))
@@ -1202,10 +1595,26 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                 scene["contact_zone"] = "Continuous solid skin-to-skin contact between bodies, no dark voids"
 
             if not scene.get("motion_intensity"):
-                scene["motion_intensity"] = "medium"
+                scene["motion_intensity"] = self._handle_fallback(
+                    scene_num=sc_num,
+                    field="motion_intensity",
+                    reason="missing motion_intensity",
+                    default_val="medium",
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             if not scene.get("expression"):
-                scene["expression"] = "Intense, emotionally grounded facial expression"
+                scene["expression"] = self._handle_fallback(
+                    scene_num=sc_num,
+                    field="expression",
+                    reason="missing expression",
+                    default_val="Intense, emotionally grounded facial expression",
+                    strict=strict,
+                    fallbacks=fallbacks,
+                    job_dir=job_dir,
+                )
 
             # Ensure structured video prompt (Wan 2.2 5-part format)
             vp = scene.get("video_prompt", "")
@@ -1231,13 +1640,12 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
 
             for field in self.REQUIRED_SCENE_FIELDS:
                 if field not in scene:
-                    raise ValueError(f"Scene missing field: {field}")
+                    raise PlanError(f"Scene missing field: {field}")
 
             scene_id = scene["id"]
 
             if scene_id in scene_ids:
-
-                raise ValueError(
+                raise PlanError(
                     f"Duplicate scene id: "
                     f"{scene_id}"
                 )
@@ -1253,7 +1661,7 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
             audio = scene.get("audio")
 
             if not isinstance(audio, dict):
-                raise ValueError(
+                raise PlanError(
                     f"Scene {scene_id} audio must be an object."
                 )
 
@@ -1266,7 +1674,7 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                 narration,
                 list,
             ):
-                raise ValueError(
+                raise PlanError(
                     f"Scene {scene_id} narration "
                     "must be a list."
                 )
@@ -1280,7 +1688,7 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                 dialogue,
                 list,
             ):
-                raise ValueError(
+                raise PlanError(
                     f"Scene {scene_id} dialogue "
                     "must be a list."
                 )
@@ -1294,7 +1702,7 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                 sound_effects,
                 list,
             ):
-                raise ValueError(
+                raise PlanError(
                     f"Scene {scene_id} sound_effects "
                     "must be a list."
                 )
@@ -1308,7 +1716,7 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                 music,
                 dict,
             ):
-                raise ValueError(
+                raise PlanError(
                     f"Scene {scene_id} music "
                     "must be an object."
                 )
@@ -1319,13 +1727,13 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                     item,
                     dict,
                 ):
-                    raise ValueError(
+                    raise PlanError(
                         f"Scene {scene_id} narration "
                         "items must be objects."
                     )
 
                 if not item.get("text"):
-                    raise ValueError(
+                    raise PlanError(
                         f"Scene {scene_id} narration "
                         "item missing text."
                     )
@@ -1336,25 +1744,25 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                     item,
                     dict,
                 ):
-                    raise ValueError(
+                    raise PlanError(
                         f"Scene {scene_id} dialogue "
                         "items must be objects."
                     )
 
                 if not item.get("character_id"):
-                    raise ValueError(
+                    raise PlanError(
                         f"Scene {scene_id} dialogue "
                         "item missing character_id."
                     )
 
                 if not item.get("text"):
-                    raise ValueError(
+                    raise PlanError(
                         f"Scene {scene_id} dialogue "
                         "item missing text."
                     )
 
                 if item["character_id"] not in character_ids:
-                    raise ValueError(
+                    raise PlanError(
                         f"Scene {scene_id} dialogue references "
                         f"unknown character: "
                         f"{item['character_id']}"
@@ -1367,12 +1775,25 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
             # --------------------------------------------------
             if not narration and not dialogue:
                 fallback_text = (scene.get("description") or scene.get("action") or "").strip()
-                if fallback_text:
-                    narration = [{
+                if not fallback_text:
+                    if strict:
+                        raise PlanError(f"Scene {sc_num}: both narration and dialogue are empty")
+                else:
+                    if strict:
+                        raise PlanError(f"Scene {sc_num}: both narration and dialogue are empty")
+                    default_narration = [{
                         "text": fallback_text,
                         "voice": "alloy"
                     }]
-                    audio["narration"] = narration
+                    audio["narration"] = self._handle_fallback(
+                        scene_num=sc_num,
+                        field="audio.narration",
+                        reason="both narration and dialogue empty, defaulted narration to scene description",
+                        default_val=default_narration,
+                        strict=strict,
+                        fallbacks=fallbacks,
+                        job_dir=job_dir,
+                    )
 
             for effect in sound_effects:
 
@@ -1380,7 +1801,7 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                     effect,
                     str,
                 ):
-                    raise ValueError(
+                    raise PlanError(
                         f"Scene {scene_id} sound_effects "
                         "must contain strings."
                     )
@@ -1391,7 +1812,7 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
 
                 if character_id not in character_ids:
 
-                    raise ValueError(
+                    raise PlanError(
                         f"Scene {scene_id} references "
                         f"unknown character: "
                         f"{character_id}"
@@ -1442,6 +1863,17 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                     else:
                         m["mood"] = "climactic passionate"
                         m["intensity"] = "very high"
+
+        counts_by_field: Dict[str, int] = {}
+        for fb in fallbacks:
+            f = fb["field"]
+            counts_by_field[f] = counts_by_field.get(f, 0) + 1
+
+        result.setdefault("meta", {})["fallbacks"] = FallbackCounts(
+            total=len(fallbacks),
+            by_field=counts_by_field,
+        )
+        return result
 
     def _find_missing_fields(
         self,
@@ -1524,3 +1956,12 @@ CRITICAL VOICE RULE: Either "narration" OR "dialogue" MUST contain spoken/voice 
                             )
 
         return missing
+
+
+def validate_plan(
+    plan: Dict[str, Any],
+    strict: bool = True,
+    job_dir: Optional[Any] = None,
+) -> Dict[str, Any]:
+    planner = StoryPlanner(provider=None, strict=strict, job_dir=job_dir)
+    return planner.validate(plan, strict=strict, job_dir=job_dir)

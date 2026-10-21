@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 import os
@@ -1043,7 +1044,7 @@ POSE & POSITION TRANSITION INSTRUCTION
         # Generate the genital reference image via composition generator (Krea T2I)
         try:
             logger.info(f"Generating genital reference for character '{character_id}' ({gender} → {normalized})...")
-            gen_seed = (abs(hash(character_id)) % 8000000) + 100000
+            gen_seed = (int(hashlib.md5(character_id.encode()).hexdigest()[:8], 16) % 8000000) + 100000
             self.composition_generator.generate_simple(
                 prompt=genital_prompt,
                 output_path=ref_path,

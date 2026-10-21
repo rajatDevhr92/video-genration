@@ -3,13 +3,80 @@ import os
 import time
 
 import requests
-import torch
+
+try:
+    import torch
+except ImportError:
+    torch = None
 
 
 COMFY_URL = os.getenv(
     "COMFY_URL",
     "http://127.0.0.1:8188",
 )
+
+DEFAULT_MIN_FREE_GPU_MEMORY_GB = float(
+    os.getenv("MIN_FREE_GPU_MEMORY_GB", "2.0")
+)
+
+
+def get_free_gpu_memory(device=None):
+    """
+    Return (free_bytes, total_bytes) using torch.cuda.mem_get_info().
+    """
+    if torch is None or not torch.cuda.is_available():
+        return 0, 0
+    return torch.cuda.mem_get_info(device)
+
+
+def check_free_gpu_memory(
+    min_free_gb=None,
+    min_free_bytes=None,
+    device=None,
+):
+    """
+    Check free GPU memory with torch.cuda.mem_get_info().
+    Logs the free memory. If free memory is below the configurable minimum,
+    raises a RuntimeError.
+    """
+    if torch is None or not torch.cuda.is_available():
+        print("[MEMORY] GPU memory check: CUDA unavailable")
+        return 0, 0
+
+    free_bytes, total_bytes = torch.cuda.mem_get_info(device)
+    free_gb = free_bytes / (1024 ** 3)
+    total_gb = total_bytes / (1024 ** 3)
+
+    if min_free_bytes is not None:
+        min_bytes = int(min_free_bytes)
+        min_limit_gb = min_bytes / (1024 ** 3)
+    elif min_free_gb is not None:
+        min_limit_gb = float(min_free_gb)
+        min_bytes = int(min_limit_gb * (1024 ** 3))
+    elif os.getenv("MIN_FREE_GPU_MEMORY_GB") is not None:
+        min_limit_gb = float(os.getenv("MIN_FREE_GPU_MEMORY_GB"))
+        min_bytes = int(min_limit_gb * (1024 ** 3))
+    elif os.getenv("MIN_FREE_GPU_MEMORY_BYTES") is not None:
+        min_bytes = int(os.getenv("MIN_FREE_GPU_MEMORY_BYTES"))
+        min_limit_gb = min_bytes / (1024 ** 3)
+    else:
+        min_limit_gb = DEFAULT_MIN_FREE_GPU_MEMORY_GB
+        min_bytes = int(min_limit_gb * (1024 ** 3))
+
+    print(
+        f"[MEMORY] Free GPU memory: {free_gb:.2f} GB / {total_gb:.2f} GB "
+        f"(minimum required: {min_limit_gb:.2f} GB)"
+    )
+
+    if free_bytes < min_bytes:
+        msg = (
+            f"Free GPU memory ({free_gb:.2f} GB) is below configurable minimum "
+            f"({min_limit_gb:.2f} GB). Total memory: {total_gb:.2f} GB."
+        )
+        print(f"[MEMORY] ERROR: {msg}")
+        raise RuntimeError(msg)
+
+    return free_bytes, total_bytes
 
 
 def cleanup_python_gpu():
@@ -145,7 +212,10 @@ def prepare_for_local_llm():
     )
 
 
-def prepare_for_comfy():
+def prepare_for_comfy(
+    min_free_gb=None,
+    min_free_bytes=None,
+):
     """
     Prepare the GPU for ComfyUI.
 
@@ -161,3 +231,9 @@ def prepare_for_comfy():
     print_gpu_memory(
         "Before ComfyUI generation"
     )
+
+    if torch is not None and torch.cuda.is_available():
+        check_free_gpu_memory(
+            min_free_gb=min_free_gb,
+            min_free_bytes=min_free_bytes,
+        )

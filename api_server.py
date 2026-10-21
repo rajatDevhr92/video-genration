@@ -17,7 +17,7 @@ from app.story_planner import (
     StoryPlanValidationError,
 )
 from app.job_cleanup import cleanup_completed_job
-from app.gpu_memory import prepare_for_local_llm
+from app.gpu_memory import prepare_for_local_llm, prepare_for_comfy
 
 
 # ============================================================
@@ -191,6 +191,13 @@ def generate_story_job(
                 story,
                 target_scenes=target_scenes,
             )
+
+            if hasattr(provider, "unload"):
+                log("Unloading local LLM to free GPU memory for ComfyUI...")
+                provider.unload()
+            elif getattr(provider, "_local_provider", None) is not None and hasattr(provider._local_provider, "unload"):
+                log("Unloading fallback local LLM to free GPU memory for ComfyUI...")
+                provider._local_provider.unload()
         else:
             log("Using directly submitted story plan (skipping LLM planning step)...")
 
@@ -264,6 +271,8 @@ def generate_story_job(
             "Generating characters, keyframes "
             "and Wan 2.2 videos..."
         )
+
+        prepare_for_comfy()
 
         run_command([
             "python",
