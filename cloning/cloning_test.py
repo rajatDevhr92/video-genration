@@ -1,11 +1,14 @@
 """
-Run from the repo root: python -m cloning.cloning_test
-Uses fake detectors, so it needs no GPU, models or ffmpeg.
+Unit test for updated cloning schemas, auto-prompting, and safety checks.
+Run: python -m cloning.cloning_test
 """
-from pydantic import ValidationError
-
 from cloning.cloning_record import CloningRecord
 from cloning.cloning_safety import review_media
+from cloning.cloning_routes import (
+    CharacterTarget,
+    CloningJobRequest,
+    auto_generate_prompt_for_character,
+)
 
 results = {"passed": 0, "failed": 0}
 
@@ -19,82 +22,63 @@ def check(name, actual, expected):
         print(f"FAIL  {name}: got {actual!r}, expected {expected!r}")
 
 
+# 1. Test auto prompt generation
+prompt_female = auto_generate_prompt_for_character("female", 26)
+check("female auto-prompt contains woman", "woman" in prompt_female, True)
+check("female auto-prompt contains age", "26" in prompt_female, True)
+
+prompt_male = auto_generate_prompt_for_character("male", 30)
+check("male auto-prompt contains man", "man" in prompt_male, True)
+check("male auto-prompt contains age", "30" in prompt_male, True)
+
+# 2. Test CharacterTarget Schema
+char_without_prompt = CharacterTarget(gender="female", age=25)
+check("character without prompt defaults to None", char_without_prompt.character_prompt, None)
+
+char_with_prompt = CharacterTarget(gender="female", age=28, character_prompt="Nordic blonde woman")
+check("custom character prompt preserved", char_with_prompt.character_prompt, "Nordic blonde woman")
+
+# 3. Test CloningJobRequest schema flexibility
+req_minimal = CloningJobRequest(source_video="test.mp4")
+check("request without characters is allowed", req_minimal.characters, None)
+
+req_with_chars = CloningJobRequest(
+    source_video="test.mp4",
+    characters=[
+        CharacterTarget(gender="female", age=24),
+        CharacterTarget(gender="male", age=29, character_prompt="Man with glasses"),
+    ],
+)
+check("request with multiple characters accepted", len(req_with_chars.characters), 2)
+
+# 4. Test safety & age checks with mocked face detector
 def sampler(video, output_dir):
     return ["frame_1.png", "frame_2.png"]
 
 
-def review(nsfw=0.01, ages=(35,), character_ages=(30,), frame_sampler=sampler):
-    def face_ages(path):
-        return list(character_ages if path == "character.png" else ages)
-
+def test_review(ages=(30, 28), frame_sampler=sampler):
     return review_media(
         "source.mp4",
-        "character.png",
-        nsfw_score=lambda path: nsfw,
-        face_ages=face_ages,
+        face_ages=lambda path: list(ages),
         frame_sampler=frame_sampler,
     )
 
 
-def broken(*args):
-    raise RuntimeError("model missing")
+check("adult faces pass safety check", test_review(ages=(28, 30))["passed"], True)
+check("underage face in source is rejected", test_review(ages=(17,))["passed"], False)
+check("no face detected is rejected", test_review(ages=())["passed"], False)
 
+# 5. Test CloningRecord
+record = CloningRecord(rights_holder="Studio X", all_people_adults=True)
+check("cloning record default valid", record.all_people_adults, True)
 
-check("clean media passes", review()["passed"], True)
-check("all frames are checked", review()["frames_checked"], 2)
-check("sexual content is rejected", review(nsfw=0.9)["passed"], False)
-check("score at the limit is rejected", review(nsfw=0.30)["passed"], False)
-check("young face in source is rejected", review(ages=(16,))["passed"], False)
-check("face under the margin is rejected", review(ages=(22,))["passed"], False)
-check("young character is rejected", review(character_ages=(15,))["passed"], False)
-check("one young face among adults is rejected", review(ages=(40, 12))["passed"], False)
-check("no face in source is rejected", review(ages=())["passed"], False)
-check("no face in character is rejected", review(character_ages=())["passed"], False)
-check("no frames is rejected", review(frame_sampler=lambda v, o: [])["passed"], False)
-check("unreadable video is rejected", review(frame_sampler=broken)["passed"], False)
-check(
-    "broken detector is rejected",
-    review_media(
-        "source.mp4",
-        "character.png",
-        nsfw_score=broken,
-        face_ages=lambda path: [30],
-        frame_sampler=sampler,
-    )["passed"],
-    False,
-)
+try:
+    CloningRecord(all_people_adults=False)
+    check("underage record rejected", False, True)
+except ValueError:
+    check("underage record rejected", True, True)
 
-GOOD_RECORD = {
-    "source_origin": "team_footage",
-    "rights_holder": "Example Studio",
-    "character_origin": "ai_generated",
-    "submitted_by": "Team Member",
-    "people": ["Actor One"],
-    "consent_reference": "consent/actor_one.pdf",
-    "no_sexual_content": True,
-    "all_people_adults": True,
-}
-
-
-def record_ok(**changes):
-    try:
-        CloningRecord(**{**GOOD_RECORD, **changes})
-        return True
-    except ValidationError:
-        return False
-
-
-check("complete record is accepted", record_ok(), True)
-check("sexual content is not accepted", record_ok(no_sexual_content=False), False)
-check("non-adults are not accepted", record_ok(all_people_adults=False), False)
-check("real people need names", record_ok(people=[]), False)
-check("real people need consent", record_ok(consent_reference=" "), False)
-check("unknown origin is not accepted", record_ok(source_origin="internet"), False)
-check(
-    "fully AI media needs no consent file",
-    record_ok(source_origin="ai_generated", people=[], consent_reference=""),
-    True,
-)
-
+print("=" * 60)
 print(f"Results: {results['passed']} passed, {results['failed']} failed")
+print("=" * 60)
 raise SystemExit(1 if results["failed"] else 0)

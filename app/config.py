@@ -3,7 +3,7 @@ import os
 
 from dotenv import load_dotenv
 
-BASE_DIR = Path("/workspace/story-video-engine")
+BASE_DIR = Path(os.getenv("BASE_DIR", Path(__file__).resolve().parent.parent))
 
 load_dotenv(BASE_DIR / ".env")
 

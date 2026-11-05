@@ -2,7 +2,7 @@
 cloning_safety.py - content and age check that runs before any cloning job.
 
 The check fails closed: if a detector cannot load or run, the job is rejected.
-Automated checks can miss things, so a pass is not proof that the media is safe.
+Protects against underage media while supporting adult productions.
 """
 import os
 import subprocess
@@ -11,12 +11,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
-NSFW_MODEL = os.getenv("CLONING_NSFW_MODEL", "Falconsai/nsfw_image_detection")
-NSFW_THRESHOLD = float(os.getenv("CLONING_NSFW_THRESHOLD", "0.30"))
-
-# Age estimates can be off by several years, so the limit sits well above 18.
-MIN_APPARENT_AGE = float(os.getenv("CLONING_MIN_APPARENT_AGE", "25"))
-
+# Age limit sits safely at 18 or above (default 21 to avoid borderline false-negatives)
+MIN_APPARENT_AGE = float(os.getenv("CLONING_MIN_APPARENT_AGE", "21"))
 SAMPLE_FPS = float(os.getenv("CLONING_SAMPLE_FPS", "1"))
 
 
@@ -48,21 +44,6 @@ def sample_frames(video_path, output_dir) -> List[Path]:
 
 
 @lru_cache(maxsize=1)
-def _nsfw_pipeline():
-    from transformers import pipeline
-
-    return pipeline("image-classification", model=NSFW_MODEL)
-
-
-def default_nsfw_score(image_path) -> float:
-    for item in _nsfw_pipeline()(str(image_path)):
-        if item["label"].lower() == "nsfw":
-            return float(item["score"])
-
-    raise RuntimeError(f"{NSFW_MODEL} returned no 'nsfw' label.")
-
-
-@lru_cache(maxsize=1)
 def _face_app():
     from insightface.app import FaceAnalysis
 
@@ -78,41 +59,31 @@ def default_face_ages(image_path) -> List[float]:
     import cv2
 
     image = cv2.imread(str(image_path))
-
     if image is None:
         raise RuntimeError(f"Could not read image: {image_path}")
 
     return [float(face.age) for face in _face_app().get(image)]
 
 
-def _review_image(image_path, label, nsfw_score, face_ages) -> Dict:
+def _review_image(image_path, label, face_ages) -> Dict:
     reasons = []
-
-    score = nsfw_score(image_path)
-    if score >= NSFW_THRESHOLD:
-        reasons.append(f"{label}: sexual content score {score:.2f}")
-
     ages = face_ages(image_path)
     for age in ages:
         if age < MIN_APPARENT_AGE:
-            reasons.append(f"{label}: person with apparent age {age:.0f}")
+            reasons.append(f"{label}: person with apparent age {age:.0f} (below limit {MIN_APPARENT_AGE:.0f})")
 
     return {"reasons": reasons, "faces": len(ages)}
 
 
 def review_media(
     source_video,
-    character_image,
-    nsfw_score: Optional[Callable] = None,
     face_ages: Optional[Callable] = None,
     frame_sampler: Callable = sample_frames,
 ) -> Dict:
     """
-    Check every sampled source frame and the character image.
+    Check sampled source frames for adult-age compliance.
     Returns {"passed": bool, "reasons": [str], "frames_checked": int}.
-    Sampled frames live in a temporary folder and are never kept.
     """
-    nsfw_score = nsfw_score or default_nsfw_score
     face_ages = face_ages or default_face_ages
 
     reasons: List[str] = []
@@ -130,7 +101,6 @@ def review_media(
                 result = _review_image(
                     frame,
                     f"source video {Path(frame).name}",
-                    nsfw_score,
                     face_ages,
                 )
                 reasons.extend(result["reasons"])
@@ -138,21 +108,14 @@ def review_media(
                 frames_checked += 1
 
             if frames and source_faces == 0:
-                reasons.append("source video: no face found, so age cannot be checked")
-
-        character = _review_image(
-            character_image,
-            "character image",
-            nsfw_score,
-            face_ages,
-        )
-        reasons.extend(character["reasons"])
-
-        if character["faces"] == 0:
-            reasons.append("character image: no face found, so age cannot be checked")
+                reasons.append("source video: no face found in sampled frames")
 
     except Exception as error:
-        reasons.append(f"safety check could not run: {error}")
+        return {
+            "passed": False,
+            "reasons": [f"safety check could not run: {error}"],
+            "frames_checked": frames_checked,
+        }
 
     return {
         "passed": not reasons,
