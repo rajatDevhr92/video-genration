@@ -55,7 +55,12 @@ class FaceSwapGenerator:
     def face_app(self):
         if self._face_app is None:
             from insightface.app import FaceAnalysis
-            app = FaceAnalysis(name="buffalo_l", providers=["CUDAExecutionProvider", "CPUExecutionProvider"])
+            import onnxruntime as ort
+            providers = ort.get_available_providers()
+            active_provider = "CUDAExecutionProvider" if "CUDAExecutionProvider" in providers else "CPUExecutionProvider"
+            print(f"[DEVICE LOG] InsightFace FaceAnalysis running on: >>> {active_provider} <<< (Available: {providers})")
+            logger.info(f"[DEVICE LOG] InsightFace FaceAnalysis running on: {active_provider}")
+            app = FaceAnalysis(name="buffalo_l", providers=[active_provider, "CPUExecutionProvider"])
             app.prepare(ctx_id=0, det_size=(640, 640))
             self._face_app = app
         return self._face_app
@@ -69,10 +74,15 @@ class FaceSwapGenerator:
                     "Please download inswapper_128.onnx to models/ folder."
                 )
             import insightface
+            import onnxruntime as ort
+            providers = ort.get_available_providers()
+            active_provider = "CUDAExecutionProvider" if "CUDAExecutionProvider" in providers else "CPUExecutionProvider"
+            print(f"[DEVICE LOG] InSwapper model running on: >>> {active_provider} <<< (Available: {providers})")
+            logger.info(f"[DEVICE LOG] InSwapper model running on: {active_provider}")
             self._swapper = insightface.model_zoo.get_model(
                 str(self.swapper_model_path),
                 download=False,
-                providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+                providers=[active_provider, "CPUExecutionProvider"]
             )
         return self._swapper
 
@@ -241,6 +251,7 @@ class FaceSwapGenerator:
             writer = cv2.VideoWriter(str(temp_raw_video), fourcc, fps, (width, height))
 
             logger.info(f"[CLONING] Swapping faces across {total_frames} frames at {fps} FPS...")
+            print(f"[CLONING] Swapping faces across {total_frames} frames at {fps} FPS...")
             frame_idx = 0
             while True:
                 ret, frame = cap.read()
@@ -274,8 +285,9 @@ class FaceSwapGenerator:
 
                 writer.write(frame)
                 frame_idx += 1
-                if frame_idx % 50 == 0:
-                    logger.debug(f"[CLONING] Processed {frame_idx}/{total_frames} frames")
+                if frame_idx % 25 == 0 or frame_idx == total_frames:
+                    print(f"[CLONING PROGRESS] Processed {frame_idx}/{total_frames} frames ({frame_idx/total_frames*100:.1f}%)")
+                    logger.info(f"[CLONING PROGRESS] Processed {frame_idx}/{total_frames} frames")
 
             cap.release()
             writer.release()
