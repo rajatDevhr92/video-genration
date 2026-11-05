@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 INSWAPPER_MODEL_URL = os.getenv(
     "INSWAPPER_MODEL_URL",
-    "https://github.com/facefusion/facefusion-assets/releases/download/models/inswapper_128.onnx"
+    "https://huggingface.co/ModelsLab/inswapper/resolve/main/inswapper_128.onnx"
 )
 MODELS_DIR = Path(os.getenv("MODELS_DIR", Path(__file__).resolve().parent.parent / "models"))
 
@@ -163,7 +163,27 @@ class FaceSwapGenerator:
         img = cv2.imread(str(image_path))
         if img is None:
             raise ValueError(f"Could not load character image: {image_path}")
+
+        # Try default detection
         faces = self.face_app.get(img)
+
+        # If no face found with default (640x640), try multi-scale detection
+        if not faces:
+            h, w = img.shape[:2]
+            for det_sz in [(w, h), (1024, 1024), (512, 512), (320, 320)]:
+                try:
+                    self.face_app.prepare(ctx_id=0, det_size=det_sz)
+                    faces = self.face_app.get(img)
+                    if faces:
+                        break
+                except Exception:
+                    pass
+            # Reset detector to standard size
+            try:
+                self.face_app.prepare(ctx_id=0, det_size=(640, 640))
+            except Exception:
+                pass
+
         if not faces:
             raise ValueError(f"No face detected in reference image: {image_path}")
         # Choose the largest face in reference image

@@ -416,7 +416,7 @@ Generate the exact cinematic story moment.
             "acne, pimples, skin blemishes, skin spots, text, watermark"
         )
 
-        workflow["10"]["inputs"]["filename_prefix"] = "genital_refs/ref"
+        workflow["10"]["inputs"]["filename_prefix"] = "cloning_refs/ref"
 
         print(f"[KREA2] Generating simple image: seed={seed}, output={output_path}")
 
