@@ -1,0 +1,8 @@
+# Extra packages for the cloning safety check. Install on the RunPod server.
+torch
+transformers
+pillow
+insightface
+onnxruntime-gpu
+opencv-python-headless
+numpy

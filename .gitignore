@@ -65,6 +65,7 @@ venv.bak/
 *.log
 output/
 outputs/
+input/
 temp/
 tmp/
 *.safetensors

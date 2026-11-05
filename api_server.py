@@ -18,6 +18,7 @@ from app.story_planner import (
 )
 from app.job_cleanup import cleanup_completed_job
 from app.gpu_memory import prepare_for_local_llm
+from cloning.cloning_routes import router as cloning_router
 
 
 # ============================================================
@@ -59,6 +60,8 @@ app = FastAPI(
     title="Story Video Engine",
     version="1.0.0",
 )
+
+app.include_router(cloning_router)
 
 
 # Serve generated files.
