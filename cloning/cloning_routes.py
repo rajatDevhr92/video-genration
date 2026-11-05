@@ -17,7 +17,6 @@ from app.composition_generator import CompositionGenerator
 
 from .cloning_record import CloningRecord
 from .cloning_safety import review_media
-from .cloning_generator import FaceSwapGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +136,18 @@ def process_cloning_job(
     """
     # Step 1: Analyze video actors and clusters
     write_status(job_dir, job_id=job_id, status="analyzing_actors")
-    generator = FaceSwapGenerator()
+    try:
+        from .cloning_generator import FaceSwapGenerator
+        generator = FaceSwapGenerator()
+    except ImportError as ie:
+        write_status(
+            job_dir,
+            job_id=job_id,
+            status="failed",
+            error=f"Face swap dependencies missing on server (e.g. opencv-python / insightface): {ie}. Run: pip install opencv-python-headless insightface onnxruntime-gpu",
+        )
+        return
+
     detected_clusters = generator.analyze_source_video(source_video)
 
     if not detected_clusters:
