@@ -130,105 +130,38 @@ def process_cloning_job(
 ):
     """
     Background worker:
-    1. Analyze video to detect actors & clusters.
-    2. Generate AI character faces using Krea 2.
-    3. Execute face replacement frame-by-frame.
+    1. Extracts first frame from source video.
+    2. Generates high-res Anime / Styled Keyframe via Krea 2.
+    3. Runs Wan 2.2 I2V (14B High/Low Noise Dual Experts + Lightning LoRA) on H200 GPU.
+    4. Muxes original video audio onto the Wan animation.
     """
     try:
-        # Step 1: Analyze video actors and clusters
-        write_status(job_dir, job_id=job_id, status="analyzing_actors")
-        try:
-            from .cloning_generator import FaceSwapGenerator
-            generator = FaceSwapGenerator()
-        except ImportError as ie:
-            write_status(
-                job_dir,
-                job_id=job_id,
-                status="failed",
-                error=f"Face swap dependencies missing on server (e.g. opencv-python / insightface): {ie}. Run: pip install opencv-python-headless insightface onnxruntime-gpu",
-            )
-            return
+        write_status(job_dir, job_id=job_id, status="generating_anime_keyframe")
+        from .wan_video_cloner import WanVideoCloner
+        cloner = WanVideoCloner()
 
-        logger.info(f"[CLONING] Starting actor analysis on {source_video}...")
-        detected_clusters = generator.analyze_source_video(source_video)
+        # Collect character descriptions
+        prompts = []
+        if characters:
+            for c in characters:
+                if c.character_prompt and c.character_prompt.strip():
+                    prompts.append(c.character_prompt.strip())
+                else:
+                    prompts.append(f"attractive {c.age}yo adult {c.gender} with stylized anime features")
+        else:
+            prompts.append("attractive adult couple, clean anime style, detailed features")
 
-        if not detected_clusters:
-            write_status(
-                job_dir,
-                job_id=job_id,
-                status="failed",
-                error="No clear faces detected in source video to clone.",
-            )
-            return
-
-        logger.info(f"[CLONING] Detected {len(detected_clusters)} actor clusters.")
-
-        # Step 2: Match detected clusters to target specifications
-        write_status(job_dir, job_id=job_id, status="generating_ai_faces")
-        comp_gen = CompositionGenerator()
-        generated_faces_dir = job_dir / "generated_faces"
-        generated_faces_dir.mkdir(parents=True, exist_ok=True)
-
-        # If payload provided character specs, map them by gender
-        spec_list = characters if characters else []
-        cluster_to_target_face = {}
-        cluster_centroids = {}
-
-        for cluster in detected_clusters:
-            c_id = cluster["cluster_id"]
-            c_gender = cluster["gender"]
-            c_age = cluster["age"]
-            cluster_centroids[c_id] = cluster["embedding"]
-
-            # Find matching spec if given
-            matching_spec = None
-            for spec in spec_list:
-                if spec.gender.lower() == c_gender.lower():
-                    matching_spec = spec
-                    break
-
-            # Resolve prompts for front and 3/4 angle
-            custom_p = matching_spec.character_prompt if (matching_spec and matching_spec.character_prompt) else None
-            target_age = matching_spec.age if (matching_spec and matching_spec.age) else c_age
-            angle_prompts = auto_generate_prompts_for_character_angles(c_gender, target_age, base_prompt=custom_p)
-
-            target_face_angles = {}
-            for angle_name, char_prompt in angle_prompts.items():
-                char_face_path = generated_faces_dir / f"character_cluster_{c_id}_{c_gender}_{angle_name}.png"
-                seed_offset = 0 if angle_name == "front" else 500
-                try:
-                    logger.info(f"[CLONING] Generating AI face ({angle_name}) for cluster {c_id} ({c_gender})")
-                    comp_gen.generate_simple(
-                        prompt=char_prompt,
-                        output_path=char_face_path,
-                        seed=100000 + c_id * 7919 + seed_offset,
-                    )
-                    target_face_obj = generator.extract_face_from_image(char_face_path)
-                    target_face_angles[angle_name] = target_face_obj
-                except Exception as e:
-                    logger.warning(f"[CLONING] Could not generate face angle {angle_name} for cluster {c_id}: {e}")
-
-            if target_face_angles:
-                cluster_to_target_face[c_id] = target_face_angles
-
-        if not cluster_to_target_face:
-            write_status(
-                job_dir,
-                job_id=job_id,
-                status="failed",
-                error="Failed to generate AI character faces for the detected actors.",
-            )
-            return
-
-        # Step 4: Perform Face Replacement on Video
-        write_status(job_dir, job_id=job_id, status="swapping_faces")
+        # Step 2: Animate with Wan 2.2 I2V
+        write_status(job_dir, job_id=job_id, status="animating_with_wan")
         output_video_path = job_dir / "cloned_output.mp4"
 
-        generator.swap_video_faces(
+        logger.info(f"[WAN CLONING] Running Wan 2.2 Anime Cloner on {source_video}")
+        cloner.clone_video_to_anime(
             source_video=source_video,
-            mapping=cluster_to_target_face,
-            cluster_centroids=cluster_centroids,
+            character_prompts=prompts,
             output_video=output_video_path,
+            job_dir=job_dir,
+            seed=int(uuid.uuid4().int % 1000000),
         )
 
         write_status(
@@ -237,10 +170,10 @@ def process_cloning_job(
             status="completed",
             output_video=str(output_video_path),
             relative_video_url=f"/output/{job_id}/cloned_output.mp4",
-            detected_actors=len(detected_clusters),
+            model_used="Wan 2.2 I2V 14B + Lightning LoRA",
         )
     except Exception as e:
-        logger.exception(f"[CLONING] Critical error during job {job_id}")
+        logger.exception(f"[WAN CLONING] Critical error during job {job_id}")
         write_status(
             job_dir,
             job_id=job_id,

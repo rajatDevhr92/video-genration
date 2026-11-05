@@ -136,6 +136,9 @@ class WorkflowRunner:
 
         return output_path
 
+    def download_video(self, video, output_path):
+        return self.download_image(video, output_path)
+
     @staticmethod
     def find_images(result):
         images = []
