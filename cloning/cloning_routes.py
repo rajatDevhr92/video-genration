@@ -134,93 +134,96 @@ def process_cloning_job(
     2. Generate AI character faces using Krea 2.
     3. Execute face replacement frame-by-frame.
     """
-    # Step 1: Analyze video actors and clusters
-    write_status(job_dir, job_id=job_id, status="analyzing_actors")
     try:
-        from .cloning_generator import FaceSwapGenerator
-        generator = FaceSwapGenerator()
-    except ImportError as ie:
-        write_status(
-            job_dir,
-            job_id=job_id,
-            status="failed",
-            error=f"Face swap dependencies missing on server (e.g. opencv-python / insightface): {ie}. Run: pip install opencv-python-headless insightface onnxruntime-gpu",
-        )
-        return
+        # Step 1: Analyze video actors and clusters
+        write_status(job_dir, job_id=job_id, status="analyzing_actors")
+        try:
+            from .cloning_generator import FaceSwapGenerator
+            generator = FaceSwapGenerator()
+        except ImportError as ie:
+            write_status(
+                job_dir,
+                job_id=job_id,
+                status="failed",
+                error=f"Face swap dependencies missing on server (e.g. opencv-python / insightface): {ie}. Run: pip install opencv-python-headless insightface onnxruntime-gpu",
+            )
+            return
 
-    detected_clusters = generator.analyze_source_video(source_video)
+        logger.info(f"[CLONING] Starting actor analysis on {source_video}...")
+        detected_clusters = generator.analyze_source_video(source_video)
 
-    if not detected_clusters:
-        write_status(
-            job_dir,
-            job_id=job_id,
-            status="failed",
-            error="No clear faces detected in source video to clone.",
-        )
-        return
+        if not detected_clusters:
+            write_status(
+                job_dir,
+                job_id=job_id,
+                status="failed",
+                error="No clear faces detected in source video to clone.",
+            )
+            return
 
-    # Step 2: Match detected clusters to target specifications
-    write_status(job_dir, job_id=job_id, status="generating_ai_faces")
-    comp_gen = CompositionGenerator()
-    generated_faces_dir = job_dir / "generated_faces"
-    generated_faces_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"[CLONING] Detected {len(detected_clusters)} actor clusters.")
 
-    # If payload provided character specs, map them by gender
-    spec_list = characters if characters else []
-    cluster_to_target_face = {}
-    cluster_centroids = {}
+        # Step 2: Match detected clusters to target specifications
+        write_status(job_dir, job_id=job_id, status="generating_ai_faces")
+        comp_gen = CompositionGenerator()
+        generated_faces_dir = job_dir / "generated_faces"
+        generated_faces_dir.mkdir(parents=True, exist_ok=True)
 
-    for cluster in detected_clusters:
-        c_id = cluster["cluster_id"]
-        c_gender = cluster["gender"]
-        c_age = cluster["age"]
-        cluster_centroids[c_id] = cluster["embedding"]
+        # If payload provided character specs, map them by gender
+        spec_list = characters if characters else []
+        cluster_to_target_face = {}
+        cluster_centroids = {}
 
-        # Find matching spec if given
-        matching_spec = None
-        for spec in spec_list:
-            if spec.gender.lower() == c_gender.lower():
-                matching_spec = spec
-                break
+        for cluster in detected_clusters:
+            c_id = cluster["cluster_id"]
+            c_gender = cluster["gender"]
+            c_age = cluster["age"]
+            cluster_centroids[c_id] = cluster["embedding"]
 
-        # Resolve prompts for front and 3/4 angle
-        custom_p = matching_spec.character_prompt if (matching_spec and matching_spec.character_prompt) else None
-        target_age = matching_spec.age if (matching_spec and matching_spec.age) else c_age
-        angle_prompts = auto_generate_prompts_for_character_angles(c_gender, target_age, base_prompt=custom_p)
+            # Find matching spec if given
+            matching_spec = None
+            for spec in spec_list:
+                if spec.gender.lower() == c_gender.lower():
+                    matching_spec = spec
+                    break
 
-        target_face_angles = {}
-        for angle_name, char_prompt in angle_prompts.items():
-            char_face_path = generated_faces_dir / f"character_cluster_{c_id}_{c_gender}_{angle_name}.png"
-            seed_offset = 0 if angle_name == "front" else 500
-            try:
-                logger.info(f"[CLONING] Generating AI face ({angle_name}) for cluster {c_id} ({c_gender})")
-                comp_gen.generate_simple(
-                    prompt=char_prompt,
-                    output_path=char_face_path,
-                    seed=100000 + c_id * 7919 + seed_offset,
-                )
-                target_face_obj = generator.extract_face_from_image(char_face_path)
-                target_face_angles[angle_name] = target_face_obj
-            except Exception as e:
-                logger.warning(f"[CLONING] Could not generate face angle {angle_name} for cluster {c_id}: {e}")
+            # Resolve prompts for front and 3/4 angle
+            custom_p = matching_spec.character_prompt if (matching_spec and matching_spec.character_prompt) else None
+            target_age = matching_spec.age if (matching_spec and matching_spec.age) else c_age
+            angle_prompts = auto_generate_prompts_for_character_angles(c_gender, target_age, base_prompt=custom_p)
 
-        if target_face_angles:
-            cluster_to_target_face[c_id] = target_face_angles
+            target_face_angles = {}
+            for angle_name, char_prompt in angle_prompts.items():
+                char_face_path = generated_faces_dir / f"character_cluster_{c_id}_{c_gender}_{angle_name}.png"
+                seed_offset = 0 if angle_name == "front" else 500
+                try:
+                    logger.info(f"[CLONING] Generating AI face ({angle_name}) for cluster {c_id} ({c_gender})")
+                    comp_gen.generate_simple(
+                        prompt=char_prompt,
+                        output_path=char_face_path,
+                        seed=100000 + c_id * 7919 + seed_offset,
+                    )
+                    target_face_obj = generator.extract_face_from_image(char_face_path)
+                    target_face_angles[angle_name] = target_face_obj
+                except Exception as e:
+                    logger.warning(f"[CLONING] Could not generate face angle {angle_name} for cluster {c_id}: {e}")
 
-    if not cluster_to_target_face:
-        write_status(
-            job_dir,
-            job_id=job_id,
-            status="failed",
-            error="Failed to generate AI character faces for the detected actors.",
-        )
-        return
+            if target_face_angles:
+                cluster_to_target_face[c_id] = target_face_angles
 
-    # Step 4: Perform Face Replacement on Video
-    write_status(job_dir, job_id=job_id, status="swapping_faces")
-    output_video_path = job_dir / "cloned_output.mp4"
+        if not cluster_to_target_face:
+            write_status(
+                job_dir,
+                job_id=job_id,
+                status="failed",
+                error="Failed to generate AI character faces for the detected actors.",
+            )
+            return
 
-    try:
+        # Step 4: Perform Face Replacement on Video
+        write_status(job_dir, job_id=job_id, status="swapping_faces")
+        output_video_path = job_dir / "cloned_output.mp4"
+
         generator.swap_video_faces(
             source_video=source_video,
             mapping=cluster_to_target_face,
@@ -237,7 +240,7 @@ def process_cloning_job(
             detected_actors=len(detected_clusters),
         )
     except Exception as e:
-        logger.exception("[CLONING] Error during face swapping")
+        logger.exception(f"[CLONING] Critical error during job {job_id}")
         write_status(
             job_dir,
             job_id=job_id,
