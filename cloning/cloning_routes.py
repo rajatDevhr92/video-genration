@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
 from app.config import BASE_DIR, OUTPUT_DIR
@@ -284,6 +284,80 @@ def create_cloning_job(request: CloningJobRequest):
         "job_id": job_id,
         "status": "queued",
         "input_video_url": f"/output/{job_id}/{active_source_video.name}",
+        "status_url": f"/api/v1/cloning/jobs/{job_id}",
+    }
+
+
+@router.post("/upload")
+async def create_cloning_job_upload(
+    video: UploadFile = File(..., description="The MP4 video file to upload directly"),
+    characters: str = Form(
+        ...,
+        description='JSON string array of characters: e.g. [{"gender":"female","age":25,"character_prompt":"..."}]'
+    ),
+):
+    """
+    Direct multipart/form-data upload: upload the video file directly with character configurations.
+    """
+    if not video.filename:
+        raise HTTPException(status_code=422, detail="No video file provided.")
+
+    try:
+        char_data = json.loads(characters)
+        if isinstance(char_data, dict):
+            char_data = [char_data]
+        char_targets = [CharacterTarget(**c) for c in char_data]
+    except Exception as err:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Invalid 'characters' JSON form field: {err}. Expected format: [{{'gender':'female','age':25}}]"
+        )
+
+    job_id = f"clone_{uuid.uuid4().hex[:12]}"
+    job_dir = OUTPUT_DIR / job_id
+    job_dir.mkdir(parents=True, exist_ok=True)
+
+    # Save uploaded video directly into the job's directory
+    safe_name = Path(video.filename).name
+    saved_video_path = job_dir / f"input_{safe_name}"
+
+    try:
+        with open(saved_video_path, "wb") as buffer:
+            shutil.copyfileobj(video.file, buffer)
+    finally:
+        await video.close()
+
+    with open(job_dir / "cloning_record.json", "w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "source_video": safe_name,
+                "input_video_copy": str(saved_video_path),
+                "characters": [c.model_dump() for c in char_targets],
+            },
+            f,
+            indent=2,
+            ensure_ascii=False,
+        )
+
+    write_status(
+        job_dir,
+        job_id=job_id,
+        status="queued",
+        input_video_url=f"/output/{job_id}/{saved_video_path.name}",
+    )
+
+    executor.submit(
+        process_cloning_job,
+        job_id,
+        job_dir,
+        saved_video_path,
+        char_targets,
+    )
+
+    return {
+        "job_id": job_id,
+        "status": "queued",
+        "input_video_url": f"/output/{job_id}/{saved_video_path.name}",
         "status_url": f"/api/v1/cloning/jobs/{job_id}",
     }
 
