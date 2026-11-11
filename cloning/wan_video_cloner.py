@@ -158,9 +158,12 @@ class WanVideoCloner:
             if not videos:
                 raise RuntimeError("Wan 2.2 I2V completed without video output.")
 
-            # Download / copy to destination
+            # Download / copy to destination (compatible with any WorkflowRunner version)
             raw_video_path = output_video_path.parent / "temp_wan_raw.mp4"
-            self.runner.download_video(videos[0], raw_video_path)
+            if hasattr(self.runner, "download_video"):
+                self.runner.download_video(videos[0], raw_video_path)
+            else:
+                self.runner.download_image(videos[0], raw_video_path)
             return raw_video_path
         finally:
             temp_path.unlink(missing_ok=True)
