@@ -132,10 +132,11 @@ class WanVideoCloner:
 
         if style_clean == "anime":
             return (
-                f"masterpiece anime solo portrait of 1 single {gender}, solo focus, centered face portrait, "
-                f"{p_clean}, high-end Japanese anime aesthetic, Makoto Shinkai and Ufotable style, vibrant anime visual art, "
+                f"masterpiece 2D Japanese anime solo portrait of 1 single {gender}, solo focus, centered face portrait, "
+                f"{p_clean}, Kyoto Animation and Makoto Shinkai style, vibrant anime visual art, pure 2D anime illustration, "
                 f"large expressive detailed anime eyes, gorgeous stylized anime hair, clean cel-shaded linework, "
-                f"soft radiant anime studio lighting, sharp focus, 8k anime style, high animation quality, no other people, single character only"
+                f"soft radiant anime studio lighting, sharp focus, 8k anime style, high animation quality, "
+                f"no photorealism, no 3D, no real human skin texture, no other people, single character only"
             )
 
         return (
@@ -154,7 +155,7 @@ class WanVideoCloner:
             if not char_desc:
                 char_desc = "gorgeous anime woman with expressive eyes and stylized hair"
             return (
-                f"masterpiece anime cinematography, {char_desc}, vibrant anime aesthetic, "
+                f"masterpiece 2D Japanese anime cinematography, {char_desc}, vibrant anime aesthetic, "
                 f"clean cel-shaded linework, smooth skin, detailed lighting, sharp focus, 8k anime style, high animation quality"
             )
 
@@ -172,12 +173,19 @@ class WanVideoCloner:
         """Backwards-compatibility: builds anime prompt."""
         return self.build_character_prompt(character_prompts, style="anime")
 
-    def generate_keyframe(self, prompt: str, output_path: Path, seed: int = 12345) -> Path:
+    def generate_keyframe(
+        self,
+        prompt: str,
+        output_path: Path,
+        seed: int = 12345,
+        negative_prompt: Optional[str] = None,
+    ) -> Path:
         """Generates the high-resolution starting keyframe via Krea 2."""
         self.comp_generator.generate_simple(
             prompt=prompt,
             output_path=output_path,
             seed=seed,
+            negative_prompt=negative_prompt,
         )
         return output_path
 
@@ -195,6 +203,7 @@ class WanVideoCloner:
         fps: int = 16,
         width: Optional[int] = None,
         height: Optional[int] = None,
+        negative_prompt: Optional[str] = None,
     ) -> Path:
         """Runs Wan 2.2 I2V on the generated keyframe to produce the high-res video."""
         keyframe_path = Path(keyframe_path)
@@ -215,6 +224,8 @@ class WanVideoCloner:
             # Set input image and prompt
             workflow["1000"]["inputs"]["image"] = temp_name
             workflow["9"]["inputs"]["text"] = motion_prompt
+            if negative_prompt:
+                workflow["10"]["inputs"]["text"] = negative_prompt
 
             # Output dimensions and length (81 frames at 16 fps = ~5.06 sec)
             workflow["11"]["inputs"]["width"] = target_w
@@ -335,8 +346,18 @@ class WanVideoCloner:
             logger.info(f"[WAN CLONER] Generating separate solo face for {gender_str} (Image {slot_num}) via Krea 2...")
             print(f"[WAN CLONER] Generating separate solo face for {gender_str} (Image {slot_num}) via Krea 2...")
 
+            anime_negative_face = (
+                "photorealistic, realistic photograph, 3d, 3d render, real human skin, "
+                "natural skin pores, blemishes, raw photo, live action, camera photo, "
+                "low quality, blurry, deformed anatomy, deformed hands, text, watermark"
+            )
             char_seed = seed + idx * 7919
-            self.generate_keyframe(solo_prompt, solo_face_path, seed=char_seed)
+            self.generate_keyframe(
+                solo_prompt,
+                solo_face_path,
+                seed=char_seed,
+                negative_prompt=anime_negative_face if style_clean == "anime" else None,
+            )
             generated_character_images.append(solo_face_path)
 
         # Keep character_identity_face.png for backwards compatibility
@@ -355,25 +376,30 @@ class WanVideoCloner:
 
         if style_clean == "anime":
             edit_prompt = (
-                f"Masterpiece Japanese anime feature film still, Makoto Shinkai and modern anime aesthetic. "
-                f"Completely convert the realistic scene in Image 1 into a vibrant, high-budget anime art style.\n\n"
-                f"MANDATORY DUAL-CHARACTER ANIME TRANSFORMATION:\n"
-                f"1. FEMALE ACTOR -> ANIME TRANSFORMATION ({f_slot_str}):\n"
+                f"Masterpiece 2D Japanese anime still frame, Kyoto Animation and Makoto Shinkai aesthetic. "
+                f"Full 2D anime conversion: redraw and completely transform the real scene in Image 1 into high-budget flat cel-shaded 2D anime artwork.\n\n"
+                f"MANDATORY DUAL-CHARACTER 2D ANIME TRANSFORMATION:\n"
+                f"1. FEMALE ACTOR -> 2D ANIME CONVERSION ({f_slot_str}):\n"
                 f"   - Identify the female actor in Image 1 (the woman kneeling, bending, or on top on the bed).\n"
-                f"   - Completely transform her into a gorgeous anime woman strictly matching {f_slot_str}.\n"
+                f"   - Completely transform her into a gorgeous 2D anime woman strictly matching {f_slot_str}.\n"
                 f"   - Change her hair to the stylized anime hairstyle and color from {f_slot_str}.\n"
-                f"   - Render her with clean cel-shaded anime linework, smooth radiant anime skin tone, and beautiful expressive anime eyes matching {f_slot_str}.\n\n"
-                f"2. MALE ACTOR -> ANIME TRANSFORMATION ({m_slot_str}):\n"
+                f"   - Render her with clean cel-shaded anime linework, smooth radiant anime skin tone, large expressive anime eyes matching {f_slot_str}, and sharp anime contours.\n\n"
+                f"2. MALE ACTOR -> 2D ANIME CONVERSION ({m_slot_str}):\n"
                 f"   - Identify the male actor in Image 1 (the man sitting or lying on the bed).\n"
-                f"   - Completely transform him into a handsome anime man strictly matching {m_slot_str}.\n"
+                f"   - Completely transform him into a handsome 2D anime man strictly matching {m_slot_str}.\n"
                 f"   - Change his hair to the stylized anime haircut from {m_slot_str}.\n"
-                f"   - Render him with clean cel-shaded anime linework, sharp anime jawline, smooth anime skin, and expressive anime eyes matching {m_slot_str}.\n\n"
-                f"3. ANIME ENVIRONMENT & POSE PRESERVATION:\n"
-                f"   - Transform the entire room, bed, pillows, and lighting in Image 1 into a beautifully rendered anime environment with vibrant anime colors and soft glowing cinematic lighting.\n"
-                f"   - Preserve 100% of the exact physical body positions, intimate action, angles, and camera composition from Image 1.\n"
-                f"   - BOTH characters MUST be converted to anime simultaneously. Clean anime art, sharp focus, 8k anime aesthetic, high animation quality."
+                f"   - Render him with clean cel-shaded anime linework, sharp anime jawline, smooth anime skin tone, and expressive anime eyes matching {m_slot_str}.\n\n"
+                f"3. 2D ANIME ENVIRONMENT & POSE PRESERVATION:\n"
+                f"   - Transform the entire room, bed, pillows, blankets, and background in Image 1 into beautifully rendered 2D anime background art with vibrant anime colors and luminous anime lighting.\n"
+                f"   - Preserve 100% of the exact physical body positions, intimate interaction, angles, and camera composition from Image 1.\n"
+                f"   - BOTH characters MUST be converted to 2D anime simultaneously. Clean cel-shaded anime art, pure 2D anime illustration, no photorealism, no real human skin texture, no photograph."
             )
-            active_denoise = max(float(denoise), 0.74)
+            anime_qwen_negative = (
+                "photorealistic, realistic, photograph, raw photo, real life, 3d, 3d render, cgi, "
+                "real human skin, skin pores, camera noise, realistic lighting, live action, "
+                "bad anatomy, extra limbs, fused bodies, text, watermark"
+            )
+            active_denoise = max(float(denoise), 0.82)
         else:
             edit_prompt = (
                 f"Masterpiece 8k cinematic 35mm film still. Highly detailed photographic transformation of BOTH actors in Image 1.\n\n"
@@ -395,12 +421,14 @@ class WanVideoCloner:
                 f"   - BOTH the female actor AND the male actor MUST be transformed simultaneously.\n"
                 f"   - Flawless authentic human skin texture, natural skin pores, realistic human eyes, cinematic volumetric lighting, raw photograph."
             )
+            anime_qwen_negative = None
             active_denoise = float(denoise)
 
         self.keyframe_generator.generate(
             scene_image=extracted_frame,
             character_references=generated_character_images,
             prompt=edit_prompt,
+            negative_prompt=anime_qwen_negative,
             output_path=styled_scene_keyframe,
             seed=seed,
             denoise=active_denoise,
@@ -409,12 +437,19 @@ class WanVideoCloner:
         # Step 5: Animate with Wan 2.2 starting from the diffusion styled scene frame
         if style_clean == "anime":
             motion_prompt = (
-                f"masterpiece fluid anime cinematography, high-end Japanese anime feature film animation, "
-                f"smooth physical anime movement, dynamic cinematic interaction, vibrant anime aesthetic, "
-                f"Makoto Shinkai quality, 8k anime style"
+                f"masterpiece 2D Japanese anime animation, Kyoto Animation, Makoto Shinkai anime aesthetic, "
+                f"smooth fluid hand-drawn anime movement, clean cel-shaded anime linework, gorgeous anime lighting, "
+                f"vibrant anime color palette, pure 2D anime cinematography, high quality anime film"
+            )
+            wan_negative_prompt = (
+                "photorealistic, realistic, photograph, raw photo, 3d, 3d render, live action, real human, "
+                "skin pores, natural human skin texture, camera noise, real life footage, "
+                "色调艳丽，过曝，静态，细节模糊不清，字幕，静止，整体发灰，最差质量，低质量，JPEG压缩残留，"
+                "丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合"
             )
         else:
             motion_prompt = f"photorealistic 8k cinematic film, continuous natural human movement, authentic physical motion, realistic action, high production cinematography"
+            wan_negative_prompt = None
 
         print_gpu_memory("Before Wan 2.2 ComfyUI execution")
         raw_wan_video = self.animate_with_wan(
@@ -426,6 +461,7 @@ class WanVideoCloner:
             fps=16,
             width=wan_w,
             height=wan_h,
+            negative_prompt=wan_negative_prompt,
         )
         print_gpu_memory("After Wan 2.2 ComfyUI execution")
 

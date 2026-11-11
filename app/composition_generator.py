@@ -394,6 +394,7 @@ Generate the exact cinematic story moment.
         prompt,
         output_path,
         seed=12345,
+        negative_prompt=None,
     ):
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -412,8 +413,11 @@ Generate the exact cinematic story moment.
         workflow["8"]["inputs"]["denoise"] = 1.0
 
         workflow["6"]["inputs"]["text"] = (
-            "low quality, blurry, distorted anatomy, deformed hands, "
-            "acne, pimples, skin blemishes, skin spots, text, watermark"
+            negative_prompt
+            or (
+                "low quality, blurry, distorted anatomy, deformed hands, "
+                "acne, pimples, skin blemishes, skin spots, text, watermark"
+            )
         )
 
         workflow["10"]["inputs"]["filename_prefix"] = "cloning_refs/ref"

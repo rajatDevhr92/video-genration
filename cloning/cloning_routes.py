@@ -172,35 +172,52 @@ def process_cloning_job(
 
             style = "anime"
             prompts = []
+            char_meta = []
+
             if characters:
                 for c in characters:
-                    if getattr(c, "style", None):
-                        style = c.style.lower().strip()
+                    # On clonin-anime branch, strictly enforce anime conversion
+                    style = "anime"
+                    c_gender = (c.gender or "character").lower().strip()
+                    c_age = c.age or 22
+
                     if c.character_prompt and c.character_prompt.strip():
-                        prompts.append(c.character_prompt.strip())
+                        p = c.character_prompt.strip()
+                        # Sanitize any leftover photorealistic keywords from client or postman payloads
+                        realistic_keywords = [
+                            "photorealistic", "photograph", "raw photo", "35mm film",
+                            "natural skin pores", "skin pores", "skin texture", "authentic human",
+                            "human skin", "realistic facial anatomy", "hyperrealistic", "realistic"
+                        ]
+                        for kw in realistic_keywords:
+                            p = p.replace(kw, "")
+                        p_clean = " ".join(p.split()).strip(" ,.")
+                        p = f"masterpiece 2D Japanese anime {c_gender}, Makoto Shinkai aesthetic, clean cel-shaded anime linework, expressive anime eyes, {p_clean}"
                     else:
-                        if style == "anime":
-                            prompts.append(f"gorgeous attractive adult anime {c.gender} with expressive detailed anime eyes and stylized anime hair")
-                        else:
-                            prompts.append(f"attractive {c.age}yo adult {c.gender} with authentic human features and natural skin texture")
+                        p = f"gorgeous attractive adult 2D anime {c_gender} with expressive detailed anime eyes, stylized anime hair, radiant smooth anime skin, clean cel-shaded aesthetic"
+                    prompts.append(p)
+                    char_meta.append({
+                        "gender": c_gender,
+                        "age": c_age,
+                        "character_prompt": p,
+                        "style": "anime",
+                    })
             else:
-                prompts.append("attractive adult anime couple, vibrant anime aesthetic, masterpiece cinematography")
+                # Default 2-character anime casting (female + male) when no characters are passed
+                style = "anime"
+                p_female = "masterpiece 2D Japanese anime solo portrait of a gorgeous 22yo anime woman with expressive detailed anime eyes, beautiful stylized anime hair, radiant smooth anime skin, clean cel-shaded aesthetic, Makoto Shinkai style"
+                p_male = "masterpiece 2D Japanese anime solo portrait of a handsome 24yo anime man with expressive detailed anime eyes, stylish anime haircut, sharp defined anime jawline, smooth anime skin, clean cel-shaded aesthetic, Makoto Shinkai style"
+                prompts = [p_female, p_male]
+                char_meta = [
+                    {"gender": "female", "age": 22, "character_prompt": p_female, "style": "anime"},
+                    {"gender": "male", "age": 24, "character_prompt": p_male, "style": "anime"},
+                ]
 
             write_status(job_dir, job_id=job_id, status=f"generating_{style}_keyframe")
 
             # Step 2: Animate with Wan 2.2 I2V
             write_status(job_dir, job_id=job_id, status="animating_with_wan")
             output_video_path = job_dir / "cloned_output.mp4"
-
-            char_meta = []
-            if characters:
-                for c in characters:
-                    char_meta.append({
-                        "gender": c.gender.lower() if c.gender else "unknown",
-                        "age": c.age or 25,
-                        "character_prompt": c.character_prompt or "",
-                        "style": getattr(c, "style", "realistic") or "realistic",
-                    })
 
             logger.info(f"[WAN CLONING] Running Wan 2.2 Cloner ({style}) on {source_video}")
             cloner.clone_video(
@@ -380,7 +397,7 @@ def create_cloning_job(request: CloningJobRequest):
             {
                 "source_video": request.source_video,
                 "input_video_copy": str(active_source_video),
-                "characters": [c.model_dump() for c in request.characters],
+                "characters": [c.model_dump() for c in request.characters] if request.characters else [],
             },
             f,
             indent=2,
@@ -400,7 +417,7 @@ def create_cloning_job(request: CloningJobRequest):
         job_dir,
         active_source_video,
         request.characters,
-        request.mode or "face_swap",
+        request.mode or "wan_v2v",
     )
 
     return {
@@ -456,7 +473,7 @@ async def create_cloning_job_upload(
     finally:
         await video.close()
 
-    active_mode = (mode or "face_swap").lower().strip()
+    active_mode = (mode or "wan_v2v").lower().strip()
 
     with open(job_dir / "cloning_record.json", "w", encoding="utf-8") as f:
         json.dump(
