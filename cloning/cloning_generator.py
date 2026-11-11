@@ -61,7 +61,7 @@ class FaceSwapGenerator:
             print(f"[DEVICE LOG] InsightFace FaceAnalysis running on: >>> {active_provider} <<< (Available: {providers})")
             logger.info(f"[DEVICE LOG] InsightFace FaceAnalysis running on: {active_provider}")
             app = FaceAnalysis(name="buffalo_l", providers=[active_provider, "CPUExecutionProvider"])
-            app.prepare(ctx_id=0, det_size=(640, 640))
+            app.prepare(ctx_id=0, det_size=(640, 640), det_thresh=0.25)
             self._face_app = app
         return self._face_app
 
@@ -219,10 +219,40 @@ class FaceSwapGenerator:
             return "side"
         return "front"
 
-    def swap_face_in_image(self, image_path: Path, target_face: Any, output_path: Path) -> Path:
+    def _resolve_face_obj(self, item: Any, preferred_pose: Optional[str] = None):
+        """Converts a Path, str, dict of angles, or Face into a valid insightface Face object."""
+        if item is None:
+            return None
+        if isinstance(item, (str, Path)):
+            item_path = Path(item)
+            if item_path.exists():
+                try:
+                    return self.extract_face_from_image(item_path)
+                except Exception as e:
+                    logger.warning(f"Could not extract face from {item_path}: {e}")
+            return None
+        if isinstance(item, dict):
+            # Check for angle keys
+            if preferred_pose and preferred_pose in item:
+                val = item[preferred_pose]
+            elif "front" in item:
+                val = item["front"]
+            elif len(item) > 0:
+                val = next(iter(item.values()))
+            else:
+                return None
+            return self._resolve_face_obj(val, preferred_pose=preferred_pose)
+        # Item is already a Face object
+        return item
+
+    def swap_face_in_image(self, image_path: Path, target_faces: Any, output_path: Path) -> Path:
         """
-        Swaps target_face into the detected actor's face in image_path,
+        Swaps target_faces into the detected actors in image_path,
         preserving the original room, bodies, clothing, and background.
+        target_faces can be:
+          - A single Face object or Path to face image
+          - A dict mapping gender ('female', 'male') or cluster_id to Face object / Path / angle dict
+          - A list of Face objects / Paths
         """
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -240,13 +270,35 @@ class FaceSwapGenerator:
         # Sort largest face first
         faces = sorted(faces, key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1]), reverse=True)
 
-        if isinstance(target_face, dict):
-            pose = self.estimate_face_yaw(faces[0])
-            face_obj = target_face.get(pose) or target_face.get("front") or next(iter(target_face.values()))
-        else:
-            face_obj = target_face
+        for idx, face in enumerate(faces):
+            g_raw = getattr(face, "gender", None)
+            if g_raw is None:
+                g_raw = 0 if getattr(face, "sex", "F") == "F" else 1
+            actor_gender = "female" if g_raw == 0 else "male"
+            pose = self.estimate_face_yaw(face)
 
-        img = self.swapper.get(img, faces[0], face_obj, paste_back=True)
+            candidate = None
+            if isinstance(target_faces, dict):
+                # Try exact gender match ("female" or "male")
+                candidate = target_faces.get(actor_gender)
+                if candidate is None:
+                    candidate = target_faces.get(0 if actor_gender == "female" else 1)
+                if candidate is None:
+                    candidate = target_faces.get(idx)
+                if candidate is None and len(target_faces) > 0:
+                    candidate = next(iter(target_faces.values()))
+            elif isinstance(target_faces, (list, tuple)):
+                candidate = target_faces[min(idx, len(target_faces) - 1)]
+            else:
+                candidate = target_faces
+
+            face_obj = self._resolve_face_obj(candidate, preferred_pose=pose)
+            if face_obj is not None:
+                try:
+                    img = self.swapper.get(img, face, face_obj, paste_back=True)
+                except Exception as swap_err:
+                    logger.warning(f"Failed to swap face {idx} ({actor_gender}) into scene image: {swap_err}")
+
         cv2.imwrite(str(output_path), img)
         return output_path
 
@@ -256,6 +308,7 @@ class FaceSwapGenerator:
         mapping: Dict[int, Any],  # cluster_id -> dict of {"front": face, "side": face} or single face
         cluster_centroids: Dict[int, np.ndarray],
         output_video: Path,
+        cluster_genders: Optional[Dict[int, str]] = None,
     ) -> Path:
         """
         Replaces detected faces frame-by-frame according to the cluster-to-face mapping,
@@ -302,8 +355,16 @@ class FaceSwapGenerator:
                             best_sim = sim
                             best_cluster_id = c_id
 
-                    # Only swap if similarity is confident and we have a target face for this cluster
-                    threshold = 0.25 if len(cluster_centroids) <= 1 else 0.35
+                    # If similarity is low or angled profile, match by detected gender as reliable fallback
+                    if (best_sim < 0.28 or best_cluster_id not in mapping) and cluster_genders:
+                        detected_gender = "female" if getattr(face, "gender", 0) == 0 else "male"
+                        for c_id, g_name in cluster_genders.items():
+                            if g_name.lower() == detected_gender and c_id in mapping:
+                                best_cluster_id = c_id
+                                best_sim = 1.0
+                                break
+
+                    threshold = 0.20 if len(cluster_centroids) <= 1 else 0.28
                     if best_cluster_id is not None and best_sim >= threshold and best_cluster_id in mapping:
                         target_entry = mapping[best_cluster_id]
                         if isinstance(target_entry, dict):

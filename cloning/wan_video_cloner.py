@@ -9,6 +9,7 @@ Workflow:
    into native high-resolution video.
 4. Muxes original video audio onto the final Wan animation via FFmpeg.
 """
+import json
 import logging
 import os
 import shutil
@@ -126,6 +127,72 @@ class WanVideoCloner:
         if res.returncode != 0 or not output_image_path.exists():
             raise RuntimeError(f"FFmpeg failed to extract first frame from {video_path}:\n{res.stderr}")
         return output_image_path
+
+    def extract_best_keyframe(self, video_path: Path, output_image_path: Path) -> Path:
+        """
+        Extracts a scene keyframe from the source video where actors' faces are clearly visible.
+        Tries 0.0s first; if face detection is active and finds 0 faces, tries 0.5s, 1.0s, 1.5s.
+        """
+        output_image_path = Path(output_image_path)
+        output_image_path.parent.mkdir(parents=True, exist_ok=True)
+        timestamps = ["00:00:00.000", "00:00:00.500", "00:00:01.000", "00:00:01.500"]
+
+        temp_candidates = []
+        for ts in timestamps:
+            cand_path = output_image_path.parent / f"candidate_{ts.replace(':', '_').replace('.', '_')}.png"
+            cmd = [
+                "ffmpeg", "-y",
+                "-ss", ts,
+                "-i", str(video_path),
+                "-vframes", "1",
+                "-q:v", "2",
+                str(cand_path),
+            ]
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if res.returncode == 0 and cand_path.exists():
+                temp_candidates.append(cand_path)
+                if self.face_swapper:
+                    try:
+                        import cv2
+                        c_img = cv2.imread(str(cand_path))
+                        if c_img is not None:
+                            detected = self.face_swapper.face_app.get(c_img)
+                            if detected and len(detected) > 0:
+                                shutil.copy2(cand_path, output_image_path)
+                                for c in temp_candidates:
+                                    c.unlink(missing_ok=True)
+                                return output_image_path
+                    except Exception:
+                        pass
+
+        if temp_candidates:
+            shutil.copy2(temp_candidates[0], output_image_path)
+            for c in temp_candidates:
+                c.unlink(missing_ok=True)
+            return output_image_path
+        return self.extract_first_frame(video_path, output_image_path)
+
+    def build_solo_character_prompt(self, char_prompt: str, gender: str = "character", style: str = "realistic") -> str:
+        """
+        Builds a dedicated solo portrait prompt for ONE single character.
+        Explicitly prevents couple/grid/multi-person generation in Krea 2.
+        """
+        p_clean = char_prompt.strip().rstrip(".")
+        style_clean = (style or "realistic").lower().strip()
+
+        if style_clean == "anime":
+            return (
+                f"masterpiece anime solo portrait, single 1 {gender}, solo focus, centered face portrait, "
+                f"{p_clean}, vibrant anime aesthetic, clean cel-shaded linework, detailed studio lighting, "
+                f"sharp focus, 8k anime style, high animation quality, no other people, single character only"
+            )
+
+        return (
+            f"photorealistic 8k cinematic 35mm film solo portrait of 1 single {gender}, centered face portrait, "
+            f"{p_clean}, authentic human skin texture, natural skin pores, fine facial details, realistic human eyes, "
+            f"soft volumetric natural lighting, shallow depth of field, sharp focus, raw photograph, "
+            f"no other people, no extra faces, solo character only"
+        )
 
     def build_character_prompt(self, character_prompts: List[str], style: str = "realistic") -> str:
         """Combines character specs into a cinematography prompt for realistic or anime output."""
@@ -273,23 +340,56 @@ class WanVideoCloner:
         logger.info(f"[WAN CLONER] Auto-detected input: {src_w}x{src_h} @ {src_fps} FPS. Target Wan resolution: {wan_w}x{wan_h}")
         print(f"[WAN CLONER] Auto-detected input: {src_w}x{src_h} @ {src_fps} FPS. Target Wan resolution: {wan_w}x{wan_h}")
 
-        # Step 2: Extract real scene first frame (room, bed, bodies, camera angle)
+        # Step 2: Extract real scene keyframe (preserving room, bed, bodies, camera angle)
         extracted_frame = job_dir / "source_first_frame.png"
         logger.info(f"[WAN CLONER] Extracting starting scene frame from {source_video}")
-        self.extract_first_frame(source_video, extracted_frame)
+        self.extract_best_keyframe(source_video, extracted_frame)
 
-        # Step 3: Generate Character Identity Anchor & Anchor into Real Scene Frame
-        keyframe_prompt = self.build_character_prompt(character_prompts, style=style_clean)
-        char_face_path = job_dir / "character_identity_face.png"
-        logger.info(f"[WAN CLONER] Generating character identity reference via Krea 2: {keyframe_prompt}")
-        self.generate_keyframe(keyframe_prompt, char_face_path, seed=seed)
+        # Step 3: Generate SEPARATE Individual Solo Character Identity Reference Photos
+        target_faces_by_gender = {}
+        generated_character_images = []
 
-        # Anchor target character into the real video scene
+        for idx, char_prompt in enumerate(character_prompts):
+            p_lower = char_prompt.lower()
+            if any(w in p_lower for w in ["woman", "female", "girl", "lady", "she", "her"]):
+                gender_str = "female"
+            elif any(w in p_lower for w in ["man", "male", "guy", "boy", "he", "his"]):
+                gender_str = "male"
+            else:
+                gender_str = f"character_{idx}"
+
+            # Strict solo portrait prompt (NEVER combine multiple people into one image)
+            solo_prompt = self.build_solo_character_prompt(char_prompt, gender=gender_str, style=style_clean)
+            solo_face_path = job_dir / f"character_{idx}_{gender_str}_solo_face.png"
+
+            logger.info(f"[WAN CLONER] Generating separate solo face for {gender_str} ({idx+1}/{len(character_prompts)}) via Krea 2...")
+            print(f"[WAN CLONER] Generating separate solo face for {gender_str} ({idx+1}/{len(character_prompts)}) via Krea 2...")
+
+            char_seed = seed + idx * 7919
+            self.generate_keyframe(solo_prompt, solo_face_path, seed=char_seed)
+            generated_character_images.append(solo_face_path)
+
+            if self.face_swapper:
+                try:
+                    face_obj = self.face_swapper.extract_face_from_image(solo_face_path)
+                    target_faces_by_gender[gender_str] = face_obj
+                    target_faces_by_gender[idx] = face_obj
+                    logger.info(f"[WAN CLONER] Successfully extracted face embedding for {gender_str} from {solo_face_path.name}")
+                    print(f"[WAN CLONER] Extracted face embedding for {gender_str} from {solo_face_path.name}")
+                except Exception as extract_err:
+                    logger.warning(f"[WAN CLONER] Could not extract face for {gender_str} from {solo_face_path}: {extract_err}")
+
+        # Keep character_identity_face.png for backwards compatibility
+        if generated_character_images:
+            shutil.copy2(generated_character_images[0], job_dir / "character_identity_face.png")
+
+        # Anchor target character identities into the real scene keyframe
         styled_scene_keyframe = job_dir / "styled_scene_keyframe.png"
-        if self.face_swapper:
+        if self.face_swapper and target_faces_by_gender:
             try:
-                logger.info(f"[WAN CLONER] Anchoring target character into the original scene frame...")
-                self.face_swapper.swap_face_in_image(extracted_frame, char_face_path, styled_scene_keyframe)
+                logger.info(f"[WAN CLONER] Anchoring target character faces into original scene frame...")
+                print(f"[WAN CLONER] Anchoring target character faces into original scene frame...")
+                self.face_swapper.swap_face_in_image(extracted_frame, target_faces_by_gender, styled_scene_keyframe)
             except Exception as swap_err:
                 logger.warning(f"[WAN CLONER] Could not anchor face into scene frame ({swap_err}); using original scene frame.")
                 shutil.copy2(extracted_frame, styled_scene_keyframe)
@@ -297,10 +397,13 @@ class WanVideoCloner:
             shutil.copy2(extracted_frame, styled_scene_keyframe)
 
         # Step 4: Animate with Wan 2.2 starting from the real scene frame
+        actor_tags = [g for g in target_faces_by_gender.keys() if isinstance(g, str)]
+        actors_desc = " and ".join(f"attractive adult {g}" for g in actor_tags) if actor_tags else "adult actors"
+
         if style_clean == "anime":
-            motion_prompt = f"fluid anime cinematography, smooth natural movement, {keyframe_prompt}"
+            motion_prompt = f"fluid anime cinematography, continuous natural physical movement, dynamic cinematic interaction, {actors_desc}, detailed anime aesthetic"
         else:
-            motion_prompt = f"photorealistic 8k cinematic film, natural human motion, subtle authentic movement, {keyframe_prompt}"
+            motion_prompt = f"photorealistic 8k cinematic film, continuous natural human movement, authentic physical motion, realistic action, {actors_desc}, high production cinematography"
 
         print_gpu_memory("Before Wan 2.2 ComfyUI execution")
         raw_wan_video = self.animate_with_wan(

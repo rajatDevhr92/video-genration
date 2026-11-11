@@ -202,6 +202,12 @@ def process_cloning_job(
                 style=style,
             )
 
+            # Scan generated character faces in job_dir to include in status
+            char_images = sorted(list(job_dir.glob("character_*_solo_face.png")))
+            char_image_urls = [f"/output/{job_id}/{p.name}" for p in char_images]
+            styled_keyframe = job_dir / "styled_scene_keyframe.png"
+            keyframe_url = f"/output/{job_id}/{styled_keyframe.name}" if styled_keyframe.exists() else None
+
             write_status(
                 job_dir,
                 job_id=job_id,
@@ -209,6 +215,8 @@ def process_cloning_job(
                 output_video=str(output_video_path),
                 relative_video_url=f"/output/{job_id}/cloned_output.mp4",
                 model_used="Wan 2.2 I2V 14B + Lightning LoRA",
+                character_images=char_image_urls,
+                scene_keyframe_url=keyframe_url,
             )
         except Exception as e:
             logger.exception(f"[WAN CLONING] Critical error during job {job_id}")
@@ -311,11 +319,13 @@ def process_cloning_job(
         write_status(job_dir, job_id=job_id, status="swapping_faces")
         output_video_path = job_dir / "cloned_output.mp4"
 
+        cluster_genders = {c["cluster_id"]: c["gender"] for c in detected_clusters}
         generator.swap_video_faces(
             source_video=source_video,
             mapping=cluster_to_target_face,
             cluster_centroids=cluster_centroids,
             output_video=output_video_path,
+            cluster_genders=cluster_genders,
         )
 
         write_status(
