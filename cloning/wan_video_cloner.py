@@ -16,7 +16,7 @@ import subprocess
 import time
 import uuid
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 
 from app.config import (
     COMFY_DIR,
