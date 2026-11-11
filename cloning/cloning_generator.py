@@ -219,6 +219,37 @@ class FaceSwapGenerator:
             return "side"
         return "front"
 
+    def swap_face_in_image(self, image_path: Path, target_face: Any, output_path: Path) -> Path:
+        """
+        Swaps target_face into the detected actor's face in image_path,
+        preserving the original room, bodies, clothing, and background.
+        """
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        img = cv2.imread(str(image_path))
+        if img is None:
+            shutil.copy2(image_path, output_path)
+            return output_path
+
+        faces = self.face_app.get(img)
+        if not faces:
+            logger.warning(f"No face detected in {image_path} to swap; using original scene frame.")
+            shutil.copy2(image_path, output_path)
+            return output_path
+
+        # Sort largest face first
+        faces = sorted(faces, key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1]), reverse=True)
+
+        if isinstance(target_face, dict):
+            pose = self.estimate_face_yaw(faces[0])
+            face_obj = target_face.get(pose) or target_face.get("front") or next(iter(target_face.values()))
+        else:
+            face_obj = target_face
+
+        img = self.swapper.get(img, faces[0], face_obj, paste_back=True)
+        cv2.imwrite(str(output_path), img)
+        return output_path
+
     def swap_video_faces(
         self,
         source_video: Path,

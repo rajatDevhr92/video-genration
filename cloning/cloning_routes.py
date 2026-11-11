@@ -65,8 +65,8 @@ class CloningJobRequest(BaseModel):
         description="Optional: List of characters in the video to replace."
     )
     mode: Optional[str] = Field(
-        default="face_swap",
-        description="Cloning mode: 'face_swap' (default, keeps 100% original video & swaps faces) or 'wan_animation'"
+        default="wan_v2v",
+        description="Cloning mode: 'wan_v2v' (default: full Wan 2.2 diffusion video cloning) or 'face_swap'"
     )
 
 
@@ -154,17 +154,18 @@ def process_cloning_job(
     job_dir: Path,
     source_video: Path,
     characters: Optional[List[CharacterTarget]],
-    mode: str = "face_swap",
+    mode: str = "wan_v2v",
 ):
     """
     Background worker:
-    mode='face_swap' (default):
+    mode='wan_v2v' (default):
+      Auto-detects video resolution & framerate (1080p, 30 FPS).
+      Anchors character identity into the real scene and animates in high-res Wan 2.2 diffusion.
+    mode='face_swap':
       Preserves 100% of the original video (background, room, bodies, all motions, actions, audio)
       and swaps only the character's face.
-    mode='wan_animation':
-      Generates a new video animation from a keyframe using Wan 2.2 I2V.
     """
-    if mode == "wan_animation":
+    if mode in ("wan_v2v", "wan_animation", "wan"):
         try:
             from .wan_video_cloner import WanVideoCloner
             cloner = WanVideoCloner()
@@ -397,8 +398,8 @@ async def create_cloning_job_upload(
         description='Optional JSON string array of characters: e.g. [{"gender":"female","age":25,"character_prompt":"..."}]'
     ),
     mode: Optional[str] = Form(
-        default="face_swap",
-        description="Cloning mode: 'face_swap' (default: keeps 100% of original video, motions, bodies & background) or 'wan_animation'"
+        default="wan_v2v",
+        description="Cloning mode: 'wan_v2v' (default: full Wan 2.2 diffusion video cloning) or 'face_swap'"
     ),
 ):
     """
