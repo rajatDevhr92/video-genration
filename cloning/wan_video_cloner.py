@@ -122,19 +122,20 @@ class WanVideoCloner:
         """Extracts the starting scene keyframe from the source video."""
         return self.extract_first_frame(video_path, output_image_path)
 
-    def build_solo_character_prompt(self, char_prompt: str, gender: str = "character", style: str = "realistic") -> str:
+    def build_solo_character_prompt(self, char_prompt: str, gender: str = "character", style: str = "anime") -> str:
         """
         Builds a dedicated solo portrait prompt for ONE single character.
         Explicitly prevents couple/grid/multi-person generation in Krea 2.
         """
         p_clean = char_prompt.strip().rstrip(".")
-        style_clean = (style or "realistic").lower().strip()
+        style_clean = (style or "anime").lower().strip()
 
         if style_clean == "anime":
             return (
-                f"masterpiece anime solo portrait, single 1 {gender}, solo focus, centered face portrait, "
-                f"{p_clean}, vibrant anime aesthetic, clean cel-shaded linework, detailed studio lighting, "
-                f"sharp focus, 8k anime style, high animation quality, no other people, single character only"
+                f"masterpiece anime solo portrait of 1 single {gender}, solo focus, centered face portrait, "
+                f"{p_clean}, high-end Japanese anime aesthetic, Makoto Shinkai and Ufotable style, vibrant anime visual art, "
+                f"large expressive detailed anime eyes, gorgeous stylized anime hair, clean cel-shaded linework, "
+                f"soft radiant anime studio lighting, sharp focus, 8k anime style, high animation quality, no other people, single character only"
             )
 
         return (
@@ -144,10 +145,10 @@ class WanVideoCloner:
             f"no other people, no extra faces, solo character only"
         )
 
-    def build_character_prompt(self, character_prompts: List[str], style: str = "realistic") -> str:
+    def build_character_prompt(self, character_prompts: List[str], style: str = "anime") -> str:
         """Combines character specs into a cinematography prompt for realistic or anime output."""
         char_desc = ", ".join(p.strip().rstrip(".") for p in character_prompts if p.strip())
-        style_clean = (style or "realistic").lower().strip()
+        style_clean = (style or "anime").lower().strip()
 
         if style_clean == "anime":
             if not char_desc:
@@ -268,23 +269,23 @@ class WanVideoCloner:
         output_video: Path,
         job_dir: Path,
         seed: int = 42,
-        style: str = "realistic",
+        style: str = "anime",
         characters: Optional[List[Dict[str, Any]]] = None,
-        denoise: float = 0.72,
+        denoise: float = 0.74,
     ) -> Path:
         """
-        Auto-detecting Wan V2V Video Cloning Pipeline:
+        Auto-detecting Wan V2V Video Cloning Pipeline (Realistic Video -> Anime Video):
         1. Auto-detects video resolution, framerate, duration via ffprobe.
         2. Extracts the starting video scene (preserving room, bed, bodies, poses, and setting).
         3. Generates high-res character facial identity reference portraits via Krea 2.
         4. Re-synthesizes the scene with Qwen Image Edit Diffusion (Multi-Reference Flux Kontext),
-           explicitly mapping the female actor to the female reference and male actor to the male reference.
-        5. Animates the real scene in native high-resolution diffusion via Wan 2.2 14B Dual Experts.
+           explicitly converting the realistic actors and environment into high-budget Japanese anime.
+        5. Animates the anime scene in native high-resolution diffusion via Wan 2.2 14B Dual Experts.
         6. Up-samples to original video FPS and re-muxes original audio.
         """
         output_video = Path(output_video)
         output_video.parent.mkdir(parents=True, exist_ok=True)
-        style_clean = (style or "realistic").lower().strip()
+        style_clean = (style or "anime").lower().strip()
 
         # Step 1: Probe source video (auto-detect 1080p, 30 FPS, aspect ratio, audio)
         meta = self.probe_video(source_video)
@@ -343,35 +344,58 @@ class WanVideoCloner:
             shutil.copy2(generated_character_images[0], job_dir / "character_identity_face.png")
 
         # Step 4: Explicit Dual-Character Diffusion Identity Transfer via KeyframeGenerator (ZERO InSwapper)
-        # Explicitly defines WHO is male and WHO is female in the scene and maps them to Image 2 and Image 3
+        # Explicitly defines WHO is male and WHO is female in the scene and converts realistic actors to Anime
         styled_scene_keyframe = job_dir / "styled_scene_keyframe.png"
-        logger.info(f"[WAN CLONER] Restyling scene keyframe via Qwen Image Edit Diffusion (NO INSWAPPER)...")
-        print(f"[WAN CLONER] Restyling scene keyframe via Qwen Image Edit Diffusion (NO INSWAPPER)...")
+        logger.info(f"[WAN CLONER] Restyling scene keyframe to {style_clean} via Qwen Image Edit Diffusion (NO INSWAPPER)...")
+        print(f"[WAN CLONER] Restyling scene keyframe to {style_clean} via Qwen Image Edit Diffusion (NO INSWAPPER)...")
 
         # Build highly specific instruction mapping each actor in the scene to their reference image
         f_slot_str = f"Image {female_ref_slot}" if female_ref_slot else "Image 2"
         m_slot_str = f"Image {male_ref_slot}" if male_ref_slot else "Image 3"
 
-        edit_prompt = (
-            f"Masterpiece 8k cinematic 35mm film still. Highly detailed photographic transformation of BOTH actors in Image 1.\n\n"
-            f"MANDATORY DUAL-CHARACTER ROLE ASSIGNMENT:\n"
-            f"1. FEMALE ACTOR REPLACEMENT ({f_slot_str}):\n"
-            f"   - Identify the female actor in Image 1 (the woman kneeling, bending, or on top on the bed).\n"
-            f"   - Completely transform her into the female character shown in {f_slot_str}.\n"
-            f"   - Replace her hair with the styled neat black braided hair from {f_slot_str}.\n"
-            f"   - Change her skin tone across her entire body, back, shoulders, and face to warm radiant bronze skin matching {f_slot_str}.\n"
-            f"   - Transform her facial structure, dark brown almond eyes, and features to strictly match {f_slot_str}.\n\n"
-            f"2. MALE ACTOR REPLACEMENT ({m_slot_str}):\n"
-            f"   - Identify the male actor in Image 1 (the man sitting or lying on the bed).\n"
-            f"   - Completely transform him into the male character shown in {m_slot_str}.\n"
-            f"   - Replace his hair with the short clean textured fade haircut from {m_slot_str}.\n"
-            f"   - Change his skin tone across his entire body to rich deep espresso skin matching {m_slot_str}.\n"
-            f"   - Transform his facial structure, strong jawline, and features to strictly match {m_slot_str}.\n\n"
-            f"3. SCENE & ACTION PRESERVATION:\n"
-            f"   - Preserve 100% of the original physical body positions, intimate interaction, bed, pillows, room background, lighting, and camera angle from Image 1.\n"
-            f"   - BOTH the female actor AND the male actor MUST be transformed simultaneously. Do NOT leave the woman with blonde hair or white skin.\n"
-            f"   - Flawless authentic human skin texture, natural skin pores, realistic human eyes, cinematic volumetric lighting, raw photograph."
-        )
+        if style_clean == "anime":
+            edit_prompt = (
+                f"Masterpiece Japanese anime feature film still, Makoto Shinkai and modern anime aesthetic. "
+                f"Completely convert the realistic scene in Image 1 into a vibrant, high-budget anime art style.\n\n"
+                f"MANDATORY DUAL-CHARACTER ANIME TRANSFORMATION:\n"
+                f"1. FEMALE ACTOR -> ANIME TRANSFORMATION ({f_slot_str}):\n"
+                f"   - Identify the female actor in Image 1 (the woman kneeling, bending, or on top on the bed).\n"
+                f"   - Completely transform her into a gorgeous anime woman strictly matching {f_slot_str}.\n"
+                f"   - Change her hair to the stylized anime hairstyle and color from {f_slot_str}.\n"
+                f"   - Render her with clean cel-shaded anime linework, smooth radiant anime skin tone, and beautiful expressive anime eyes matching {f_slot_str}.\n\n"
+                f"2. MALE ACTOR -> ANIME TRANSFORMATION ({m_slot_str}):\n"
+                f"   - Identify the male actor in Image 1 (the man sitting or lying on the bed).\n"
+                f"   - Completely transform him into a handsome anime man strictly matching {m_slot_str}.\n"
+                f"   - Change his hair to the stylized anime haircut from {m_slot_str}.\n"
+                f"   - Render him with clean cel-shaded anime linework, sharp anime jawline, smooth anime skin, and expressive anime eyes matching {m_slot_str}.\n\n"
+                f"3. ANIME ENVIRONMENT & POSE PRESERVATION:\n"
+                f"   - Transform the entire room, bed, pillows, and lighting in Image 1 into a beautifully rendered anime environment with vibrant anime colors and soft glowing cinematic lighting.\n"
+                f"   - Preserve 100% of the exact physical body positions, intimate action, angles, and camera composition from Image 1.\n"
+                f"   - BOTH characters MUST be converted to anime simultaneously. Clean anime art, sharp focus, 8k anime aesthetic, high animation quality."
+            )
+            active_denoise = max(float(denoise), 0.74)
+        else:
+            edit_prompt = (
+                f"Masterpiece 8k cinematic 35mm film still. Highly detailed photographic transformation of BOTH actors in Image 1.\n\n"
+                f"MANDATORY DUAL-CHARACTER ROLE ASSIGNMENT:\n"
+                f"1. FEMALE ACTOR REPLACEMENT ({f_slot_str}):\n"
+                f"   - Identify the female actor in Image 1 (the woman kneeling, bending, or on top on the bed).\n"
+                f"   - Completely transform her into the female character shown in {f_slot_str}.\n"
+                f"   - Replace her hair with the styled neat hair from {f_slot_str}.\n"
+                f"   - Change her skin tone across her entire body, back, shoulders, and face matching {f_slot_str}.\n"
+                f"   - Transform her facial structure, eyes, and features to strictly match {f_slot_str}.\n\n"
+                f"2. MALE ACTOR REPLACEMENT ({m_slot_str}):\n"
+                f"   - Identify the male actor in Image 1 (the man sitting or lying on the bed).\n"
+                f"   - Completely transform him into the male character shown in {m_slot_str}.\n"
+                f"   - Replace his hair with the haircut from {m_slot_str}.\n"
+                f"   - Change his skin tone across his entire body matching {m_slot_str}.\n"
+                f"   - Transform his facial structure, jawline, and features to strictly match {m_slot_str}.\n\n"
+                f"3. SCENE & ACTION PRESERVATION:\n"
+                f"   - Preserve 100% of the original physical body positions, intimate interaction, bed, pillows, room background, lighting, and camera angle from Image 1.\n"
+                f"   - BOTH the female actor AND the male actor MUST be transformed simultaneously.\n"
+                f"   - Flawless authentic human skin texture, natural skin pores, realistic human eyes, cinematic volumetric lighting, raw photograph."
+            )
+            active_denoise = float(denoise)
 
         self.keyframe_generator.generate(
             scene_image=extracted_frame,
@@ -379,12 +403,16 @@ class WanVideoCloner:
             prompt=edit_prompt,
             output_path=styled_scene_keyframe,
             seed=seed,
-            denoise=float(denoise),
+            denoise=active_denoise,
         )
 
         # Step 5: Animate with Wan 2.2 starting from the diffusion styled scene frame
         if style_clean == "anime":
-            motion_prompt = f"fluid anime cinematography, continuous natural physical movement, dynamic cinematic interaction, detailed anime aesthetic"
+            motion_prompt = (
+                f"masterpiece fluid anime cinematography, high-end Japanese anime feature film animation, "
+                f"smooth physical anime movement, dynamic cinematic interaction, vibrant anime aesthetic, "
+                f"Makoto Shinkai quality, 8k anime style"
+            )
         else:
             motion_prompt = f"photorealistic 8k cinematic film, continuous natural human movement, authentic physical motion, realistic action, high production cinematography"
 

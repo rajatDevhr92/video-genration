@@ -46,8 +46,8 @@ class CharacterTarget(BaseModel):
         description="Optional: Custom prompt for generating face. If null, auto-generated based on gender and age."
     )
     style: Optional[str] = Field(
-        default="realistic",
-        description="Visual style: 'realistic' (default) or 'anime'"
+        default="anime",
+        description="Visual style: 'anime' (default) or 'realistic'"
     )
     target_id: Optional[str] = Field(
         default=None,
@@ -170,7 +170,7 @@ def process_cloning_job(
             from .wan_video_cloner import WanVideoCloner
             cloner = WanVideoCloner()
 
-            style = "realistic"
+            style = "anime"
             prompts = []
             if characters:
                 for c in characters:
@@ -180,11 +180,11 @@ def process_cloning_job(
                         prompts.append(c.character_prompt.strip())
                     else:
                         if style == "anime":
-                            prompts.append(f"attractive {c.age}yo adult {c.gender} with stylized anime features")
+                            prompts.append(f"gorgeous attractive adult anime {c.gender} with expressive detailed anime eyes and stylized anime hair")
                         else:
                             prompts.append(f"attractive {c.age}yo adult {c.gender} with authentic human features and natural skin texture")
             else:
-                prompts.append("attractive adult couple, authentic human features and cinematic realism")
+                prompts.append("attractive adult anime couple, vibrant anime aesthetic, masterpiece cinematography")
 
             write_status(job_dir, job_id=job_id, status=f"generating_{style}_keyframe")
 
