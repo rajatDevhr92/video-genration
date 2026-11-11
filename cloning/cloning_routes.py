@@ -64,6 +64,10 @@ class CloningJobRequest(BaseModel):
         default=None,
         description="Optional: List of characters in the video to replace."
     )
+    mode: Optional[str] = Field(
+        default="face_swap",
+        description="Cloning mode: 'face_swap' (default, keeps 100% original video & swaps faces) or 'wan_animation'"
+    )
 
 
 def resolve_input(name: str) -> Path:
@@ -106,6 +110,11 @@ def auto_generate_prompts_for_character_angles(gender: str, age: int, base_promp
     safe_age = max(int(age), 21)
     if base_prompt and base_prompt.strip():
         core = base_prompt.strip().rstrip(".")
+        if "portrait" in core.lower() or "headshot" in core.lower():
+            return {
+                "front": f"{core}, looking directly at camera, front facing, 8k masterpiece",
+                "side": f"{core}, 3/4 angle side view, dynamic lighting, sharp focus, 8k masterpiece"
+            }
         return {
             "front": f"cinematic close-up portrait headshot of {core}, looking straight directly at camera, front facing, 8k masterpiece",
             "side": f"cinematic close-up portrait headshot of {core}, 3/4 angle side view, dynamic lighting, sharp focus, 8k masterpiece"
@@ -145,49 +154,167 @@ def process_cloning_job(
     job_dir: Path,
     source_video: Path,
     characters: Optional[List[CharacterTarget]],
+    mode: str = "face_swap",
 ):
     """
     Background worker:
-    1. Extracts first frame from source video.
-    2. Generates high-res Anime / Styled Keyframe via Krea 2.
-    3. Runs Wan 2.2 I2V (14B High/Low Noise Dual Experts + Lightning LoRA) on H200 GPU.
-    4. Muxes original video audio onto the Wan animation.
+    mode='face_swap' (default):
+      Preserves 100% of the original video (background, room, bodies, all motions, actions, audio)
+      and swaps only the character's face.
+    mode='wan_animation':
+      Generates a new video animation from a keyframe using Wan 2.2 I2V.
     """
-    try:
-        from .wan_video_cloner import WanVideoCloner
-        cloner = WanVideoCloner()
+    if mode == "wan_animation":
+        try:
+            from .wan_video_cloner import WanVideoCloner
+            cloner = WanVideoCloner()
 
-        # Determine visual style (default is realistic)
-        style = "realistic"
-        prompts = []
-        if characters:
-            for c in characters:
-                if getattr(c, "style", None):
-                    style = c.style.lower().strip()
-                if c.character_prompt and c.character_prompt.strip():
-                    prompts.append(c.character_prompt.strip())
-                else:
-                    if style == "anime":
-                        prompts.append(f"attractive {c.age}yo adult {c.gender} with stylized anime features")
+            style = "realistic"
+            prompts = []
+            if characters:
+                for c in characters:
+                    if getattr(c, "style", None):
+                        style = c.style.lower().strip()
+                    if c.character_prompt and c.character_prompt.strip():
+                        prompts.append(c.character_prompt.strip())
                     else:
-                        prompts.append(f"attractive {c.age}yo adult {c.gender} with authentic human features and natural skin texture")
-        else:
-            prompts.append("attractive adult couple, authentic human features and cinematic realism")
+                        if style == "anime":
+                            prompts.append(f"attractive {c.age}yo adult {c.gender} with stylized anime features")
+                        else:
+                            prompts.append(f"attractive {c.age}yo adult {c.gender} with authentic human features and natural skin texture")
+            else:
+                prompts.append("attractive adult couple, authentic human features and cinematic realism")
 
-        write_status(job_dir, job_id=job_id, status=f"generating_{style}_keyframe")
+            write_status(job_dir, job_id=job_id, status=f"generating_{style}_keyframe")
 
-        # Step 2: Animate with Wan 2.2 I2V
-        write_status(job_dir, job_id=job_id, status="animating_with_wan")
+            # Step 2: Animate with Wan 2.2 I2V
+            write_status(job_dir, job_id=job_id, status="animating_with_wan")
+            output_video_path = job_dir / "cloned_output.mp4"
+
+            logger.info(f"[WAN CLONING] Running Wan 2.2 Cloner ({style}) on {source_video}")
+            cloner.clone_video(
+                source_video=source_video,
+                character_prompts=prompts,
+                output_video=output_video_path,
+                job_dir=job_dir,
+                seed=int(uuid.uuid4().int % 1000000),
+                style=style,
+            )
+
+            write_status(
+                job_dir,
+                job_id=job_id,
+                status="completed",
+                output_video=str(output_video_path),
+                relative_video_url=f"/output/{job_id}/cloned_output.mp4",
+                model_used="Wan 2.2 I2V 14B + Lightning LoRA",
+            )
+        except Exception as e:
+            logger.exception(f"[WAN CLONING] Critical error during job {job_id}")
+            write_status(
+                job_dir,
+                job_id=job_id,
+                status="failed",
+                error=str(e),
+            )
+        return
+
+    # -------------------------------------------------------------------------
+    # Default: Face Swap (Preserves 100% of original video, motions, and background)
+    # -------------------------------------------------------------------------
+    write_status(job_dir, job_id=job_id, status="analyzing_video_actors")
+    try:
+        from .cloning_generator import FaceSwapGenerator
+        generator = FaceSwapGenerator()
+    except ImportError as ie:
+        write_status(
+            job_dir,
+            job_id=job_id,
+            status="failed",
+            error=f"Face swap dependencies missing on server: {ie}. Run: pip install opencv-python-headless insightface onnxruntime-gpu",
+        )
+        return
+
+    try:
+        logger.info(f"[CLONING] Starting actor analysis on {source_video}...")
+        detected_clusters = generator.analyze_source_video(source_video, max_sample_frames=30)
+
+        if not detected_clusters:
+            write_status(
+                job_dir,
+                job_id=job_id,
+                status="failed",
+                error="No clear faces detected in source video to clone. Ensure the character's face appears in at least some frames.",
+            )
+            return
+
+        logger.info(f"[CLONING] Detected {len(detected_clusters)} actor cluster(s).")
+        write_status(job_dir, job_id=job_id, status="generating_ai_faces", detected_actors=len(detected_clusters))
+
+        comp_gen = CompositionGenerator()
+        generated_faces_dir = job_dir / "generated_faces"
+        generated_faces_dir.mkdir(parents=True, exist_ok=True)
+
+        spec_list = characters if characters else []
+        cluster_to_target_face = {}
+        cluster_centroids = {}
+
+        for cluster in detected_clusters:
+            c_id = cluster["cluster_id"]
+            c_gender = cluster["gender"]
+            c_age = cluster["age"]
+            cluster_centroids[c_id] = cluster["embedding"]
+
+            # Match character spec by gender or order
+            matching_spec = None
+            for spec in spec_list:
+                if spec.gender.lower() == c_gender.lower():
+                    matching_spec = spec
+                    break
+            if not matching_spec and spec_list:
+                matching_spec = spec_list[min(c_id, len(spec_list) - 1)]
+
+            custom_p = matching_spec.character_prompt if (matching_spec and matching_spec.character_prompt) else None
+            target_age = matching_spec.age if (matching_spec and matching_spec.age) else c_age
+            angle_prompts = auto_generate_prompts_for_character_angles(c_gender, target_age, base_prompt=custom_p)
+
+            target_face_angles = {}
+            for angle_name, char_prompt in angle_prompts.items():
+                char_face_path = generated_faces_dir / f"character_cluster_{c_id}_{c_gender}_{angle_name}.png"
+                seed_offset = 0 if angle_name == "front" else 500
+                try:
+                    logger.info(f"[CLONING] Generating AI face ({angle_name}) for cluster {c_id} ({c_gender})")
+                    comp_gen.generate_simple(
+                        prompt=char_prompt,
+                        output_path=char_face_path,
+                        seed=100000 + c_id * 7919 + seed_offset,
+                    )
+                    target_face_obj = generator.extract_face_from_image(char_face_path)
+                    target_face_angles[angle_name] = target_face_obj
+                except Exception as e:
+                    logger.warning(f"[CLONING] Could not generate face angle {angle_name} for cluster {c_id}: {e}")
+
+            if target_face_angles:
+                cluster_to_target_face[c_id] = target_face_angles
+
+        if not cluster_to_target_face:
+            write_status(
+                job_dir,
+                job_id=job_id,
+                status="failed",
+                error="Failed to generate AI character faces for the detected actors.",
+            )
+            return
+
+        # Frame-by-frame face replacement on original video
+        write_status(job_dir, job_id=job_id, status="swapping_faces")
         output_video_path = job_dir / "cloned_output.mp4"
 
-        logger.info(f"[WAN CLONING] Running Wan 2.2 Cloner ({style}) on {source_video}")
-        cloner.clone_video(
+        generator.swap_video_faces(
             source_video=source_video,
-            character_prompts=prompts,
+            mapping=cluster_to_target_face,
+            cluster_centroids=cluster_centroids,
             output_video=output_video_path,
-            job_dir=job_dir,
-            seed=int(uuid.uuid4().int % 1000000),
-            style=style,
         )
 
         write_status(
@@ -196,10 +323,11 @@ def process_cloning_job(
             status="completed",
             output_video=str(output_video_path),
             relative_video_url=f"/output/{job_id}/cloned_output.mp4",
-            model_used="Wan 2.2 I2V 14B + Lightning LoRA",
+            model_used="InsightFace + InSwapper (Original Motion, Bodies & Background 100% Preserved)",
+            detected_actors=len(detected_clusters),
         )
     except Exception as e:
-        logger.exception(f"[WAN CLONING] Critical error during job {job_id}")
+        logger.exception(f"[CLONING] Critical error during job {job_id}")
         write_status(
             job_dir,
             job_id=job_id,
@@ -250,6 +378,7 @@ def create_cloning_job(request: CloningJobRequest):
         job_dir,
         active_source_video,
         request.characters,
+        request.mode or "face_swap",
     )
 
     return {
@@ -266,6 +395,10 @@ async def create_cloning_job_upload(
     characters: Optional[str] = Form(
         default=None,
         description='Optional JSON string array of characters: e.g. [{"gender":"female","age":25,"character_prompt":"..."}]'
+    ),
+    mode: Optional[str] = Form(
+        default="face_swap",
+        description="Cloning mode: 'face_swap' (default: keeps 100% of original video, motions, bodies & background) or 'wan_animation'"
     ),
 ):
     """
@@ -301,12 +434,15 @@ async def create_cloning_job_upload(
     finally:
         await video.close()
 
+    active_mode = (mode or "face_swap").lower().strip()
+
     with open(job_dir / "cloning_record.json", "w", encoding="utf-8") as f:
         json.dump(
             {
                 "source_video": safe_name,
                 "input_video_copy": str(saved_video_path),
                 "characters": [c.model_dump() for c in char_targets],
+                "mode": active_mode,
             },
             f,
             indent=2,
@@ -318,6 +454,7 @@ async def create_cloning_job_upload(
         job_id=job_id,
         status="queued",
         input_video_url=f"/output/{job_id}/{saved_video_path.name}",
+        mode=active_mode,
     )
 
     executor.submit(
@@ -326,6 +463,7 @@ async def create_cloning_job_upload(
         job_dir,
         saved_video_path,
         char_targets,
+        active_mode,
     )
 
     return {

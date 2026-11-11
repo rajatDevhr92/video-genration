@@ -272,7 +272,8 @@ class FaceSwapGenerator:
                             best_cluster_id = c_id
 
                     # Only swap if similarity is confident and we have a target face for this cluster
-                    if best_cluster_id is not None and best_sim >= 0.38 and best_cluster_id in mapping:
+                    threshold = 0.25 if len(cluster_centroids) <= 1 else 0.35
+                    if best_cluster_id is not None and best_sim >= threshold and best_cluster_id in mapping:
                         target_entry = mapping[best_cluster_id]
                         if isinstance(target_entry, dict):
                             # Dynamically select front vs 3/4 side angle based on actor's face orientation
