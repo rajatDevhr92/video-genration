@@ -192,6 +192,16 @@ def process_cloning_job(
             write_status(job_dir, job_id=job_id, status="animating_with_wan")
             output_video_path = job_dir / "cloned_output.mp4"
 
+            char_meta = []
+            if characters:
+                for c in characters:
+                    char_meta.append({
+                        "gender": c.gender.lower() if c.gender else "unknown",
+                        "age": c.age or 25,
+                        "character_prompt": c.character_prompt or "",
+                        "style": getattr(c, "style", "realistic") or "realistic",
+                    })
+
             logger.info(f"[WAN CLONING] Running Wan 2.2 Cloner ({style}) on {source_video}")
             cloner.clone_video(
                 source_video=source_video,
@@ -200,6 +210,7 @@ def process_cloning_job(
                 job_dir=job_dir,
                 seed=int(uuid.uuid4().int % 1000000),
                 style=style,
+                characters=char_meta,
             )
 
             # Scan generated character faces in job_dir to include in status

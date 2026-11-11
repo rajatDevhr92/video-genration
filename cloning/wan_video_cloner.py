@@ -269,14 +269,18 @@ class WanVideoCloner:
         job_dir: Path,
         seed: int = 42,
         style: str = "realistic",
+        characters: Optional[List[Dict[str, Any]]] = None,
+        denoise: float = 0.72,
     ) -> Path:
         """
         Auto-detecting Wan V2V Video Cloning Pipeline:
         1. Auto-detects video resolution, framerate, duration via ffprobe.
-        2. Extracts the starting video scene (preserving room, bodies, poses, and setting).
-        3. Generates high-res character facial identity and anchors it into the real scene frame.
-        4. Animates the real scene in native high-resolution diffusion via Wan 2.2 14B Dual Experts.
-        5. Up-samples to original video FPS and re-muxes original audio.
+        2. Extracts the starting video scene (preserving room, bed, bodies, poses, and setting).
+        3. Generates high-res character facial identity reference portraits via Krea 2.
+        4. Re-synthesizes the scene with Qwen Image Edit Diffusion (Multi-Reference Flux Kontext),
+           explicitly mapping the female actor to the female reference and male actor to the male reference.
+        5. Animates the real scene in native high-resolution diffusion via Wan 2.2 14B Dual Experts.
+        6. Up-samples to original video FPS and re-muxes original audio.
         """
         output_video = Path(output_video)
         output_video.parent.mkdir(parents=True, exist_ok=True)
@@ -296,24 +300,39 @@ class WanVideoCloner:
         self.extract_best_keyframe(source_video, extracted_frame)
 
         # Step 3: Generate SEPARATE Individual Solo Character Identity Reference Photos
-        target_faces_by_gender = {}
         generated_character_images = []
+        female_ref_slot = None
+        male_ref_slot = None
+        female_desc = ""
+        male_desc = ""
 
         for idx, char_prompt in enumerate(character_prompts):
             p_lower = char_prompt.lower()
-            if any(w in p_lower for w in ["woman", "female", "girl", "lady", "she", "her"]):
+            char_gender = None
+            if characters and idx < len(characters) and characters[idx].get("gender"):
+                char_gender = characters[idx]["gender"].lower()
+
+            if char_gender == "female" or any(w in p_lower for w in ["woman", "female", "girl", "lady", "she", "her"]):
                 gender_str = "female"
-            elif any(w in p_lower for w in ["man", "male", "guy", "boy", "he", "his"]):
+            elif char_gender == "male" or any(w in p_lower for w in ["man", "male", "guy", "boy", "he", "his"]):
                 gender_str = "male"
             else:
                 gender_str = f"character_{idx}"
+
+            slot_num = idx + 2  # Image 2, Image 3
+            if gender_str == "female" and female_ref_slot is None:
+                female_ref_slot = slot_num
+                female_desc = char_prompt
+            elif gender_str == "male" and male_ref_slot is None:
+                male_ref_slot = slot_num
+                male_desc = char_prompt
 
             # Strict solo portrait prompt (NEVER combine multiple people into one image)
             solo_prompt = self.build_solo_character_prompt(char_prompt, gender=gender_str, style=style_clean)
             solo_face_path = job_dir / f"character_{idx}_{gender_str}_solo_face.png"
 
-            logger.info(f"[WAN CLONER] Generating separate solo face for {gender_str} ({idx+1}/{len(character_prompts)}) via Krea 2...")
-            print(f"[WAN CLONER] Generating separate solo face for {gender_str} ({idx+1}/{len(character_prompts)}) via Krea 2...")
+            logger.info(f"[WAN CLONER] Generating separate solo face for {gender_str} (Image {slot_num}) via Krea 2...")
+            print(f"[WAN CLONER] Generating separate solo face for {gender_str} (Image {slot_num}) via Krea 2...")
 
             char_seed = seed + idx * 7919
             self.generate_keyframe(solo_prompt, solo_face_path, seed=char_seed)
@@ -323,20 +342,35 @@ class WanVideoCloner:
         if generated_character_images:
             shutil.copy2(generated_character_images[0], job_dir / "character_identity_face.png")
 
-        # Step 4: Pure Diffusion Identity Transfer via KeyframeGenerator (ZERO InSwapper)
-        # Uses Qwen Image Edit (Flux Kontext Multi-Reference Latent Diffusion) to restyle
-        # the real scene frame (bodies, poses, room) with the new character identities.
+        # Step 4: Explicit Dual-Character Diffusion Identity Transfer via KeyframeGenerator (ZERO InSwapper)
+        # Explicitly defines WHO is male and WHO is female in the scene and maps them to Image 2 and Image 3
         styled_scene_keyframe = job_dir / "styled_scene_keyframe.png"
         logger.info(f"[WAN CLONER] Restyling scene keyframe via Qwen Image Edit Diffusion (NO INSWAPPER)...")
         print(f"[WAN CLONER] Restyling scene keyframe via Qwen Image Edit Diffusion (NO INSWAPPER)...")
 
-        char_desc = " and ".join(character_prompts)
+        # Build highly specific instruction mapping each actor in the scene to their reference image
+        f_slot_str = f"Image {female_ref_slot}" if female_ref_slot else "Image 2"
+        m_slot_str = f"Image {male_ref_slot}" if male_ref_slot else "Image 3"
+
         edit_prompt = (
-            f"Masterpiece 8k cinematic raw film still. Maintain the exact physical scene, camera angle, "
-            f"lighting, room background, bed, and body poses from Image 1. Seamlessly transform the actors to "
-            f"match the facial appearance, skin tone, hairstyle, and identity of the reference characters "
-            f"in Image 2 and Image 3: {char_desc}. "
-            f"Authentic human skin texture, natural pores, flawless natural lighting, raw photograph."
+            f"Masterpiece 8k cinematic 35mm film still. Highly detailed photographic transformation of BOTH actors in Image 1.\n\n"
+            f"MANDATORY DUAL-CHARACTER ROLE ASSIGNMENT:\n"
+            f"1. FEMALE ACTOR REPLACEMENT ({f_slot_str}):\n"
+            f"   - Identify the female actor in Image 1 (the woman kneeling, bending, or on top on the bed).\n"
+            f"   - Completely transform her into the female character shown in {f_slot_str}.\n"
+            f"   - Replace her hair with the styled neat black braided hair from {f_slot_str}.\n"
+            f"   - Change her skin tone across her entire body, back, shoulders, and face to warm radiant bronze skin matching {f_slot_str}.\n"
+            f"   - Transform her facial structure, dark brown almond eyes, and features to strictly match {f_slot_str}.\n\n"
+            f"2. MALE ACTOR REPLACEMENT ({m_slot_str}):\n"
+            f"   - Identify the male actor in Image 1 (the man sitting or lying on the bed).\n"
+            f"   - Completely transform him into the male character shown in {m_slot_str}.\n"
+            f"   - Replace his hair with the short clean textured fade haircut from {m_slot_str}.\n"
+            f"   - Change his skin tone across his entire body to rich deep espresso skin matching {m_slot_str}.\n"
+            f"   - Transform his facial structure, strong jawline, and features to strictly match {m_slot_str}.\n\n"
+            f"3. SCENE & ACTION PRESERVATION:\n"
+            f"   - Preserve 100% of the original physical body positions, intimate interaction, bed, pillows, room background, lighting, and camera angle from Image 1.\n"
+            f"   - BOTH the female actor AND the male actor MUST be transformed simultaneously. Do NOT leave the woman with blonde hair or white skin.\n"
+            f"   - Flawless authentic human skin texture, natural skin pores, realistic human eyes, cinematic volumetric lighting, raw photograph."
         )
 
         self.keyframe_generator.generate(
@@ -345,7 +379,7 @@ class WanVideoCloner:
             prompt=edit_prompt,
             output_path=styled_scene_keyframe,
             seed=seed,
-            denoise=0.65,
+            denoise=float(denoise),
         )
 
         # Step 5: Animate with Wan 2.2 starting from the diffusion styled scene frame
