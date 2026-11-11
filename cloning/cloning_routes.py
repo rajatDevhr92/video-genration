@@ -45,6 +45,10 @@ class CharacterTarget(BaseModel):
         default=None,
         description="Optional: Custom prompt for generating face. If null, auto-generated based on gender and age."
     )
+    style: Optional[str] = Field(
+        default="realistic",
+        description="Visual style: 'realistic' (default) or 'anime'"
+    )
     target_id: Optional[str] = Field(
         default=None,
         description="Optional tag for multiple characters"
@@ -56,9 +60,9 @@ class CloningJobRequest(BaseModel):
         ...,
         description="File name inside input/cloning on the server (e.g. 'input_clip.mp4')."
     )
-    characters: List[CharacterTarget] = Field(
-        ...,
-        description="List of characters in the video to replace."
+    characters: Optional[List[CharacterTarget]] = Field(
+        default=None,
+        description="Optional: List of characters in the video to replace."
     )
 
 
@@ -82,8 +86,17 @@ def resolve_input(name: str) -> Path:
 
 
 def write_status(job_dir: Path, **values):
-    with open(job_dir / "cloning_status.json", "w", encoding="utf-8") as f:
-        json.dump(values, f, indent=2, ensure_ascii=False)
+    status_file = job_dir / "cloning_status.json"
+    data = {}
+    if status_file.exists():
+        try:
+            with open(status_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            pass
+    data.update(values)
+    with open(status_file, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
 
 
 def auto_generate_prompts_for_character_angles(gender: str, age: int, base_prompt: Optional[str] = None) -> Dict[str, str]:
@@ -122,6 +135,11 @@ def auto_generate_prompts_for_character_angles(gender: str, age: int, base_promp
         }
 
 
+def auto_generate_prompt_for_character(gender: str, age: int, base_prompt: Optional[str] = None) -> str:
+    """Convenience single-prompt generator (front view)."""
+    return auto_generate_prompts_for_character_angles(gender, age, base_prompt)["front"]
+
+
 def process_cloning_job(
     job_id: str,
     job_dir: Path,
@@ -136,32 +154,40 @@ def process_cloning_job(
     4. Muxes original video audio onto the Wan animation.
     """
     try:
-        write_status(job_dir, job_id=job_id, status="generating_anime_keyframe")
         from .wan_video_cloner import WanVideoCloner
         cloner = WanVideoCloner()
 
-        # Collect character descriptions
+        # Determine visual style (default is realistic)
+        style = "realistic"
         prompts = []
         if characters:
             for c in characters:
+                if getattr(c, "style", None):
+                    style = c.style.lower().strip()
                 if c.character_prompt and c.character_prompt.strip():
                     prompts.append(c.character_prompt.strip())
                 else:
-                    prompts.append(f"attractive {c.age}yo adult {c.gender} with stylized anime features")
+                    if style == "anime":
+                        prompts.append(f"attractive {c.age}yo adult {c.gender} with stylized anime features")
+                    else:
+                        prompts.append(f"attractive {c.age}yo adult {c.gender} with authentic human features and natural skin texture")
         else:
-            prompts.append("attractive adult couple, clean anime style, detailed features")
+            prompts.append("attractive adult couple, authentic human features and cinematic realism")
+
+        write_status(job_dir, job_id=job_id, status=f"generating_{style}_keyframe")
 
         # Step 2: Animate with Wan 2.2 I2V
         write_status(job_dir, job_id=job_id, status="animating_with_wan")
         output_video_path = job_dir / "cloned_output.mp4"
 
-        logger.info(f"[WAN CLONING] Running Wan 2.2 Anime Cloner on {source_video}")
-        cloner.clone_video_to_anime(
+        logger.info(f"[WAN CLONING] Running Wan 2.2 Cloner ({style}) on {source_video}")
+        cloner.clone_video(
             source_video=source_video,
             character_prompts=prompts,
             output_video=output_video_path,
             job_dir=job_dir,
             seed=int(uuid.uuid4().int % 1000000),
+            style=style,
         )
 
         write_status(
@@ -237,9 +263,9 @@ def create_cloning_job(request: CloningJobRequest):
 @router.post("/upload")
 async def create_cloning_job_upload(
     video: UploadFile = File(..., description="The MP4 video file to upload directly"),
-    characters: str = Form(
-        ...,
-        description='JSON string array of characters: e.g. [{"gender":"female","age":25,"character_prompt":"..."}]'
+    characters: Optional[str] = Form(
+        default=None,
+        description='Optional JSON string array of characters: e.g. [{"gender":"female","age":25,"character_prompt":"..."}]'
     ),
 ):
     """
@@ -248,16 +274,18 @@ async def create_cloning_job_upload(
     if not video.filename:
         raise HTTPException(status_code=422, detail="No video file provided.")
 
-    try:
-        char_data = json.loads(characters)
-        if isinstance(char_data, dict):
-            char_data = [char_data]
-        char_targets = [CharacterTarget(**c) for c in char_data]
-    except Exception as err:
-        raise HTTPException(
-            status_code=422,
-            detail=f"Invalid 'characters' JSON form field: {err}. Expected format: [{{'gender':'female','age':25}}]"
-        )
+    char_targets = []
+    if characters and characters.strip():
+        try:
+            char_data = json.loads(characters)
+            if isinstance(char_data, dict):
+                char_data = [char_data]
+            char_targets = [CharacterTarget(**c) for c in char_data]
+        except Exception as err:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid 'characters' JSON form field: {err}. Expected format: [{{'gender':'female','age':25}}]"
+            )
 
     job_id = f"clone_{uuid.uuid4().hex[:12]}"
     job_dir = OUTPUT_DIR / job_id

@@ -7,7 +7,7 @@ BASE_DIR = Path(os.getenv("BASE_DIR", Path(__file__).resolve().parent.parent))
 
 load_dotenv(BASE_DIR / ".env")
 
-COMFY_DIR = Path("/workspace/ComfyUI")
+COMFY_DIR = Path(os.getenv("COMFY_DIR", "/workspace/ComfyUI"))
 
 OUTPUT_DIR = BASE_DIR / "output"
 WORKFLOWS_DIR = BASE_DIR / "workflows"
