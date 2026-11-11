@@ -27,6 +27,7 @@ from app.config import (
     WAN_I2V_WORKFLOW,
 )
 from app.composition_generator import CompositionGenerator
+from app.keyframe_generator import KeyframeGenerator
 from app.workflow_runner import WorkflowRunner
 from app.gpu_memory import print_gpu_memory
 
@@ -38,18 +39,7 @@ class WanVideoCloner:
         self.runner = WorkflowRunner()
         self.input_dir = COMFY_DIR / "input"
         self.comp_generator = CompositionGenerator()
-        self._face_swapper = None
-
-    @property
-    def face_swapper(self):
-        if self._face_swapper is None:
-            try:
-                from .cloning_generator import FaceSwapGenerator
-                self._face_swapper = FaceSwapGenerator()
-            except Exception as e:
-                logger.warning(f"[WAN CLONER] FaceSwapGenerator could not be initialized: {e}")
-                self._face_swapper = False
-        return self._face_swapper if self._face_swapper is not False else None
+        self.keyframe_generator = KeyframeGenerator()
 
     def probe_video(self, video_path: Path) -> Dict[str, Any]:
         """Auto-detects video resolution, framerate, duration, and audio track via ffprobe."""
@@ -129,47 +119,7 @@ class WanVideoCloner:
         return output_image_path
 
     def extract_best_keyframe(self, video_path: Path, output_image_path: Path) -> Path:
-        """
-        Extracts a scene keyframe from the source video where actors' faces are clearly visible.
-        Tries 0.0s first; if face detection is active and finds 0 faces, tries 0.5s, 1.0s, 1.5s.
-        """
-        output_image_path = Path(output_image_path)
-        output_image_path.parent.mkdir(parents=True, exist_ok=True)
-        timestamps = ["00:00:00.000", "00:00:00.500", "00:00:01.000", "00:00:01.500"]
-
-        temp_candidates = []
-        for ts in timestamps:
-            cand_path = output_image_path.parent / f"candidate_{ts.replace(':', '_').replace('.', '_')}.png"
-            cmd = [
-                "ffmpeg", "-y",
-                "-ss", ts,
-                "-i", str(video_path),
-                "-vframes", "1",
-                "-q:v", "2",
-                str(cand_path),
-            ]
-            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            if res.returncode == 0 and cand_path.exists():
-                temp_candidates.append(cand_path)
-                if self.face_swapper:
-                    try:
-                        import cv2
-                        c_img = cv2.imread(str(cand_path))
-                        if c_img is not None:
-                            detected = self.face_swapper.face_app.get(c_img)
-                            if detected and len(detected) > 0:
-                                shutil.copy2(cand_path, output_image_path)
-                                for c in temp_candidates:
-                                    c.unlink(missing_ok=True)
-                                return output_image_path
-                    except Exception:
-                        pass
-
-        if temp_candidates:
-            shutil.copy2(temp_candidates[0], output_image_path)
-            for c in temp_candidates:
-                c.unlink(missing_ok=True)
-            return output_image_path
+        """Extracts the starting scene keyframe from the source video."""
         return self.extract_first_frame(video_path, output_image_path)
 
     def build_solo_character_prompt(self, char_prompt: str, gender: str = "character", style: str = "realistic") -> str:
@@ -369,41 +319,40 @@ class WanVideoCloner:
             self.generate_keyframe(solo_prompt, solo_face_path, seed=char_seed)
             generated_character_images.append(solo_face_path)
 
-            if self.face_swapper:
-                try:
-                    face_obj = self.face_swapper.extract_face_from_image(solo_face_path)
-                    target_faces_by_gender[gender_str] = face_obj
-                    target_faces_by_gender[idx] = face_obj
-                    logger.info(f"[WAN CLONER] Successfully extracted face embedding for {gender_str} from {solo_face_path.name}")
-                    print(f"[WAN CLONER] Extracted face embedding for {gender_str} from {solo_face_path.name}")
-                except Exception as extract_err:
-                    logger.warning(f"[WAN CLONER] Could not extract face for {gender_str} from {solo_face_path}: {extract_err}")
-
         # Keep character_identity_face.png for backwards compatibility
         if generated_character_images:
             shutil.copy2(generated_character_images[0], job_dir / "character_identity_face.png")
 
-        # Anchor target character identities into the real scene keyframe
+        # Step 4: Pure Diffusion Identity Transfer via KeyframeGenerator (ZERO InSwapper)
+        # Uses Qwen Image Edit (Flux Kontext Multi-Reference Latent Diffusion) to restyle
+        # the real scene frame (bodies, poses, room) with the new character identities.
         styled_scene_keyframe = job_dir / "styled_scene_keyframe.png"
-        if self.face_swapper and target_faces_by_gender:
-            try:
-                logger.info(f"[WAN CLONER] Anchoring target character faces into original scene frame...")
-                print(f"[WAN CLONER] Anchoring target character faces into original scene frame...")
-                self.face_swapper.swap_face_in_image(extracted_frame, target_faces_by_gender, styled_scene_keyframe)
-            except Exception as swap_err:
-                logger.warning(f"[WAN CLONER] Could not anchor face into scene frame ({swap_err}); using original scene frame.")
-                shutil.copy2(extracted_frame, styled_scene_keyframe)
-        else:
-            shutil.copy2(extracted_frame, styled_scene_keyframe)
+        logger.info(f"[WAN CLONER] Restyling scene keyframe via Qwen Image Edit Diffusion (NO INSWAPPER)...")
+        print(f"[WAN CLONER] Restyling scene keyframe via Qwen Image Edit Diffusion (NO INSWAPPER)...")
 
-        # Step 4: Animate with Wan 2.2 starting from the real scene frame
-        actor_tags = [g for g in target_faces_by_gender.keys() if isinstance(g, str)]
-        actors_desc = " and ".join(f"attractive adult {g}" for g in actor_tags) if actor_tags else "adult actors"
+        char_desc = " and ".join(character_prompts)
+        edit_prompt = (
+            f"Masterpiece 8k cinematic raw film still. Maintain the exact physical scene, camera angle, "
+            f"lighting, room background, bed, and body poses from Image 1. Seamlessly transform the actors to "
+            f"match the facial appearance, skin tone, hairstyle, and identity of the reference characters "
+            f"in Image 2 and Image 3: {char_desc}. "
+            f"Authentic human skin texture, natural pores, flawless natural lighting, raw photograph."
+        )
 
+        self.keyframe_generator.generate(
+            scene_image=extracted_frame,
+            character_references=generated_character_images,
+            prompt=edit_prompt,
+            output_path=styled_scene_keyframe,
+            seed=seed,
+            denoise=0.65,
+        )
+
+        # Step 5: Animate with Wan 2.2 starting from the diffusion styled scene frame
         if style_clean == "anime":
-            motion_prompt = f"fluid anime cinematography, continuous natural physical movement, dynamic cinematic interaction, {actors_desc}, detailed anime aesthetic"
+            motion_prompt = f"fluid anime cinematography, continuous natural physical movement, dynamic cinematic interaction, detailed anime aesthetic"
         else:
-            motion_prompt = f"photorealistic 8k cinematic film, continuous natural human movement, authentic physical motion, realistic action, {actors_desc}, high production cinematography"
+            motion_prompt = f"photorealistic 8k cinematic film, continuous natural human movement, authentic physical motion, realistic action, high production cinematography"
 
         print_gpu_memory("Before Wan 2.2 ComfyUI execution")
         raw_wan_video = self.animate_with_wan(
