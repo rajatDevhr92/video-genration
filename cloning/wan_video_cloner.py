@@ -296,13 +296,12 @@ class WanVideoCloner:
             if not videos:
                 raise RuntimeError("Wan 2.2 I2V completed without video output.")
 
-            # Download / copy to destination (compatible with any WorkflowRunner version)
-            raw_video_path = output_video_path.parent / "temp_wan_raw.mp4"
+            # Download / copy directly to destination path
             if hasattr(self.runner, "download_video"):
-                self.runner.download_video(videos[0], raw_video_path)
+                self.runner.download_video(videos[0], output_video_path)
             else:
-                self.runner.download_image(videos[0], raw_video_path)
-            return raw_video_path
+                self.runner.download_image(videos[0], output_video_path)
+            return output_video_path
         finally:
             temp_path.unlink(missing_ok=True)
 
@@ -550,7 +549,7 @@ class WanVideoCloner:
             # 4c. Animate with Wan 2.2 I2V
             temp_wan_raw = chunks_dir / f"temp_wan_{chunk_idx:04d}.mp4"
             print_gpu_memory(f"Before Wan 2.2 Chunk {chunk_idx + 1}")
-            self.animate_with_wan(
+            actual_wan_video = self.animate_with_wan(
                 keyframe_path=styled_chunk_keyframe,
                 motion_prompt=motion_prompt,
                 output_video_path=temp_wan_raw,
@@ -563,18 +562,25 @@ class WanVideoCloner:
             )
             print_gpu_memory(f"After Wan 2.2 Chunk {chunk_idx + 1}")
 
+            if not actual_wan_video.exists() or actual_wan_video.stat().st_size == 0:
+                raise RuntimeError(f"Wan 2.2 chunk {chunk_idx + 1} produced no video file: {actual_wan_video}")
+
             # 4d. Resample chunk to source FPS and clamp duration
             resample_cmd = [
                 "ffmpeg", "-y",
-                "-i", str(temp_wan_raw),
+                "-i", str(actual_wan_video),
                 "-t", str(round(this_chunk_dur, 3)),
                 "-r", str(src_fps),
                 "-c:v", "libx264",
                 "-pix_fmt", "yuv420p",
                 str(chunk_target),
             ]
-            subprocess.run(resample_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
-            temp_wan_raw.unlink(missing_ok=True)
+            res_chunk = subprocess.run(resample_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if res_chunk.returncode != 0:
+                logger.error(f"[WAN CLONER] FFmpeg chunk resample failed:\n{res_chunk.stderr}")
+                raise RuntimeError(f"FFmpeg chunk resample failed:\n{res_chunk.stderr}")
+
+            actual_wan_video.unlink(missing_ok=True)
             completed_chunk_paths.append(chunk_target)
 
             # Force garbage collection between chunks to keep VRAM completely clean

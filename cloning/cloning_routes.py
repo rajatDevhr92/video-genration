@@ -4,6 +4,7 @@ cloning_routes.py - API routes for AI Character Face Replacement & Video Cloning
 import json
 import logging
 import shutil
+import subprocess
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -88,6 +89,30 @@ def resolve_input(name: str) -> Path:
         raise HTTPException(
             status_code=422,
             detail=f"File not found in input/cloning: {name}",
+        )
+
+    if path.stat().st_size == 0:
+        raise HTTPException(
+            status_code=422,
+            detail=f"File '{name}' is 0 bytes (empty or still uploading). Please wait for upload to finish.",
+        )
+
+    # Validate that MP4 has finished uploading and has valid container/moov atom
+    probe_cmd = ["ffprobe", "-v", "error", str(path)]
+    probe_res = subprocess.run(probe_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if probe_res.returncode != 0:
+        err_msg = probe_res.stderr.strip()
+        if "moov atom not found" in err_msg:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"File '{name}' ({path.stat().st_size / (1024*1024):.1f} MB) is incomplete or still uploading "
+                    f"in JupyterLab (moov atom not found). Please wait until JupyterLab finishes writing 100% of the file."
+                ),
+            )
+        raise HTTPException(
+            status_code=422,
+            detail=f"File '{name}' is unreadable or corrupted: {err_msg}",
         )
 
     return path
