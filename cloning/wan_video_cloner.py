@@ -9,8 +9,10 @@ Workflow:
    into native high-resolution video.
 4. Muxes original video audio onto the final Wan animation via FFmpeg.
 """
+import gc
 import json
 import logging
+import math
 import os
 import shutil
 import subprocess
@@ -121,6 +123,37 @@ class WanVideoCloner:
     def extract_best_keyframe(self, video_path: Path, output_image_path: Path) -> Path:
         """Extracts the starting scene keyframe from the source video."""
         return self.extract_first_frame(video_path, output_image_path)
+
+    def extract_frame_at_time(self, video_path: Path, timestamp_sec: float, output_image_path: Path) -> Path:
+        """Extracts one frame at an exact timestamp (in seconds) from the source video."""
+        output_image_path = Path(output_image_path)
+        output_image_path.parent.mkdir(parents=True, exist_ok=True)
+        hrs = int(timestamp_sec // 3600)
+        mins = int((timestamp_sec % 3600) // 60)
+        secs = timestamp_sec % 60
+        time_str = f"{hrs:02d}:{mins:02d}:{secs:06.3f}"
+        cmd = [
+            "ffmpeg", "-y",
+            "-ss", time_str,
+            "-i", str(video_path),
+            "-vframes", "1",
+            "-q:v", "2",
+            str(output_image_path),
+        ]
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if res.returncode != 0 or not output_image_path.exists():
+            cmd_fb = [
+                "ffmpeg", "-y",
+                "-ss", str(round(timestamp_sec, 3)),
+                "-i", str(video_path),
+                "-vframes", "1",
+                "-q:v", "2",
+                str(output_image_path),
+            ]
+            subprocess.run(cmd_fb, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if not output_image_path.exists():
+            return self.extract_first_frame(video_path, output_image_path)
+        return output_image_path
 
     def build_solo_character_prompt(self, char_prompt: str, gender: str = "character", style: str = "anime") -> str:
         """
@@ -283,35 +316,51 @@ class WanVideoCloner:
         style: str = "anime",
         characters: Optional[List[Dict[str, Any]]] = None,
         denoise: float = 0.88,
+        status_callback: Optional[Any] = None,
+        max_duration: Optional[float] = None,
     ) -> Path:
         """
         Auto-detecting Wan V2V Video Cloning Pipeline (Realistic Video -> Anime Video):
         1. Auto-detects video resolution, framerate, duration via ffprobe.
-        2. Extracts the starting video scene (preserving room, bed, bodies, poses, and setting).
-        3. Generates high-res character facial identity reference portraits via Krea 2.
-        4. Re-synthesizes the scene with Qwen Image Edit Diffusion (Multi-Reference Flux Kontext),
-           explicitly converting the realistic actors and environment into high-budget Japanese anime.
-        5. Animates the anime scene in native high-resolution diffusion via Wan 2.2 14B Dual Experts.
-        6. Up-samples to original video FPS and re-muxes original audio.
+        2. Slices long videos (e.g. 5m to 7m+) into sequential ~5s chunks with resume capability.
+        3. Generates high-res character facial identity reference portraits via Krea 2 (ONCE).
+        4. Re-synthesizes each chunk keyframe with Qwen Image Edit Diffusion into 100% 2D anime.
+        5. Animates each chunk through Wan 2.2 14B Dual Experts I2V.
+        6. Seamlessly stitches all chunks via FFmpeg concat and remuxes full original audio.
         """
         output_video = Path(output_video)
         output_video.parent.mkdir(parents=True, exist_ok=True)
+        job_dir = Path(job_dir)
+        job_dir.mkdir(parents=True, exist_ok=True)
         style_clean = (style or "anime").lower().strip()
 
-        # Step 1: Probe source video (auto-detect 1080p, 30 FPS, aspect ratio, audio)
+        # Step 1: Probe source video (auto-detect 1080p, 30 FPS, aspect ratio, duration, audio)
         meta = self.probe_video(source_video)
         src_w, src_h = meta["width"], meta["height"]
         src_fps = meta["fps"]
-        wan_w, wan_h = self.get_optimal_wan_dimensions(src_w, src_h)
-        logger.info(f"[WAN CLONER] Auto-detected input: {src_w}x{src_h} @ {src_fps} FPS. Target Wan resolution: {wan_w}x{wan_h}")
-        print(f"[WAN CLONER] Auto-detected input: {src_w}x{src_h} @ {src_fps} FPS. Target Wan resolution: {wan_w}x{wan_h}")
+        total_duration = meta["duration"]
 
-        # Step 2: Extract real scene keyframe (preserving room, bed, bodies, camera angle)
+        if max_duration and float(max_duration) > 0:
+            active_duration = min(float(total_duration), float(max_duration))
+        else:
+            active_duration = float(total_duration)
+
+        wan_w, wan_h = self.get_optimal_wan_dimensions(src_w, src_h)
+        logger.info(
+            f"[WAN CLONER] Auto-detected input: {src_w}x{src_h} @ {src_fps} FPS. "
+            f"Duration: {total_duration:.2f}s (active: {active_duration:.2f}s). Target Wan res: {wan_w}x{wan_h}"
+        )
+        print(
+            f"[WAN CLONER] Auto-detected input: {src_w}x{src_h} @ {src_fps} FPS. "
+            f"Duration: {total_duration:.2f}s (active: {active_duration:.2f}s). Target Wan res: {wan_w}x{wan_h}"
+        )
+
+        # Step 2: Extract real scene keyframe for chunk 0
         extracted_frame = job_dir / "source_first_frame.png"
         logger.info(f"[WAN CLONER] Extracting starting scene frame from {source_video}")
         self.extract_best_keyframe(source_video, extracted_frame)
 
-        # Step 3: Generate SEPARATE Individual Solo Character Identity Reference Photos
+        # Step 3: Generate SEPARATE Individual Solo Character Identity Reference Photos (ONCE for whole video)
         generated_character_images = []
         female_ref_slot = None
         male_ref_slot = None
@@ -339,38 +388,34 @@ class WanVideoCloner:
                 male_ref_slot = slot_num
                 male_desc = char_prompt
 
-            # Strict solo portrait prompt (NEVER combine multiple people into one image)
             solo_prompt = self.build_solo_character_prompt(char_prompt, gender=gender_str, style=style_clean)
             solo_face_path = job_dir / f"character_{idx}_{gender_str}_solo_face.png"
 
-            logger.info(f"[WAN CLONER] Generating separate solo face for {gender_str} (Image {slot_num}) via Krea 2...")
-            print(f"[WAN CLONER] Generating separate solo face for {gender_str} (Image {slot_num}) via Krea 2...")
+            if solo_face_path.exists() and solo_face_path.stat().st_size > 10000:
+                logger.info(f"[WAN CLONER] Reusing existing solo face for {gender_str} ({solo_face_path.name})")
+            else:
+                logger.info(f"[WAN CLONER] Generating separate solo face for {gender_str} (Image {slot_num}) via Krea 2...")
+                print(f"[WAN CLONER] Generating separate solo face for {gender_str} (Image {slot_num}) via Krea 2...")
+                anime_negative_face = (
+                    "photorealistic, realistic photograph, 3d, 3d render, real human skin, "
+                    "natural skin pores, blemishes, raw photo, live action, camera photo, "
+                    "low quality, blurry, deformed anatomy, deformed hands, text, watermark"
+                )
+                char_seed = seed + idx * 7919
+                self.generate_keyframe(
+                    solo_prompt,
+                    solo_face_path,
+                    seed=char_seed,
+                    negative_prompt=anime_negative_face if style_clean == "anime" else None,
+                )
 
-            anime_negative_face = (
-                "photorealistic, realistic photograph, 3d, 3d render, real human skin, "
-                "natural skin pores, blemishes, raw photo, live action, camera photo, "
-                "low quality, blurry, deformed anatomy, deformed hands, text, watermark"
-            )
-            char_seed = seed + idx * 7919
-            self.generate_keyframe(
-                solo_prompt,
-                solo_face_path,
-                seed=char_seed,
-                negative_prompt=anime_negative_face if style_clean == "anime" else None,
-            )
             generated_character_images.append(solo_face_path)
 
         # Keep character_identity_face.png for backwards compatibility
         if generated_character_images:
             shutil.copy2(generated_character_images[0], job_dir / "character_identity_face.png")
 
-        # Step 4: Explicit Dual-Character Diffusion Identity Transfer via KeyframeGenerator (ZERO InSwapper)
-        # Explicitly defines WHO is male and WHO is female in the scene and converts realistic actors to Anime
-        styled_scene_keyframe = job_dir / "styled_scene_keyframe.png"
-        logger.info(f"[WAN CLONER] Restyling scene keyframe to {style_clean} via Qwen Image Edit Diffusion (NO INSWAPPER)...")
-        print(f"[WAN CLONER] Restyling scene keyframe to {style_clean} via Qwen Image Edit Diffusion (NO INSWAPPER)...")
-
-        # Build highly specific instruction mapping each actor in the scene to their reference image
+        # Step 4: Multi-Chunk Sequential Cloning for Long Videos (5s chunks, up to 7+ minutes)
         f_slot_str = f"Image {female_ref_slot}" if female_ref_slot else "Image 2"
         m_slot_str = f"Image {male_ref_slot}" if male_ref_slot else "Image 3"
 
@@ -406,6 +451,19 @@ class WanVideoCloner:
             )
             active_denoise = max(float(denoise), 0.88)
             active_cfg = 5.0
+            motion_prompt = (
+                f"masterpiece 2D Japanese anime animation, Kyoto Animation and Makoto Shinkai aesthetic, "
+                f"full-frame 2D anime scene in motion, hand-drawn anime characters and hand-painted anime background, "
+                f"smooth fluid hand-drawn anime movement, clean cel-shaded anime linework, gorgeous luminous anime lighting, "
+                f"vibrant anime color palette, pure 2D anime cinematography, high quality anime film, no live action"
+            )
+            wan_negative_prompt = (
+                "photorealistic, realistic, photograph, raw photo, live action, live action footage, real human, "
+                "real human skin, skin pores, body hair, photographic furniture, real room photo, real couch, real sofa, "
+                "3d, 3d render, camera noise, real life footage, "
+                "色调艳丽，过曝，静态，细节模糊不清，字幕，静止，整体发灰，最差质量，低质量，JPEG压缩残留，"
+                "丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合"
+            )
         else:
             edit_prompt = (
                 f"Masterpiece 8k cinematic 35mm film still. Highly detailed photographic transformation of BOTH actors in Image 1.\n\n"
@@ -430,88 +488,155 @@ class WanVideoCloner:
             anime_qwen_negative = None
             active_denoise = float(denoise)
             active_cfg = 4.0
-
-        self.keyframe_generator.generate(
-            scene_image=extracted_frame,
-            character_references=generated_character_images,
-            prompt=edit_prompt,
-            negative_prompt=anime_qwen_negative,
-            output_path=styled_scene_keyframe,
-            seed=seed,
-            denoise=active_denoise,
-            cfg=active_cfg,
-        )
-
-        # Step 5: Animate with Wan 2.2 starting from the diffusion styled scene frame
-        if style_clean == "anime":
-            motion_prompt = (
-                f"masterpiece 2D Japanese anime animation, Kyoto Animation and Makoto Shinkai aesthetic, "
-                f"full-frame 2D anime scene in motion, hand-drawn anime characters and hand-painted anime background, "
-                f"smooth fluid hand-drawn anime movement, clean cel-shaded anime linework, gorgeous luminous anime lighting, "
-                f"vibrant anime color palette, pure 2D anime cinematography, high quality anime film, no live action"
-            )
-            wan_negative_prompt = (
-                "photorealistic, realistic, photograph, raw photo, live action, live action footage, real human, "
-                "real human skin, skin pores, body hair, photographic furniture, real room photo, real couch, real sofa, "
-                "3d, 3d render, camera noise, real life footage, "
-                "色调艳丽，过曝，静态，细节模糊不清，字幕，静止，整体发灰，最差质量，低质量，JPEG压缩残留，"
-                "丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合"
-            )
-        else:
             motion_prompt = f"photorealistic 8k cinematic film, continuous natural human movement, authentic physical motion, realistic action, high production cinematography"
             wan_negative_prompt = None
 
-        print_gpu_memory("Before Wan 2.2 ComfyUI execution")
-        raw_wan_video = self.animate_with_wan(
-            keyframe_path=styled_scene_keyframe,
-            motion_prompt=motion_prompt,
-            output_video_path=output_video,
-            seed=seed,
-            length_frames=81,
-            fps=16,
-            width=wan_w,
-            height=wan_h,
-            negative_prompt=wan_negative_prompt,
-        )
-        print_gpu_memory("After Wan 2.2 ComfyUI execution")
+        CHUNK_SEC = 5.0
+        num_chunks = max(1, int(math.ceil(active_duration / CHUNK_SEC)))
+        logger.info(f"[WAN CLONER] Processing {active_duration:.2f}s in {num_chunks} chunks ({CHUNK_SEC}s each)...")
+        print(f"[WAN CLONER] Processing {active_duration:.2f}s in {num_chunks} chunks ({CHUNK_SEC}s each)...")
 
-        # Step 5: Smooth Framerate Resampling & Audio Muxing
-        logger.info(f"[WAN CLONER] Resampling to original {src_fps} FPS and muxing audio...")
-        temp_fps_video = job_dir / "temp_resampled_fps.mp4"
+        chunks_dir = job_dir / "chunks"
+        chunks_dir.mkdir(parents=True, exist_ok=True)
+        completed_chunk_paths = []
 
-        # Resample to original FPS (e.g. 30 FPS) smoothly
-        resample_cmd = [
-            "ffmpeg", "-y",
-            "-i", str(raw_wan_video),
-            "-r", str(src_fps),
-            "-c:v", "libx264",
-            "-pix_fmt", "yuv420p",
-            str(temp_fps_video),
-        ]
-        res_fps = subprocess.run(resample_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        active_video = temp_fps_video if (res_fps.returncode == 0 and temp_fps_video.exists()) else raw_wan_video
+        for chunk_idx in range(num_chunks):
+            start_t = chunk_idx * CHUNK_SEC
+            this_chunk_dur = min(CHUNK_SEC, active_duration - start_t)
+            chunk_target = chunks_dir / f"chunk_{chunk_idx:04d}.mp4"
 
-        # Mux original audio onto output
+            # Checkpoint / Resume capability: skip if this chunk is already finished
+            if chunk_target.exists() and chunk_target.stat().st_size > 50000:
+                logger.info(f"[WAN CLONER] [RESUME] Chunk {chunk_idx + 1}/{num_chunks} already completed. Skipping.")
+                print(f"[WAN CLONER] [RESUME] Chunk {chunk_idx + 1}/{num_chunks} already completed ({chunk_target.name}). Skipping.")
+                completed_chunk_paths.append(chunk_target)
+                continue
+
+            logger.info(f"[WAN CLONER] === Chunk {chunk_idx + 1}/{num_chunks} ({start_t:.1f}s - {start_t + this_chunk_dur:.1f}s) ===")
+            print(f"[WAN CLONER] === Chunk {chunk_idx + 1}/{num_chunks} ({start_t:.1f}s - {start_t + this_chunk_dur:.1f}s) ===")
+
+            if status_callback:
+                status_callback(
+                    status="animating_with_wan",
+                    current_chunk=chunk_idx + 1,
+                    total_chunks=num_chunks,
+                    progress=f"{chunk_idx + 1}/{num_chunks} ({(chunk_idx + 1) * 100 // num_chunks}%)",
+                )
+
+            # 4a. Extract keyframe for this chunk
+            chunk_raw_frame = chunks_dir / f"keyframe_{chunk_idx:04d}_raw.png"
+            if chunk_idx == 0:
+                shutil.copy2(extracted_frame, chunk_raw_frame)
+            else:
+                self.extract_frame_at_time(source_video, start_t, chunk_raw_frame)
+
+            # 4b. Full-frame anime restyling via Qwen Image Edit
+            styled_chunk_keyframe = chunks_dir / f"keyframe_{chunk_idx:04d}_styled.png"
+            chunk_seed = seed + chunk_idx * 10007
+            self.keyframe_generator.generate(
+                scene_image=chunk_raw_frame,
+                character_references=generated_character_images,
+                prompt=edit_prompt,
+                negative_prompt=anime_qwen_negative,
+                output_path=styled_chunk_keyframe,
+                seed=chunk_seed,
+                denoise=active_denoise,
+                cfg=active_cfg,
+            )
+
+            if chunk_idx == 0:
+                shutil.copy2(styled_chunk_keyframe, job_dir / "styled_scene_keyframe.png")
+
+            # 4c. Animate with Wan 2.2 I2V
+            temp_wan_raw = chunks_dir / f"temp_wan_{chunk_idx:04d}.mp4"
+            print_gpu_memory(f"Before Wan 2.2 Chunk {chunk_idx + 1}")
+            self.animate_with_wan(
+                keyframe_path=styled_chunk_keyframe,
+                motion_prompt=motion_prompt,
+                output_video_path=temp_wan_raw,
+                seed=chunk_seed,
+                length_frames=81,
+                fps=16,
+                width=wan_w,
+                height=wan_h,
+                negative_prompt=wan_negative_prompt,
+            )
+            print_gpu_memory(f"After Wan 2.2 Chunk {chunk_idx + 1}")
+
+            # 4d. Resample chunk to source FPS and clamp duration
+            resample_cmd = [
+                "ffmpeg", "-y",
+                "-i", str(temp_wan_raw),
+                "-t", str(round(this_chunk_dur, 3)),
+                "-r", str(src_fps),
+                "-c:v", "libx264",
+                "-pix_fmt", "yuv420p",
+                str(chunk_target),
+            ]
+            subprocess.run(resample_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+            temp_wan_raw.unlink(missing_ok=True)
+            completed_chunk_paths.append(chunk_target)
+
+            # Force garbage collection between chunks to keep VRAM completely clean
+            gc.collect()
+
+        # Step 5: Seamless Stitching & Full Audio Remuxing
+        logger.info(f"[WAN CLONER] Stitching {len(completed_chunk_paths)} chunks together...")
+        print(f"[WAN CLONER] Stitching {len(completed_chunk_paths)} chunks into final {active_duration:.2f}s video...")
+
+        if len(completed_chunk_paths) == 1:
+            stitched_video = completed_chunk_paths[0]
+        else:
+            concat_list_file = job_dir / "concat_chunks.txt"
+            with open(concat_list_file, "w", encoding="utf-8") as f:
+                for p in completed_chunk_paths:
+                    f.write(f"file '{p.resolve()}'\n")
+
+            stitched_video = job_dir / "temp_stitched_all_chunks.mp4"
+            concat_cmd = [
+                "ffmpeg", "-y",
+                "-f", "concat",
+                "-safe", "0",
+                "-i", str(concat_list_file),
+                "-c", "copy",
+                str(stitched_video),
+            ]
+            res_cat = subprocess.run(concat_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if res_cat.returncode != 0:
+                concat_cmd_reencode = [
+                    "ffmpeg", "-y",
+                    "-f", "concat",
+                    "-safe", "0",
+                    "-i", str(concat_list_file),
+                    "-c:v", "libx264",
+                    "-pix_fmt", "yuv420p",
+                    str(stitched_video),
+                ]
+                subprocess.run(concat_cmd_reencode, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+
+        # Mux full original audio track onto output
+        logger.info(f"[WAN CLONER] Muxing original audio onto output video...")
+        print(f"[WAN CLONER] Muxing original audio onto output video...")
         mux_cmd = [
             "ffmpeg", "-y",
-            "-i", str(active_video),
+            "-i", str(stitched_video),
             "-i", str(source_video),
             "-c:v", "copy",
             "-c:a", "aac",
             "-map", "0:v:0",
             "-map", "1:a:0?",
-            "-shortest",
+            "-t", str(round(active_duration, 3)),
             str(output_video),
         ]
         res_mux = subprocess.run(mux_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         if res_mux.returncode != 0:
-            shutil.copy2(active_video, output_video)
+            shutil.copy2(stitched_video, output_video)
 
-        # Cleanup intermediate files
-        raw_wan_video.unlink(missing_ok=True)
-        temp_fps_video.unlink(missing_ok=True)
+        if stitched_video != completed_chunk_paths[0]:
+            stitched_video.unlink(missing_ok=True)
 
-        logger.info(f"[WAN CLONER] Video cloning complete! Saved to {output_video}")
+        logger.info(f"[WAN CLONER] Long video cloning complete! Saved to {output_video}")
+        print(f"[WAN CLONER] Long video cloning complete! Saved to {output_video}")
         return output_video
 
     def clone_video_to_anime(

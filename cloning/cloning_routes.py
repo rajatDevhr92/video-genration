@@ -68,6 +68,10 @@ class CloningJobRequest(BaseModel):
         default="wan_v2v",
         description="Cloning mode: 'wan_v2v' (default: full Wan 2.2 diffusion video cloning) or 'face_swap'"
     )
+    max_duration: Optional[float] = Field(
+        default=None,
+        description="Optional: Max seconds of video to process (defaults to full video, e.g. 420 for 7 minutes)."
+    )
 
 
 def resolve_input(name: str) -> Path:
@@ -155,6 +159,7 @@ def process_cloning_job(
     source_video: Path,
     characters: Optional[List[CharacterTarget]],
     mode: str = "wan_v2v",
+    max_duration: Optional[float] = None,
 ):
     """
     Background worker:
@@ -215,6 +220,9 @@ def process_cloning_job(
 
             write_status(job_dir, job_id=job_id, status=f"generating_{style}_keyframe")
 
+            def chunk_status_cb(**kwargs):
+                write_status(job_dir, job_id=job_id, **kwargs)
+
             # Step 2: Animate with Wan 2.2 I2V
             write_status(job_dir, job_id=job_id, status="animating_with_wan")
             output_video_path = job_dir / "cloned_output.mp4"
@@ -228,6 +236,8 @@ def process_cloning_job(
                 seed=int(uuid.uuid4().int % 1000000),
                 style=style,
                 characters=char_meta,
+                status_callback=chunk_status_cb,
+                max_duration=max_duration,
             )
 
             # Scan generated character faces in job_dir to include in status
@@ -418,6 +428,7 @@ def create_cloning_job(request: CloningJobRequest):
         active_source_video,
         request.characters,
         request.mode or "wan_v2v",
+        request.max_duration,
     )
 
     return {
@@ -438,6 +449,10 @@ async def create_cloning_job_upload(
     mode: Optional[str] = Form(
         default="wan_v2v",
         description="Cloning mode: 'wan_v2v' (default: full Wan 2.2 diffusion video cloning) or 'face_swap'"
+    ),
+    max_duration: Optional[float] = Form(
+        default=None,
+        description="Optional: Max seconds of video to process (defaults to full video, e.g. 420 for 7 minutes)."
     ),
 ):
     """
@@ -501,8 +516,9 @@ async def create_cloning_job_upload(
         job_id,
         job_dir,
         saved_video_path,
-        char_targets,
+        char_targets if char_targets else None,
         active_mode,
+        max_duration,
     )
 
     return {
