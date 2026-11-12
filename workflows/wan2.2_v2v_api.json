@@ -110,7 +110,7 @@
       ],
       "width": 1280,
       "height": 720,
-      "length": 161,
+      "length": 81,
       "batch_size": 1
     }
   },
@@ -164,7 +164,7 @@
       "add_noise": "enable",
       "noise_seed": 123456789,
       "steps": 4,
-      "cfg": 1.0,
+      "cfg": 5.0,
       "sampler_name": "euler",
       "scheduler": "simple",
       "start_at_step": 1,
@@ -194,7 +194,7 @@
       "add_noise": "disable",
       "noise_seed": 123456789,
       "steps": 4,
-      "cfg": 1.0,
+      "cfg": 5.0,
       "sampler_name": "euler",
       "scheduler": "simple",
       "start_at_step": 2,

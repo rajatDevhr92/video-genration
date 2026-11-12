@@ -156,6 +156,94 @@ class WanVideoCloner:
             return self.extract_first_frame(video_path, output_image_path)
         return output_image_path
 
+    def prefilter_image_to_anime(self, input_image_path: Path, output_image_path: Path, wan_w: int, wan_h: int) -> Path:
+        """
+        Applies fast edge-preserving bilateral smoothing and cel-shaded color/contour
+        enhancement to a single keyframe image via FFmpeg. Ensures it is formatted to
+        wan_w x wan_h and stripped of photographic skin pores and raw camera textures.
+        """
+        output_image_path = Path(output_image_path)
+        output_image_path.parent.mkdir(parents=True, exist_ok=True)
+        vf_str = (
+            f"scale={wan_w}:{wan_h}:force_original_aspect_ratio=decrease,"
+            f"pad={wan_w}:{wan_h}:(ow-iw)/2:(oh-ih)/2,"
+            f"bilateral=sigmaS=4:sigmaR=0.25,"
+            f"eq=saturation=1.25:contrast=1.12,"
+            f"unsharp=5:5:0.8:5:5:0.0"
+        )
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", str(input_image_path),
+            "-vf", vf_str,
+            "-update", "1",
+            "-frames:v", "1",
+            str(output_image_path),
+        ]
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if res.returncode != 0 or not output_image_path.exists():
+            shutil.copy2(input_image_path, output_image_path)
+        return output_image_path
+
+    def prefilter_chunk_to_anime(
+        self,
+        source_video: Path,
+        start_t: float,
+        chunk_dur: float,
+        output_chunk_path: Path,
+        wan_w: int,
+        wan_h: int,
+        target_frames: int = 81,
+        style: str = "anime",
+    ) -> Path:
+        """
+        Slices exact chunk from source video, scales/pads to Wan resolution,
+        ensures exact 16 FPS and EXACTLY target_frames (e.g. 81 frames) with zero frame count drift,
+        and applies edge-preserving bilateral smoothing + color saturation boost for pure anime style.
+        """
+        output_chunk_path = Path(output_chunk_path)
+        output_chunk_path.parent.mkdir(parents=True, exist_ok=True)
+
+        filters = [
+            f"scale={wan_w}:{wan_h}:force_original_aspect_ratio=decrease",
+            f"pad={wan_w}:{wan_h}:(ow-iw)/2:(oh-ih)/2",
+            "fps=16",
+            "tpad=stop_mode=clone:stop=-1",
+        ]
+        if style == "anime":
+            filters.extend([
+                "bilateral=sigmaS=4:sigmaR=0.25",
+                "eq=saturation=1.25:contrast=1.12",
+                "unsharp=5:5:0.8:5:5:0.0",
+            ])
+        vf_str = ",".join(filters)
+
+        cmd = [
+            "ffmpeg", "-y",
+            "-ss", str(round(start_t, 3)),
+            "-i", str(source_video),
+            "-vf", vf_str,
+            "-frames:v", str(target_frames),
+            "-c:v", "libx264",
+            "-pix_fmt", "yuv420p",
+            str(output_chunk_path),
+        ]
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if res.returncode != 0 or not output_chunk_path.exists():
+            logger.warning(f"[WAN V2V] FFmpeg prefilter slice notice: {res.stderr}. Using simple fallback slice.")
+            fb_cmd = [
+                "ffmpeg", "-y",
+                "-ss", str(round(start_t, 3)),
+                "-i", str(source_video),
+                "-s", f"{wan_w}x{wan_h}",
+                "-r", "16",
+                "-frames:v", str(target_frames),
+                "-c:v", "libx264",
+                "-pix_fmt", "yuv420p",
+                str(output_chunk_path),
+            ]
+            subprocess.run(fb_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        return output_chunk_path
+
     def build_solo_character_prompt(self, char_prompt: str, gender: str = "character", style: str = "anime") -> str:
         """
         Builds a dedicated solo portrait prompt for ONE single character.
@@ -316,13 +404,13 @@ class WanVideoCloner:
         motion_prompt: str,
         output_video_path: Path,
         seed: int = 12345,
-        length_frames: int = 161,
+        length_frames: int = 81,
         fps: int = 16,
         width: Optional[int] = None,
         height: Optional[int] = None,
         negative_prompt: Optional[str] = None,
         denoise: float = 0.75,
-        cfg: float = 2.0,
+        cfg: float = 5.0,
     ) -> Path:
         """
         Runs true Wan 2.2 Video-to-Video (V2V) on the sliced video chunk.
@@ -359,7 +447,7 @@ class WanVideoCloner:
             if negative_prompt:
                 workflow["10"]["inputs"]["text"] = negative_prompt
 
-            # 3. Dimensions and length
+            # 3. Dimensions and length (locked to exact frames, e.g. 81)
             workflow["11"]["inputs"]["width"] = target_w
             workflow["11"]["inputs"]["height"] = target_h
             workflow["11"]["inputs"]["length"] = length_frames
@@ -374,12 +462,15 @@ class WanVideoCloner:
 
             # 5. Denoise step control:
             # Step 1 out of 4 is ~0.75 denoise (preserves motion & choreography, repaints textures to anime).
-            # Step 2 out of 4 is ~0.50 denoise (subtle restyling).
+            # Step 2 out of 4 is ~0.50 denoise.
             if denoise >= 0.70:
                 start_step = 1
             else:
                 start_step = 2
             workflow["12"]["inputs"]["start_at_step"] = start_step
+            workflow["12"]["inputs"]["end_at_step"] = 2
+            workflow["13"]["inputs"]["start_at_step"] = 2
+            workflow["13"]["inputs"]["end_at_step"] = 4
 
             logger.info(
                 f"[WAN V2V] Submitting Wan 2.2 V2V job (seed={seed}, resolution={target_w}x{target_h}, "
@@ -419,26 +510,12 @@ class WanVideoCloner:
                 self.runner.download_image(videos[0], output_video_path)
             return output_video_path
         except Exception as v2v_err:
-            logger.warning(
-                f"[WAN V2V] V2V workflow failed or node unavailable: {v2v_err}. "
-                f"Falling back to Wan 2.2 I2V animation for this chunk."
+            logger.error(
+                f"[WAN V2V] Wan 2.2 V2V execution failed on GPU: {v2v_err}",
+                exc_info=True,
             )
-            print(
-                f"[WAN V2V] Notice: V2V workflow encountered: {v2v_err}. "
-                f"Falling back to Wan 2.2 I2V for this chunk."
-            )
-            return self.animate_with_wan(
-                keyframe_path=keyframe_path,
-                motion_prompt=motion_prompt,
-                output_video_path=output_video_path,
-                seed=seed,
-                length_frames=length_frames,
-                fps=fps,
-                width=width,
-                height=height,
-                negative_prompt=negative_prompt,
-                cfg=cfg,
-            )
+            print(f"[WAN V2V] ERROR: V2V execution failed: {v2v_err}")
+            raise RuntimeError(f"Wan 2.2 Video-to-Video execution failed on GPU: {v2v_err}") from v2v_err
         finally:
             temp_img_path.unlink(missing_ok=True)
             temp_vid_path.unlink(missing_ok=True)
@@ -647,10 +724,11 @@ class WanVideoCloner:
             motion_prompt = f"photorealistic 8k cinematic film, continuous natural human movement, authentic physical motion, realistic action, high production cinematography"
             wan_negative_prompt = None
 
-        CHUNK_SEC = 10.0
+        CHUNK_SEC = 5.0
+        TARGET_FRAMES = 81
         num_chunks = max(1, int(math.ceil(active_duration / CHUNK_SEC)))
-        logger.info(f"[WAN CLONER] Processing {active_duration:.2f}s in {num_chunks} chunks ({CHUNK_SEC}s each)...")
-        print(f"[WAN CLONER] Processing {active_duration:.2f}s in {num_chunks} chunks ({CHUNK_SEC}s each)...")
+        logger.info(f"[WAN CLONER] Processing {active_duration:.2f}s in {num_chunks} chunks ({CHUNK_SEC}s / {TARGET_FRAMES} frames each)...")
+        print(f"[WAN CLONER] Processing {active_duration:.2f}s in {num_chunks} chunks ({CHUNK_SEC}s / {TARGET_FRAMES} frames each)...")
 
         chunks_dir = job_dir / "chunks"
         chunks_dir.mkdir(parents=True, exist_ok=True)
@@ -679,39 +757,20 @@ class WanVideoCloner:
                     progress=f"{chunk_idx + 1}/{num_chunks} ({(chunk_idx + 1) * 100 // num_chunks}%)",
                 )
 
-            # Calculate optimal frame count aligned strictly to Wan VAE's 4n+1 temporal stride
-            raw_frames = int(round(this_chunk_dur * 16))
-            n_stride = max(1, (raw_frames - 1) // 4)
-            chunk_length_frames = min(161, max(17, 4 * n_stride + 1))
+            chunk_seed = seed + chunk_idx * 10007
 
-            # 4a. Slice exact chunk video from source (16 FPS, exact wan resolution, exact frame count)
+            # 4a. Slice and prefilter chunk video: exact Wan dimensions, exact 16 FPS, exact 81 frames, cel-shaded anime
             chunk_src_video = chunks_dir / f"chunk_{chunk_idx:04d}_src.mp4"
-            slice_cmd = [
-                "ffmpeg", "-y",
-                "-ss", str(round(start_t, 3)),
-                "-t", str(round(this_chunk_dur + 0.1, 3)),
-                "-i", str(source_video),
-                "-vf", f"scale={wan_w}:{wan_h}:force_original_aspect_ratio=decrease,pad={wan_w}:{wan_h}:(ow-iw)/2:(oh-ih)/2,fps=16",
-                "-vframes", str(chunk_length_frames),
-                "-c:v", "libx264",
-                "-pix_fmt", "yuv420p",
-                str(chunk_src_video),
-            ]
-            res_slice = subprocess.run(slice_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            if res_slice.returncode != 0 or not chunk_src_video.exists():
-                logger.warning(f"[WAN V2V] FFmpeg video slice failed, using fallback simple slice:\n{res_slice.stderr}")
-                fb_cmd = [
-                    "ffmpeg", "-y",
-                    "-ss", str(round(start_t, 3)),
-                    "-t", str(round(this_chunk_dur, 3)),
-                    "-i", str(source_video),
-                    "-s", f"{wan_w}x{wan_h}",
-                    "-r", "16",
-                    "-c:v", "libx264",
-                    "-pix_fmt", "yuv420p",
-                    str(chunk_src_video),
-                ]
-                subprocess.run(fb_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+            self.prefilter_chunk_to_anime(
+                source_video=source_video,
+                start_t=start_t,
+                chunk_dur=this_chunk_dur,
+                output_chunk_path=chunk_src_video,
+                wan_w=wan_w,
+                wan_h=wan_h,
+                target_frames=TARGET_FRAMES,
+                style=style_clean,
+            )
 
             # 4b. Extract keyframe for this chunk
             chunk_raw_frame = chunks_dir / f"keyframe_{chunk_idx:04d}_raw.png"
@@ -720,12 +779,16 @@ class WanVideoCloner:
             else:
                 self.extract_frame_at_time(source_video, start_t, chunk_raw_frame)
 
-            # Unconditional chunk_seed definition (fixes BUG-01)
-            chunk_seed = seed + chunk_idx * 10007
+            # Create a cel-shaded anime version of the keyframe as anchor fallback
+            chunk_prefiltered_frame = chunks_dir / f"keyframe_{chunk_idx:04d}_prefiltered.png"
+            self.prefilter_image_to_anime(
+                input_image_path=chunk_raw_frame,
+                output_image_path=chunk_prefiltered_frame,
+                wan_w=wan_w,
+                wan_h=wan_h,
+            )
 
             # 4c. Keyframe preparation:
-            # If specific character references exist, restyle frame 0 with those identities.
-            # If pure V2V mode, restyle frame 0 into 2D anime directly from Image 1 (single-image edit).
             styled_chunk_keyframe = chunks_dir / f"keyframe_{chunk_idx:04d}_styled.png"
             refs_to_use = generated_character_images if generated_character_images else []
             keyframe_denoise = 0.85 if style_clean == "anime" else active_denoise
@@ -741,9 +804,9 @@ class WanVideoCloner:
                     cfg=active_cfg,
                 )
             except Exception as e:
-                logger.error(f"[WAN CLONER] Keyframe anime restyle failed: {e}", exc_info=True)
-                print(f"[WAN CLONER] WARNING: Qwen Image Edit failed ({e}). Using raw frame as fallback.")
-                styled_chunk_keyframe = chunk_raw_frame
+                logger.warning(f"[WAN CLONER] Keyframe anime restyle notice: {e}. Using cel-shaded anime keyframe anchor.")
+                print(f"[WAN CLONER] Using cel-shaded anime keyframe anchor for chunk {chunk_idx + 1}.")
+                styled_chunk_keyframe = chunk_prefiltered_frame
 
             if chunk_idx == 0:
                 shutil.copy2(styled_chunk_keyframe, job_dir / "styled_scene_keyframe.png")
@@ -757,12 +820,13 @@ class WanVideoCloner:
                 motion_prompt=motion_prompt,
                 output_video_path=temp_wan_raw,
                 seed=chunk_seed,
-                length_frames=chunk_length_frames,
+                length_frames=TARGET_FRAMES,
                 fps=16,
                 width=wan_w,
                 height=wan_h,
                 negative_prompt=wan_negative_prompt,
                 denoise=active_denoise,
+                cfg=active_cfg,
             )
             print_gpu_memory(f"After Wan 2.2 V2V Chunk {chunk_idx + 1}")
 
