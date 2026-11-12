@@ -27,6 +27,7 @@ class KeyframeGenerator:
         genital_references=None,
         negative_prompt=None,
         anatomy_rules="",
+        cfg=None,
     ):
         scene_image = Path(scene_image)
         output_path = Path(output_path)
@@ -129,7 +130,7 @@ class KeyframeGenerator:
 
             workflow["15"]["inputs"]["seed"] = seed
             workflow["15"]["inputs"]["steps"] = 40
-            workflow["15"]["inputs"]["cfg"] = 4.0
+            workflow["15"]["inputs"]["cfg"] = float(cfg) if cfg is not None else 4.0
             workflow["15"]["inputs"]["sampler_name"] = "euler"
             workflow["15"]["inputs"]["scheduler"] = "simple"
             workflow["15"]["inputs"]["denoise"] = float(active_denoise)
@@ -298,7 +299,7 @@ CRITICAL CONTACT ZONE & STAGE B ANATOMY FOCUS
 
             workflow["15"]["inputs"]["seed"] = seed
             workflow["15"]["inputs"]["steps"] = 40
-            workflow["15"]["inputs"]["cfg"] = 4.0
+            workflow["15"]["inputs"]["cfg"] = float(cfg) if cfg is not None else 4.0
             workflow["15"]["inputs"]["sampler_name"] = "euler"
             workflow["15"]["inputs"]["scheduler"] = "simple"
             workflow["15"]["inputs"]["denoise"] = float(active_denoise)

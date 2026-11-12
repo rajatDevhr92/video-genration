@@ -376,30 +376,36 @@ class WanVideoCloner:
 
         if style_clean == "anime":
             edit_prompt = (
-                f"Masterpiece 2D Japanese anime still frame, Kyoto Animation and Makoto Shinkai aesthetic. "
-                f"Full 2D anime conversion: redraw and completely transform the real scene in Image 1 into high-budget flat cel-shaded 2D anime artwork.\n\n"
-                f"MANDATORY DUAL-CHARACTER 2D ANIME TRANSFORMATION:\n"
-                f"1. FEMALE ACTOR -> 2D ANIME CONVERSION ({f_slot_str}):\n"
-                f"   - Identify the female actor in Image 1 (the woman kneeling, bending, or on top on the bed).\n"
-                f"   - Completely transform her into a gorgeous 2D anime woman strictly matching {f_slot_str}.\n"
-                f"   - Change her hair to the stylized anime hairstyle and color from {f_slot_str}.\n"
-                f"   - Render her with clean cel-shaded anime linework, smooth radiant anime skin tone, large expressive anime eyes matching {f_slot_str}, and sharp anime contours.\n\n"
-                f"2. MALE ACTOR -> 2D ANIME CONVERSION ({m_slot_str}):\n"
-                f"   - Identify the male actor in Image 1 (the man sitting or lying on the bed).\n"
-                f"   - Completely transform him into a handsome 2D anime man strictly matching {m_slot_str}.\n"
-                f"   - Change his hair to the stylized anime haircut from {m_slot_str}.\n"
-                f"   - Render him with clean cel-shaded anime linework, sharp anime jawline, smooth anime skin tone, and expressive anime eyes matching {m_slot_str}.\n\n"
-                f"3. 2D ANIME ENVIRONMENT & POSE PRESERVATION:\n"
-                f"   - Transform the entire room, bed, pillows, blankets, and background in Image 1 into beautifully rendered 2D anime background art with vibrant anime colors and luminous anime lighting.\n"
-                f"   - Preserve 100% of the exact physical body positions, intimate interaction, angles, and camera composition from Image 1.\n"
-                f"   - BOTH characters MUST be converted to 2D anime simultaneously. Clean cel-shaded anime art, pure 2D anime illustration, no photorealism, no real human skin texture, no photograph."
+                f"Masterpiece 2D Japanese anime illustration, Kyoto Animation and Makoto Shinkai style.\n"
+                f"MANDATORY 100% FULL-FRAME 2D ANIME REDRAW: The ENTIRE image in Image 1 must be completely transformed into a cohesive, hand-drawn 2D anime illustration. Every single square inch — all characters, full bodies, furniture, sofa, couch, walls, doors, cabinets, and room background — must be rendered in pure 2D cel-shaded anime style with clean anime ink outlines. ABSOLUTELY ZERO live-action photograph elements or real human textures.\n\n"
+                f"1. ENVIRONMENT & FURNITURE - 100% 2D ANIME ART:\n"
+                f"   - Completely repaint the sofa, couch, cushions, bed, seating, and floor into stylized 2D anime furniture with clean anime outline strokes, smooth anime shading, and vibrant anime colors. Eliminate all photographic leather, cloth grain, and realistic textures.\n"
+                f"   - Transform the entire background (walls, doors, kitchen cabinets, countertops, ceiling, lighting) into hand-painted 2D Japanese anime background art with luminous anime lighting and rich cinematic color palette.\n"
+                f"   - Remove all text, logos, stamps, and watermarks.\n\n"
+                f"2. FEMALE CHARACTER - FULL-BODY 2D ANIME CONVERSION ({f_slot_str}):\n"
+                f"   - Identify the female actor in Image 1.\n"
+                f"   - Completely transform her into the gorgeous 2D anime woman strictly matching {f_slot_str}.\n"
+                f"   - Render her stylized anime hairstyle and hair color from {f_slot_str}, large expressive detailed anime eyes, and clean anime facial contours.\n"
+                f"   - Render her ENTIRE body from head to toe — face, neck, shoulders, chest, arms, hands, back, hips, thighs, knees, legs, and feet — in smooth 2D cel-shaded anime skin with clean dark anime outline linework, radiant anime skin tone, and soft anime shading.\n\n"
+                f"3. MALE CHARACTER - FULL-BODY 2D ANIME CONVERSION ({m_slot_str}):\n"
+                f"   - Identify the male actor in Image 1.\n"
+                f"   - Completely transform him into the handsome 2D anime man strictly matching {m_slot_str}.\n"
+                f"   - Render his stylized anime haircut from {m_slot_str}, sharp defined anime jawline, and expressive anime eyes.\n"
+                f"   - Render his ENTIRE body from head to toe — face, neck, shoulders, chest, torso, abdomen, hips, groin, private areas, thighs, knees, legs, and feet — in pure 2D anime style with clean anime ink outlines and smooth flat cel-shaded anime skin.\n"
+                f"   - COMPLETELY ELIMINATE all realistic human body hair, skin pores, photographic blemishes, and live-action skin textures across his entire lower body, thighs, and legs.\n\n"
+                f"4. POSE, ANGLE & INTERACTION LOCK:\n"
+                f"   - Faithfully preserve 100% of the original physical body positions, intimate interaction, limb angles, spatial interaction, and camera perspective from Image 1.\n"
+                f"   - The entire image must be a unified 2D anime animation still frame. High-end anime aesthetic, crisp cel-shading, pure 2D anime art, no photorealism, no real human skin, no photograph."
             )
             anime_qwen_negative = (
-                "photorealistic, realistic, photograph, raw photo, real life, 3d, 3d render, cgi, "
-                "real human skin, skin pores, camera noise, realistic lighting, live action, "
-                "bad anatomy, extra limbs, fused bodies, text, watermark"
+                "photorealistic, realistic, photograph, raw photo, live action, live action footage, "
+                "real human skin, skin pores, natural skin texture, body hair, photographic texture, "
+                "real leather, photographic furniture, real room photo, real couch, real sofa, "
+                "camera noise, 3d, 3d render, cgi, realistic lighting, bad anatomy, extra limbs, "
+                "fused bodies, text, watermark, logo, Princess CUM, subtitles"
             )
-            active_denoise = max(float(denoise), 0.82)
+            active_denoise = max(float(denoise), 0.88)
+            active_cfg = 5.0
         else:
             edit_prompt = (
                 f"Masterpiece 8k cinematic 35mm film still. Highly detailed photographic transformation of BOTH actors in Image 1.\n\n"
@@ -423,6 +429,7 @@ class WanVideoCloner:
             )
             anime_qwen_negative = None
             active_denoise = float(denoise)
+            active_cfg = 4.0
 
         self.keyframe_generator.generate(
             scene_image=extracted_frame,
@@ -432,18 +439,21 @@ class WanVideoCloner:
             output_path=styled_scene_keyframe,
             seed=seed,
             denoise=active_denoise,
+            cfg=active_cfg,
         )
 
         # Step 5: Animate with Wan 2.2 starting from the diffusion styled scene frame
         if style_clean == "anime":
             motion_prompt = (
-                f"masterpiece 2D Japanese anime animation, Kyoto Animation, Makoto Shinkai anime aesthetic, "
-                f"smooth fluid hand-drawn anime movement, clean cel-shaded anime linework, gorgeous anime lighting, "
-                f"vibrant anime color palette, pure 2D anime cinematography, high quality anime film"
+                f"masterpiece 2D Japanese anime animation, Kyoto Animation and Makoto Shinkai aesthetic, "
+                f"full-frame 2D anime scene in motion, hand-drawn anime characters and hand-painted anime background, "
+                f"smooth fluid hand-drawn anime movement, clean cel-shaded anime linework, gorgeous luminous anime lighting, "
+                f"vibrant anime color palette, pure 2D anime cinematography, high quality anime film, no live action"
             )
             wan_negative_prompt = (
-                "photorealistic, realistic, photograph, raw photo, 3d, 3d render, live action, real human, "
-                "skin pores, natural human skin texture, camera noise, real life footage, "
+                "photorealistic, realistic, photograph, raw photo, live action, live action footage, real human, "
+                "real human skin, skin pores, body hair, photographic furniture, real room photo, real couch, real sofa, "
+                "3d, 3d render, camera noise, real life footage, "
                 "色调艳丽，过曝，静态，细节模糊不清，字幕，静止，整体发灰，最差质量，低质量，JPEG压缩残留，"
                 "丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合"
             )
