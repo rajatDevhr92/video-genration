@@ -130,7 +130,7 @@
     }
   },
   "22": {
-    "class_type": "VAEEncodeVideo",
+    "class_type": "VAEEncode",
     "inputs": {
       "pixels": [
         "21",

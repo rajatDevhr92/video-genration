@@ -57,9 +57,13 @@ class CharacterTarget(BaseModel):
 
 
 class CloningJobRequest(BaseModel):
-    source_video: str = Field(
-        ...,
-        description="File name inside input/cloning on the server (e.g. 'input_clip.mp4')."
+    source_video: Optional[str] = Field(
+        default=None,
+        description="File name inside input/cloning or input on the server (e.g. 'Test5.mp4')."
+    )
+    video_path: Optional[str] = Field(
+        default=None,
+        description="Alias for source_video (e.g. 'input/Test5.mp4' or 'Test5.mp4')."
     )
     characters: Optional[List[CharacterTarget]] = Field(
         default=None,
@@ -83,22 +87,29 @@ def resolve_input(name: str) -> Path:
     input_dir = CLONING_INPUT_DIR.resolve()
     base_input = (BASE_DIR / "input").resolve()
 
-    # 1. Try input/cloning/<name>
-    path = (input_dir / name).resolve()
+    clean_name = name.strip()
+    file_basename = Path(clean_name).name
 
-    # 2. If not found, check input/<name> directly
-    if not path.is_file():
-        alt_path = (base_input / name).resolve()
-        if alt_path.is_file():
-            input_dir.mkdir(parents=True, exist_ok=True)
-            path = input_dir / name
-            if not path.exists():
-                try:
-                    shutil.copy2(alt_path, path)
-                except Exception:
-                    path = alt_path
+    candidates = [
+        Path(clean_name),
+        BASE_DIR / clean_name,
+        input_dir / clean_name,
+        input_dir / file_basename,
+        base_input / clean_name,
+        base_input / file_basename,
+    ]
 
-    if not path.is_file():
+    path = None
+    for cand in candidates:
+        try:
+            cand_res = cand.resolve()
+            if cand_res.is_file():
+                path = cand_res
+                break
+        except Exception:
+            continue
+
+    if path is None:
         raise HTTPException(
             status_code=422,
             detail=f"File not found in input/cloning or input: {name}",
@@ -424,7 +435,13 @@ def process_cloning_job(
 
 @router.post("/jobs")
 def create_cloning_job(request: CloningJobRequest):
-    source_video = resolve_input(request.source_video)
+    target_video_str = request.source_video or request.video_path
+    if not target_video_str:
+        raise HTTPException(
+            status_code=422,
+            detail="Either 'source_video' or 'video_path' must be provided in the request body.",
+        )
+    source_video = resolve_input(target_video_str)
 
     job_id = f"clone_{uuid.uuid4().hex[:12]}"
     job_dir = OUTPUT_DIR / job_id
@@ -442,7 +459,7 @@ def create_cloning_job(request: CloningJobRequest):
     with open(job_dir / "cloning_record.json", "w", encoding="utf-8") as f:
         json.dump(
             {
-                "source_video": request.source_video,
+                "source_video": target_video_str,
                 "input_video_copy": str(active_source_video),
                 "characters": [c.model_dump() for c in request.characters] if request.characters else [],
             },

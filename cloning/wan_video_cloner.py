@@ -238,6 +238,7 @@ class WanVideoCloner:
         width: Optional[int] = None,
         height: Optional[int] = None,
         negative_prompt: Optional[str] = None,
+        cfg: float = 2.0,
     ) -> Path:
         """Runs Wan 2.2 I2V on the generated keyframe to produce the high-res video."""
         keyframe_path = Path(keyframe_path)
@@ -269,6 +270,8 @@ class WanVideoCloner:
 
             workflow["12"]["inputs"]["noise_seed"] = seed
             workflow["13"]["inputs"]["noise_seed"] = seed
+            workflow["12"]["inputs"]["cfg"] = float(cfg)
+            workflow["13"]["inputs"]["cfg"] = float(cfg)
             workflow["16"]["inputs"]["filename_prefix"] = f"cloning/wan_{uuid.uuid4().hex[:12]}"
 
             logger.info(f"[WAN CLONER] Submitting Wan 2.2 I2V job (seed={seed}, resolution={target_w}x{target_h}, frames={length_frames})...")
@@ -319,6 +322,7 @@ class WanVideoCloner:
         height: Optional[int] = None,
         negative_prompt: Optional[str] = None,
         denoise: float = 0.75,
+        cfg: float = 2.0,
     ) -> Path:
         """
         Runs true Wan 2.2 Video-to-Video (V2V) on the sliced video chunk.
@@ -361,9 +365,11 @@ class WanVideoCloner:
             workflow["11"]["inputs"]["length"] = length_frames
             workflow["15"]["inputs"]["fps"] = float(fps)
 
-            # 4. Seeds
+            # 4. Seeds and CFG
             workflow["12"]["inputs"]["noise_seed"] = seed
             workflow["13"]["inputs"]["noise_seed"] = seed
+            workflow["12"]["inputs"]["cfg"] = float(cfg)
+            workflow["13"]["inputs"]["cfg"] = float(cfg)
             workflow["16"]["inputs"]["filename_prefix"] = f"cloning/wan_v2v_{uuid.uuid4().hex[:12]}"
 
             # 5. Denoise step control:
@@ -377,11 +383,11 @@ class WanVideoCloner:
 
             logger.info(
                 f"[WAN V2V] Submitting Wan 2.2 V2V job (seed={seed}, resolution={target_w}x{target_h}, "
-                f"frames={length_frames}, start_step={start_step})..."
+                f"frames={length_frames}, start_step={start_step}, cfg={cfg})..."
             )
             print(
                 f"[WAN V2V] Submitting Wan 2.2 V2V job to ComfyUI ({target_w}x{target_h}, seed={seed}, "
-                f"length={length_frames} frames, start_step={start_step})..."
+                f"length={length_frames} frames, start_step={start_step}, cfg={cfg})..."
             )
             prompt_id, client_id = self.runner.submit(workflow)
             print(f"[WAN V2V] ComfyUI Prompt ID: {prompt_id} (Client: {client_id}). Waiting for GPU execution...")
@@ -431,6 +437,7 @@ class WanVideoCloner:
                 width=width,
                 height=height,
                 negative_prompt=negative_prompt,
+                cfg=cfg,
             )
         finally:
             temp_img_path.unlink(missing_ok=True)
