@@ -39,6 +39,11 @@ WAN_I2V_WORKFLOW = (
     "wan2.2_i2v_api.json"
 )
 
+WAN_V2V_WORKFLOW = (
+    WORKFLOWS_DIR /
+    "wan2.2_v2v_api.json"
+)
+
 WAN_T2V_WORKFLOW = (
     WORKFLOWS_DIR /
     "wan2.2_t2v_14b_api.json"

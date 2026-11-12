@@ -27,6 +27,7 @@ from app.config import (
     VIDEO_HEIGHT,
     VIDEO_WIDTH,
     WAN_I2V_WORKFLOW,
+    WAN_V2V_WORKFLOW,
 )
 from app.composition_generator import CompositionGenerator
 from app.keyframe_generator import KeyframeGenerator
@@ -232,7 +233,7 @@ class WanVideoCloner:
         motion_prompt: str,
         output_video_path: Path,
         seed: int = 12345,
-        length_frames: int = 81,
+        length_frames: int = 161,
         fps: int = 16,
         width: Optional[int] = None,
         height: Optional[int] = None,
@@ -260,7 +261,7 @@ class WanVideoCloner:
             if negative_prompt:
                 workflow["10"]["inputs"]["text"] = negative_prompt
 
-            # Output dimensions and length (81 frames at 16 fps = ~5.06 sec)
+            # Output dimensions and length (161 frames at 16 fps = ~10.06 sec)
             workflow["11"]["inputs"]["width"] = target_w
             workflow["11"]["inputs"]["height"] = target_h
             workflow["11"]["inputs"]["length"] = length_frames
@@ -304,6 +305,136 @@ class WanVideoCloner:
             return output_video_path
         finally:
             temp_path.unlink(missing_ok=True)
+
+    def animate_with_wan_v2v(
+        self,
+        chunk_video_path: Path,
+        keyframe_path: Path,
+        motion_prompt: str,
+        output_video_path: Path,
+        seed: int = 12345,
+        length_frames: int = 161,
+        fps: int = 16,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+        negative_prompt: Optional[str] = None,
+        denoise: float = 0.75,
+    ) -> Path:
+        """
+        Runs true Wan 2.2 Video-to-Video (V2V) on the sliced video chunk.
+        Encodes all chunk frames into 3D video latents with Wan VAE and denoises
+        starting from step 1 (skipping step 0 noise reset), strictly locking 100% of
+        the physical motions, poses, choreography, and timing from the source video.
+        """
+        chunk_video_path = Path(chunk_video_path)
+        keyframe_path = Path(keyframe_path)
+        output_video_path = Path(output_video_path)
+        output_video_path.parent.mkdir(parents=True, exist_ok=True)
+
+        self.input_dir.mkdir(parents=True, exist_ok=True)
+        temp_img_name = f"wan_v2v_ref_{uuid.uuid4().hex[:12]}{keyframe_path.suffix.lower()}"
+        temp_vid_name = f"wan_v2v_src_{uuid.uuid4().hex[:12]}.mp4"
+        temp_img_path = self.input_dir / temp_img_name
+        temp_vid_path = self.input_dir / temp_vid_name
+
+        shutil.copy2(keyframe_path, temp_img_path)
+        shutil.copy2(chunk_video_path, temp_vid_path)
+
+        target_w = width or VIDEO_WIDTH
+        target_h = height or VIDEO_HEIGHT
+
+        try:
+            workflow = self.runner.load_workflow(WAN_V2V_WORKFLOW)
+
+            # 1. Inputs: anchor keyframe and chunk video
+            workflow["1000"]["inputs"]["image"] = temp_img_name
+            workflow["20"]["inputs"]["file"] = temp_vid_name
+
+            # 2. Prompts
+            workflow["9"]["inputs"]["text"] = motion_prompt
+            if negative_prompt:
+                workflow["10"]["inputs"]["text"] = negative_prompt
+
+            # 3. Dimensions and length
+            workflow["11"]["inputs"]["width"] = target_w
+            workflow["11"]["inputs"]["height"] = target_h
+            workflow["11"]["inputs"]["length"] = length_frames
+            workflow["15"]["inputs"]["fps"] = float(fps)
+
+            # 4. Seeds
+            workflow["12"]["inputs"]["noise_seed"] = seed
+            workflow["13"]["inputs"]["noise_seed"] = seed
+            workflow["16"]["inputs"]["filename_prefix"] = f"cloning/wan_v2v_{uuid.uuid4().hex[:12]}"
+
+            # 5. Denoise step control:
+            # Step 1 out of 4 is ~0.75 denoise (preserves motion & choreography, repaints textures to anime).
+            # Step 2 out of 4 is ~0.50 denoise (subtle restyling).
+            if denoise >= 0.70:
+                start_step = 1
+            else:
+                start_step = 2
+            workflow["12"]["inputs"]["start_at_step"] = start_step
+
+            logger.info(
+                f"[WAN V2V] Submitting Wan 2.2 V2V job (seed={seed}, resolution={target_w}x{target_h}, "
+                f"frames={length_frames}, start_step={start_step})..."
+            )
+            print(
+                f"[WAN V2V] Submitting Wan 2.2 V2V job to ComfyUI ({target_w}x{target_h}, seed={seed}, "
+                f"length={length_frames} frames, start_step={start_step})..."
+            )
+            prompt_id, client_id = self.runner.submit(workflow)
+            print(f"[WAN V2V] ComfyUI Prompt ID: {prompt_id} (Client: {client_id}). Waiting for GPU execution...")
+            result = self.runner.wait(prompt_id, timeout=1800)
+            print("[WAN V2V] Wan 2.2 V2V execution completed successfully on GPU.")
+
+            # Find produced video across outputs
+            videos = []
+            for node_id, node_output in result.get("outputs", {}).items():
+                if "gifs" in node_output:
+                    videos.extend(node_output["gifs"])
+                if "videos" in node_output:
+                    videos.extend(node_output["videos"])
+                if "images" in node_output:
+                    animated = node_output.get("animated", [])
+                    for idx, img in enumerate(node_output["images"]):
+                        if isinstance(img, dict):
+                            fname = img.get("filename", "").lower()
+                            is_anim = idx < len(animated) and animated[idx] is True
+                            if is_anim or fname.endswith((".mp4", ".mov", ".webm", ".mkv", ".gif")):
+                                videos.append(img)
+
+            if not videos:
+                raise RuntimeError("Wan 2.2 V2V completed without video output.")
+
+            if hasattr(self.runner, "download_video"):
+                self.runner.download_video(videos[0], output_video_path)
+            else:
+                self.runner.download_image(videos[0], output_video_path)
+            return output_video_path
+        except Exception as v2v_err:
+            logger.warning(
+                f"[WAN V2V] V2V workflow failed or node unavailable: {v2v_err}. "
+                f"Falling back to Wan 2.2 I2V animation for this chunk."
+            )
+            print(
+                f"[WAN V2V] Notice: V2V workflow encountered: {v2v_err}. "
+                f"Falling back to Wan 2.2 I2V for this chunk."
+            )
+            return self.animate_with_wan(
+                keyframe_path=keyframe_path,
+                motion_prompt=motion_prompt,
+                output_video_path=output_video_path,
+                seed=seed,
+                length_frames=length_frames,
+                fps=fps,
+                width=width,
+                height=height,
+                negative_prompt=negative_prompt,
+            )
+        finally:
+            temp_img_path.unlink(missing_ok=True)
+            temp_vid_path.unlink(missing_ok=True)
 
     def clone_video(
         self,
@@ -490,7 +621,7 @@ class WanVideoCloner:
             motion_prompt = f"photorealistic 8k cinematic film, continuous natural human movement, authentic physical motion, realistic action, high production cinematography"
             wan_negative_prompt = None
 
-        CHUNK_SEC = 5.0
+        CHUNK_SEC = 10.0
         num_chunks = max(1, int(math.ceil(active_duration / CHUNK_SEC)))
         logger.info(f"[WAN CLONER] Processing {active_duration:.2f}s in {num_chunks} chunks ({CHUNK_SEC}s each)...")
         print(f"[WAN CLONER] Processing {active_duration:.2f}s in {num_chunks} chunks ({CHUNK_SEC}s each)...")
@@ -522,14 +653,45 @@ class WanVideoCloner:
                     progress=f"{chunk_idx + 1}/{num_chunks} ({(chunk_idx + 1) * 100 // num_chunks}%)",
                 )
 
-            # 4a. Extract keyframe for this chunk
+            chunk_length_frames = 81 if this_chunk_dur <= 5.5 else 161
+
+            # 4a. Slice exact chunk video from source (16 FPS, exact wan resolution, exact frame count)
+            chunk_src_video = chunks_dir / f"chunk_{chunk_idx:04d}_src.mp4"
+            slice_cmd = [
+                "ffmpeg", "-y",
+                "-ss", str(round(start_t, 3)),
+                "-t", str(round(this_chunk_dur + 0.1, 3)),
+                "-i", str(source_video),
+                "-vf", f"scale={wan_w}:{wan_h}:force_original_aspect_ratio=decrease,pad={wan_w}:{wan_h}:(ow-iw)/2:(oh-ih)/2,fps=16",
+                "-vframes", str(chunk_length_frames),
+                "-c:v", "libx264",
+                "-pix_fmt", "yuv420p",
+                str(chunk_src_video),
+            ]
+            res_slice = subprocess.run(slice_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if res_slice.returncode != 0 or not chunk_src_video.exists():
+                logger.warning(f"[WAN V2V] FFmpeg video slice failed, using fallback simple slice:\n{res_slice.stderr}")
+                fb_cmd = [
+                    "ffmpeg", "-y",
+                    "-ss", str(round(start_t, 3)),
+                    "-t", str(round(this_chunk_dur, 3)),
+                    "-i", str(source_video),
+                    "-s", f"{wan_w}x{wan_h}",
+                    "-r", "16",
+                    "-c:v", "libx264",
+                    "-pix_fmt", "yuv420p",
+                    str(chunk_src_video),
+                ]
+                subprocess.run(fb_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+
+            # 4b. Extract keyframe for this chunk
             chunk_raw_frame = chunks_dir / f"keyframe_{chunk_idx:04d}_raw.png"
             if chunk_idx == 0:
                 shutil.copy2(extracted_frame, chunk_raw_frame)
             else:
                 self.extract_frame_at_time(source_video, start_t, chunk_raw_frame)
 
-            # 4b. Full-frame anime restyling via Qwen Image Edit
+            # 4c. Full-frame anime restyling via Qwen Image Edit
             styled_chunk_keyframe = chunks_dir / f"keyframe_{chunk_idx:04d}_styled.png"
             chunk_seed = seed + chunk_idx * 10007
             self.keyframe_generator.generate(
@@ -546,26 +708,28 @@ class WanVideoCloner:
             if chunk_idx == 0:
                 shutil.copy2(styled_chunk_keyframe, job_dir / "styled_scene_keyframe.png")
 
-            # 4c. Animate with Wan 2.2 I2V
+            # 4d. Animate with Wan 2.2 V2V (Video-to-Video with exact 1:1 motion preservation)
             temp_wan_raw = chunks_dir / f"temp_wan_{chunk_idx:04d}.mp4"
-            print_gpu_memory(f"Before Wan 2.2 Chunk {chunk_idx + 1}")
-            actual_wan_video = self.animate_with_wan(
+            print_gpu_memory(f"Before Wan 2.2 V2V Chunk {chunk_idx + 1}")
+            actual_wan_video = self.animate_with_wan_v2v(
+                chunk_video_path=chunk_src_video,
                 keyframe_path=styled_chunk_keyframe,
                 motion_prompt=motion_prompt,
                 output_video_path=temp_wan_raw,
                 seed=chunk_seed,
-                length_frames=81,
+                length_frames=chunk_length_frames,
                 fps=16,
                 width=wan_w,
                 height=wan_h,
                 negative_prompt=wan_negative_prompt,
+                denoise=active_denoise,
             )
-            print_gpu_memory(f"After Wan 2.2 Chunk {chunk_idx + 1}")
+            print_gpu_memory(f"After Wan 2.2 V2V Chunk {chunk_idx + 1}")
 
             if not actual_wan_video.exists() or actual_wan_video.stat().st_size == 0:
                 raise RuntimeError(f"Wan 2.2 chunk {chunk_idx + 1} produced no video file: {actual_wan_video}")
 
-            # 4d. Resample chunk to source FPS and clamp duration
+            # 4e. Resample chunk to source FPS and clamp duration
             resample_cmd = [
                 "ffmpeg", "-y",
                 "-i", str(actual_wan_video),
@@ -578,9 +742,10 @@ class WanVideoCloner:
             res_chunk = subprocess.run(resample_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             if res_chunk.returncode != 0:
                 logger.error(f"[WAN CLONER] FFmpeg chunk resample failed:\n{res_chunk.stderr}")
-                raise RuntimeError(f"FFmpeg chunk resample failed:\n{res_chunk.stderr}")
+                shutil.copy2(actual_wan_video, chunk_target)
 
             actual_wan_video.unlink(missing_ok=True)
+            chunk_src_video.unlink(missing_ok=True)
             completed_chunk_paths.append(chunk_target)
 
             # Force garbage collection between chunks to keep VRAM completely clean

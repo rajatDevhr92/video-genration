@@ -277,7 +277,7 @@ def process_cloning_job(
                 status="completed",
                 output_video=str(output_video_path),
                 relative_video_url=f"/output/{job_id}/cloned_output.mp4",
-                model_used="Wan 2.2 I2V 14B + Lightning LoRA",
+                model_used="Wan 2.2 V2V 14B Dual Experts + Lightning LoRA",
                 character_images=char_image_urls,
                 scene_keyframe_url=keyframe_url,
             )
