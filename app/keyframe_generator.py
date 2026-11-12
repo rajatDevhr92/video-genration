@@ -32,12 +32,10 @@ class KeyframeGenerator:
         scene_image = Path(scene_image)
         output_path = Path(output_path)
         genital_references = genital_references or []
+        character_references = character_references or []
 
         if not scene_image.exists():
             raise FileNotFoundError(f"Scene/base image not found: {scene_image}")
-
-        if not character_references and not genital_references:
-            raise ValueError("At least one character or genital reference is required.")
 
         workflow = self.runner.load_workflow(QWEN_EDIT_WORKFLOW)
         self.input_dir.mkdir(parents=True, exist_ok=True)

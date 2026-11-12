@@ -550,28 +550,47 @@ class WanVideoCloner:
         m_slot_str = f"Image {male_ref_slot}" if male_ref_slot else "Image 3"
 
         if style_clean == "anime":
-            edit_prompt = (
-                f"Masterpiece 2D Japanese anime illustration, Kyoto Animation and Makoto Shinkai style.\n"
-                f"MANDATORY 100% FULL-FRAME 2D ANIME REDRAW: The ENTIRE image in Image 1 must be completely transformed into a cohesive, hand-drawn 2D anime illustration. Every single square inch — all characters, full bodies, furniture, sofa, couch, walls, doors, cabinets, and room background — must be rendered in pure 2D cel-shaded anime style with clean anime ink outlines. ABSOLUTELY ZERO live-action photograph elements or real human textures.\n\n"
-                f"1. ENVIRONMENT & FURNITURE - 100% 2D ANIME ART:\n"
-                f"   - Completely repaint the sofa, couch, cushions, bed, seating, and floor into stylized 2D anime furniture with clean anime outline strokes, smooth anime shading, and vibrant anime colors. Eliminate all photographic leather, cloth grain, and realistic textures.\n"
-                f"   - Transform the entire background (walls, doors, kitchen cabinets, countertops, ceiling, lighting) into hand-painted 2D Japanese anime background art with luminous anime lighting and rich cinematic color palette.\n"
-                f"   - Remove all text, logos, stamps, and watermarks.\n\n"
-                f"2. FEMALE CHARACTER - FULL-BODY 2D ANIME CONVERSION ({f_slot_str}):\n"
-                f"   - Identify the female actor in Image 1.\n"
-                f"   - Completely transform her into the gorgeous 2D anime woman strictly matching {f_slot_str}.\n"
-                f"   - Render her stylized anime hairstyle and hair color from {f_slot_str}, large expressive detailed anime eyes, and clean anime facial contours.\n"
-                f"   - Render her ENTIRE body from head to toe — face, neck, shoulders, chest, arms, hands, back, hips, thighs, knees, legs, and feet — in smooth 2D cel-shaded anime skin with clean dark anime outline linework, radiant anime skin tone, and soft anime shading.\n\n"
-                f"3. MALE CHARACTER - FULL-BODY 2D ANIME CONVERSION ({m_slot_str}):\n"
-                f"   - Identify the male actor in Image 1.\n"
-                f"   - Completely transform him into the handsome 2D anime man strictly matching {m_slot_str}.\n"
-                f"   - Render his stylized anime haircut from {m_slot_str}, sharp defined anime jawline, and expressive anime eyes.\n"
-                f"   - Render his ENTIRE body from head to toe — face, neck, shoulders, chest, torso, abdomen, hips, groin, private areas, thighs, knees, legs, and feet — in pure 2D anime style with clean anime ink outlines and smooth flat cel-shaded anime skin.\n"
-                f"   - COMPLETELY ELIMINATE all realistic human body hair, skin pores, photographic blemishes, and live-action skin textures across his entire lower body, thighs, and legs.\n\n"
-                f"4. POSE, ANGLE & INTERACTION LOCK:\n"
-                f"   - Faithfully preserve 100% of the original physical body positions, intimate interaction, limb angles, spatial interaction, and camera perspective from Image 1.\n"
-                f"   - The entire image must be a unified 2D anime animation still frame. High-end anime aesthetic, crisp cel-shading, pure 2D anime art, no photorealism, no real human skin, no photograph."
-            )
+            if generated_character_images:
+                edit_prompt = (
+                    f"Masterpiece 2D Japanese anime illustration, Kyoto Animation and Makoto Shinkai style.\n"
+                    f"MANDATORY 100% FULL-FRAME 2D ANIME REDRAW: The ENTIRE image in Image 1 must be completely transformed into a cohesive, hand-drawn 2D anime illustration. Every single square inch — all characters, full bodies, furniture, sofa, couch, walls, doors, cabinets, and room background — must be rendered in pure 2D cel-shaded anime style with clean anime ink outlines. ABSOLUTELY ZERO live-action photograph elements or real human textures.\n\n"
+                    f"1. ENVIRONMENT & FURNITURE - 100% 2D ANIME ART:\n"
+                    f"   - Completely repaint the sofa, couch, cushions, bed, seating, and floor into stylized 2D anime furniture with clean anime outline strokes, smooth anime shading, and vibrant anime colors. Eliminate all photographic leather, cloth grain, and realistic textures.\n"
+                    f"   - Transform the entire background (walls, doors, kitchen cabinets, countertops, ceiling, lighting) into hand-painted 2D Japanese anime background art with luminous anime lighting and rich cinematic color palette.\n"
+                    f"   - Remove all text, logos, stamps, and watermarks.\n\n"
+                    f"2. FEMALE CHARACTER - FULL-BODY 2D ANIME CONVERSION ({f_slot_str}):\n"
+                    f"   - Identify the female actor in Image 1.\n"
+                    f"   - Completely transform her into the gorgeous 2D anime woman strictly matching {f_slot_str}.\n"
+                    f"   - Render her stylized anime hairstyle and hair color from {f_slot_str}, large expressive detailed anime eyes, and clean anime facial contours.\n"
+                    f"   - Render her ENTIRE body from head to toe — face, neck, shoulders, chest, arms, hands, back, hips, thighs, knees, legs, and feet — in smooth 2D cel-shaded anime skin with clean dark anime outline linework, radiant anime skin tone, and soft anime shading.\n\n"
+                    f"3. MALE CHARACTER - FULL-BODY 2D ANIME CONVERSION ({m_slot_str}):\n"
+                    f"   - Identify the male actor in Image 1.\n"
+                    f"   - Completely transform him into the handsome 2D anime man strictly matching {m_slot_str}.\n"
+                    f"   - Render his stylized anime haircut from {m_slot_str}, sharp defined anime jawline, and expressive anime eyes.\n"
+                    f"   - Render his ENTIRE body from head to toe — face, neck, shoulders, chest, torso, abdomen, hips, groin, private areas, thighs, knees, legs, and feet — in pure 2D anime style with clean anime ink outlines and smooth flat cel-shaded anime skin.\n"
+                    f"   - COMPLETELY ELIMINATE all realistic human body hair, skin pores, photographic blemishes, and live-action skin textures across his entire lower body, thighs, and legs.\n\n"
+                    f"4. POSE, ANGLE & INTERACTION LOCK:\n"
+                    f"   - Faithfully preserve 100% of the original physical body positions, intimate interaction, limb angles, spatial interaction, and camera perspective from Image 1.\n"
+                    f"   - The entire image must be a unified 2D anime animation still frame. High-end anime aesthetic, crisp cel-shading, pure 2D anime art, no photorealism, no real human skin, no photograph."
+                )
+            else:
+                edit_prompt = (
+                    f"Masterpiece 2D Japanese anime illustration, Kyoto Animation and Makoto Shinkai style.\n"
+                    f"MANDATORY 100% FULL-FRAME 2D ANIME REDRAW: The ENTIRE image in Image 1 must be completely transformed into a cohesive, hand-drawn 2D anime illustration. Every single square inch — all people, characters, full bodies, clothing, skin, furniture, sofa, couch, bed, seating, walls, doors, windows, and room background — must be rendered in pure 2D cel-shaded anime style with clean dark anime ink outlines. ABSOLUTELY ZERO live-action photograph elements, photographic grain, real human skin pores, or camera textures.\n\n"
+                    f"1. CHARACTERS & ACTORS - 100% 2D ANIME REDRAW:\n"
+                    f"   - Identify all people/actors in Image 1.\n"
+                    f"   - Completely redraw their faces into beautiful 2D anime faces with large expressive detailed anime eyes, delicate anime facial contours, stylized anime noses, and anime mouths.\n"
+                    f"   - Redraw their hair into sleek, flowing 2D anime hair with crisp clump geometry and anime highlights.\n"
+                    f"   - Redraw their ENTIRE bodies from head to toe in smooth 2D cel-shaded anime skin with clean dark anime outline linework, radiant anime skin tone, and soft anime shading.\n"
+                    f"   - Completely eliminate all realistic human body hair, skin pores, blemishes, and live-action photographic skin textures.\n\n"
+                    f"2. ENVIRONMENT, FURNITURE & LIGHTING - 100% 2D ANIME ART:\n"
+                    f"   - Completely repaint all furniture, bed, sofa, couch, cushions, floor, and objects into stylized 2D anime artwork with clean anime outline strokes, smooth anime shading, and vibrant anime colors.\n"
+                    f"   - Transform the entire background into hand-painted 2D Japanese anime background art with luminous anime lighting and rich cinematic color palette.\n"
+                    f"   - Remove all text, logos, stamps, subtitles, and watermarks.\n\n"
+                    f"3. POSE, ANGLE & INTERACTION LOCK:\n"
+                    f"   - Faithfully preserve 100% of the original physical body positions, choreography, limb angles, spatial interactions, framing, and camera perspective from Image 1.\n"
+                    f"   - The entire image must be a unified 2D anime animation still frame. High-end anime aesthetic, crisp cel-shading, pure 2D anime art, no photorealism, no real human skin, no photograph."
+                )
             anime_qwen_negative = (
                 "photorealistic, realistic, photograph, raw photo, live action, live action footage, "
                 "real human skin, skin pores, natural skin texture, body hair, photographic texture, "
@@ -699,9 +718,10 @@ class WanVideoCloner:
 
             # 4c. Keyframe preparation:
             # If specific character references exist, restyle frame 0 with those identities.
-            # If pure V2V mode, restyle frame 0 into 2D anime using chunk_raw_frame as reference (fixes OBS-02).
+            # If pure V2V mode, restyle frame 0 into 2D anime directly from Image 1 (single-image edit).
             styled_chunk_keyframe = chunks_dir / f"keyframe_{chunk_idx:04d}_styled.png"
-            refs_to_use = generated_character_images if generated_character_images else [chunk_raw_frame]
+            refs_to_use = generated_character_images if generated_character_images else []
+            keyframe_denoise = 0.85 if style_clean == "anime" else active_denoise
             try:
                 self.keyframe_generator.generate(
                     scene_image=chunk_raw_frame,
@@ -710,11 +730,12 @@ class WanVideoCloner:
                     negative_prompt=anime_qwen_negative,
                     output_path=styled_chunk_keyframe,
                     seed=chunk_seed,
-                    denoise=active_denoise,
+                    denoise=keyframe_denoise,
                     cfg=active_cfg,
                 )
             except Exception as e:
-                logger.warning(f"[WAN CLONER] Keyframe anime restyle notice: {e}. Using raw frame as anchor.")
+                logger.error(f"[WAN CLONER] Keyframe anime restyle failed: {e}", exc_info=True)
+                print(f"[WAN CLONER] WARNING: Qwen Image Edit failed ({e}). Using raw frame as fallback.")
                 styled_chunk_keyframe = chunk_raw_frame
 
             if chunk_idx == 0:
