@@ -282,7 +282,7 @@ class WanVideoCloner:
         seed: int = 42,
         style: str = "anime",
         characters: Optional[List[Dict[str, Any]]] = None,
-        denoise: float = 0.74,
+        denoise: float = 0.88,
     ) -> Path:
         """
         Auto-detecting Wan V2V Video Cloning Pipeline (Realistic Video -> Anime Video):
