@@ -445,7 +445,7 @@ class WanVideoCloner:
         seed: int = 42,
         style: str = "anime",
         characters: Optional[List[Dict[str, Any]]] = None,
-        denoise: float = 0.88,
+        denoise: float = 0.75,
         status_callback: Optional[Any] = None,
         max_duration: Optional[float] = None,
     ) -> Path:
@@ -579,7 +579,7 @@ class WanVideoCloner:
                 "camera noise, 3d, 3d render, cgi, realistic lighting, bad anatomy, extra limbs, "
                 "fused bodies, text, watermark, logo, Princess CUM, subtitles"
             )
-            active_denoise = max(float(denoise), 0.88)
+            active_denoise = max(float(denoise), 0.50)
             active_cfg = 5.0
             motion_prompt = (
                 f"masterpiece 2D Japanese anime animation, Kyoto Animation and Makoto Shinkai aesthetic, "
@@ -653,7 +653,10 @@ class WanVideoCloner:
                     progress=f"{chunk_idx + 1}/{num_chunks} ({(chunk_idx + 1) * 100 // num_chunks}%)",
                 )
 
-            chunk_length_frames = 81 if this_chunk_dur <= 5.5 else 161
+            # Calculate optimal frame count aligned strictly to Wan VAE's 4n+1 temporal stride
+            raw_frames = int(round(this_chunk_dur * 16))
+            n_stride = max(1, (raw_frames - 1) // 4)
+            chunk_length_frames = min(161, max(17, 4 * n_stride + 1))
 
             # 4a. Slice exact chunk video from source (16 FPS, exact wan resolution, exact frame count)
             chunk_src_video = chunks_dir / f"chunk_{chunk_idx:04d}_src.mp4"
@@ -691,19 +694,28 @@ class WanVideoCloner:
             else:
                 self.extract_frame_at_time(source_video, start_t, chunk_raw_frame)
 
-            # 4c. Full-frame anime restyling via Qwen Image Edit
-            styled_chunk_keyframe = chunks_dir / f"keyframe_{chunk_idx:04d}_styled.png"
+            # Unconditional chunk_seed definition (fixes BUG-01)
             chunk_seed = seed + chunk_idx * 10007
-            self.keyframe_generator.generate(
-                scene_image=chunk_raw_frame,
-                character_references=generated_character_images,
-                prompt=edit_prompt,
-                negative_prompt=anime_qwen_negative,
-                output_path=styled_chunk_keyframe,
-                seed=chunk_seed,
-                denoise=active_denoise,
-                cfg=active_cfg,
-            )
+
+            # 4c. Keyframe preparation:
+            # If specific character references exist, restyle frame 0 with those identities.
+            # If pure V2V mode, restyle frame 0 into 2D anime using chunk_raw_frame as reference (fixes OBS-02).
+            styled_chunk_keyframe = chunks_dir / f"keyframe_{chunk_idx:04d}_styled.png"
+            refs_to_use = generated_character_images if generated_character_images else [chunk_raw_frame]
+            try:
+                self.keyframe_generator.generate(
+                    scene_image=chunk_raw_frame,
+                    character_references=refs_to_use,
+                    prompt=edit_prompt,
+                    negative_prompt=anime_qwen_negative,
+                    output_path=styled_chunk_keyframe,
+                    seed=chunk_seed,
+                    denoise=active_denoise,
+                    cfg=active_cfg,
+                )
+            except Exception as e:
+                logger.warning(f"[WAN CLONER] Keyframe anime restyle notice: {e}. Using raw frame as anchor.")
+                styled_chunk_keyframe = chunk_raw_frame
 
             if chunk_idx == 0:
                 shutil.copy2(styled_chunk_keyframe, job_dir / "styled_scene_keyframe.png")

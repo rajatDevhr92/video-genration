@@ -73,22 +73,35 @@ class CloningJobRequest(BaseModel):
         default=None,
         description="Optional: Max seconds of video to process (defaults to full video, e.g. 420 for 7 minutes)."
     )
+    denoise: Optional[float] = Field(
+        default=0.75,
+        description="Optional: Denoise level for V2V (0.50 to 0.88, default 0.75)."
+    )
 
 
 def resolve_input(name: str) -> Path:
     input_dir = CLONING_INPUT_DIR.resolve()
+    base_input = (BASE_DIR / "input").resolve()
+
+    # 1. Try input/cloning/<name>
     path = (input_dir / name).resolve()
 
-    if not path.is_relative_to(input_dir):
-        raise HTTPException(
-            status_code=422,
-            detail=f"File must be inside input/cloning: {name}",
-        )
+    # 2. If not found, check input/<name> directly
+    if not path.is_file():
+        alt_path = (base_input / name).resolve()
+        if alt_path.is_file():
+            input_dir.mkdir(parents=True, exist_ok=True)
+            path = input_dir / name
+            if not path.exists():
+                try:
+                    shutil.copy2(alt_path, path)
+                except Exception:
+                    path = alt_path
 
     if not path.is_file():
         raise HTTPException(
             status_code=422,
-            detail=f"File not found in input/cloning: {name}",
+            detail=f"File not found in input/cloning or input: {name}",
         )
 
     if path.stat().st_size == 0:
@@ -185,6 +198,7 @@ def process_cloning_job(
     characters: Optional[List[CharacterTarget]],
     mode: str = "wan_v2v",
     max_duration: Optional[float] = None,
+    denoise: Optional[float] = 0.75,
 ):
     """
     Background worker:
@@ -233,22 +247,19 @@ def process_cloning_job(
                         "style": "anime",
                     })
             else:
-                # Default 2-character anime casting (female + male) when no characters are passed
-                style = "anime"
-                p_female = "masterpiece 2D Japanese anime solo portrait of a gorgeous 22yo anime woman with expressive detailed anime eyes, beautiful stylized anime hair, radiant smooth anime skin, clean cel-shaded aesthetic, Makoto Shinkai style"
-                p_male = "masterpiece 2D Japanese anime solo portrait of a handsome 24yo anime man with expressive detailed anime eyes, stylish anime haircut, sharp defined anime jawline, smooth anime skin, clean cel-shaded aesthetic, Makoto Shinkai style"
-                prompts = [p_female, p_male]
-                char_meta = [
-                    {"gender": "female", "age": 22, "character_prompt": p_female, "style": "anime"},
-                    {"gender": "male", "age": 24, "character_prompt": p_male, "style": "anime"},
-                ]
+                # Direct Video-to-Video mode: No characters required.
+                # The video itself provides all actors, motion, choreography, and scene structure.
+                logger.info("[WAN CLONING] No character list provided. Running pure Video-to-Video (V2V) transformation directly on video frames.")
+                prompts = []
+                char_meta = []
 
-            write_status(job_dir, job_id=job_id, status=f"generating_{style}_keyframe")
+            init_status = f"generating_{style}_keyframe" if prompts else "animating_with_wan"
+            write_status(job_dir, job_id=job_id, status=init_status)
 
             def chunk_status_cb(**kwargs):
                 write_status(job_dir, job_id=job_id, **kwargs)
 
-            # Step 2: Animate with Wan 2.2 I2V
+            # Step 2: Animate with Wan 2.2 V2V
             write_status(job_dir, job_id=job_id, status="animating_with_wan")
             output_video_path = job_dir / "cloned_output.mp4"
 
@@ -263,6 +274,7 @@ def process_cloning_job(
                 characters=char_meta,
                 status_callback=chunk_status_cb,
                 max_duration=max_duration,
+                denoise=denoise or 0.75,
             )
 
             # Scan generated character faces in job_dir to include in status
@@ -454,6 +466,7 @@ def create_cloning_job(request: CloningJobRequest):
         request.characters,
         request.mode or "wan_v2v",
         request.max_duration,
+        request.denoise or 0.75,
     )
 
     return {
@@ -478,6 +491,10 @@ async def create_cloning_job_upload(
     max_duration: Optional[float] = Form(
         default=None,
         description="Optional: Max seconds of video to process (defaults to full video, e.g. 420 for 7 minutes)."
+    ),
+    denoise: Optional[float] = Form(
+        default=0.75,
+        description="Optional: Denoise level for V2V (0.50 to 0.88, default 0.75)."
     ),
 ):
     """
@@ -544,6 +561,7 @@ async def create_cloning_job_upload(
         char_targets if char_targets else None,
         active_mode,
         max_duration,
+        denoise or 0.75,
     )
 
     return {
