@@ -106,7 +106,7 @@ def main():
         job_dir=test_job_dir,
         seed=42,
         style="anime",
-        max_duration=CHUNK_DURATION_SEC,  # Process exactly 1 chunk (10.0s / 161 frames)
+        max_duration=CHUNK_DURATION_SEC,  # Process exactly 1 chunk (5.0s / 81 frames)
         cloning_backend="fun_control",
         control_mode=CONTROL_VIDEO_MODE,
     )

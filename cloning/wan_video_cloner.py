@@ -741,7 +741,7 @@ class WanVideoCloner:
             print(f"[WAN CLONER] Submitting Wan 2.2 I2V job to ComfyUI ({target_w}x{target_h}, seed={seed}, length={length_frames} frames)...")
             prompt_id, client_id = self.runner.submit(workflow)
             print(f"[WAN CLONER] ComfyUI Prompt ID: {prompt_id} (Client: {client_id}). Waiting for GPU execution...")
-            result = self.runner.wait(prompt_id, timeout=1800)
+            result = self.runner.wait(prompt_id, timeout=3600)
             print("[WAN CLONER] Wan 2.2 I2V execution completed successfully on GPU.")
 
             # Find produced video across outputs (videos, gifs, or animated images)
@@ -857,7 +857,7 @@ class WanVideoCloner:
             )
             prompt_id, client_id = self.runner.submit(workflow)
             print(f"[WAN V2V] ComfyUI Prompt ID: {prompt_id} (Client: {client_id}). Waiting for GPU execution...")
-            result = self.runner.wait(prompt_id, timeout=1800)
+            result = self.runner.wait(prompt_id, timeout=3600)
             print("[WAN V2V] Wan 2.2 V2V execution completed successfully on GPU.")
 
             # Find produced video strictly from SaveVideo node (node 16), avoiding input/control video node 20
@@ -1039,7 +1039,7 @@ class WanVideoCloner:
             )
             prompt_id, client_id = self.runner.submit(workflow)
             print(f"[WAN FUN CONTROL] ComfyUI Prompt ID: {prompt_id} (Client: {client_id}). Waiting for GPU execution...")
-            result = self.runner.wait(prompt_id, timeout=1800)
+            result = self.runner.wait(prompt_id, timeout=3600)
             print("[WAN FUN CONTROL] Wan 2.2 Fun Control execution completed successfully on GPU.")
 
             # Find produced video strictly from SaveVideo node (nodes["save_video"]), avoiding input/control video node 20

@@ -81,9 +81,9 @@ FUN_CONTROL_SHIFT = float(os.getenv("FUN_CONTROL_SHIFT", "5.0"))
 # Control video generation mode: "pose+depth", "pose", "depth" (default), "canny"
 CONTROL_VIDEO_MODE = os.getenv("CONTROL_VIDEO_MODE", "depth")
 
-# Multi-chunk slicing settings: 10.0s at 16 FPS = 161 frames (4n + 1 required by Wan 2.2)
-CHUNK_DURATION_SEC = float(os.getenv("CHUNK_DURATION_SEC", "10.0"))
-CHUNK_TARGET_FRAMES = int(os.getenv("CHUNK_TARGET_FRAMES", "161"))
+# Multi-chunk slicing settings: 5.0s at 16 FPS = 81 frames (4n + 1 required by Wan 2.2)
+CHUNK_DURATION_SEC = float(os.getenv("CHUNK_DURATION_SEC", "5.0"))
+CHUNK_TARGET_FRAMES = int(os.getenv("CHUNK_TARGET_FRAMES", "81"))
 
 # Re-anchor interval for chunk chaining (prevents color and detail drift)
 REANCHOR_EVERY_N_CHUNKS = int(os.getenv("REANCHOR_EVERY_N_CHUNKS", "15"))
