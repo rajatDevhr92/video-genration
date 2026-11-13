@@ -22,6 +22,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
 
 from app.config import (
+    CHUNK_DURATION_SEC,
+    CHUNK_TARGET_FRAMES,
     CLONING_BACKEND,
     COMFY_DIR,
     CONTROL_VIDEO_MODE,
@@ -202,11 +204,11 @@ def extract_control_video(
     width: Optional[int] = None,
     height: Optional[int] = None,
     fps: int = 16,
-    target_frames: int = 81,
+    target_frames: int = CHUNK_TARGET_FRAMES,
 ) -> Path:
     """
-    Creates an 81-frame control video from each chunk.
-    Supports mode = 'pose', 'depth', 'canny', 'pose+depth'.
+    Creates a control video from each chunk (default 161 frames / 10s at 16 FPS).
+    Supports mode = 'depth', 'pose', 'canny', 'pose+depth'.
     Saves next to the chunk as chunks/chunk_XXXX_control.mp4 and reuses on resume.
     """
     chunk_src_mp4 = Path(chunk_src_mp4)
@@ -777,7 +779,7 @@ class WanVideoCloner:
         motion_prompt: str,
         output_video_path: Path,
         seed: int = 12345,
-        length_frames: int = 81,
+        length_frames: int = CHUNK_TARGET_FRAMES,
         fps: int = 16,
         width: Optional[int] = None,
         height: Optional[int] = None,
@@ -904,7 +906,7 @@ class WanVideoCloner:
         motion_prompt: Optional[str] = None,
         output_video_path: Path = None,
         seed: int = 12345,
-        length_frames: int = 81,
+        length_frames: int = CHUNK_TARGET_FRAMES,
         fps: int = 16,
         width: Optional[int] = None,
         height: Optional[int] = None,
@@ -1272,8 +1274,8 @@ class WanVideoCloner:
             motion_prompt = f"photorealistic 8k cinematic film, continuous natural human movement, authentic physical motion, realistic action, high production cinematography"
             wan_negative_prompt = None
 
-        CHUNK_SEC = 5.0
-        TARGET_FRAMES = 81
+        CHUNK_SEC = CHUNK_DURATION_SEC
+        TARGET_FRAMES = CHUNK_TARGET_FRAMES
         num_chunks = max(1, int(math.ceil(active_duration / CHUNK_SEC)))
         logger.info(f"[WAN CLONER] Processing {active_duration:.2f}s in {num_chunks} chunks ({CHUNK_SEC}s / {TARGET_FRAMES} frames each)...")
         print(f"[WAN CLONER] Processing {active_duration:.2f}s in {num_chunks} chunks ({CHUNK_SEC}s / {TARGET_FRAMES} frames each)...")

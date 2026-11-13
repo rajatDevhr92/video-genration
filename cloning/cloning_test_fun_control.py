@@ -21,6 +21,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from app.config import (
+    CHUNK_DURATION_SEC,
+    CHUNK_TARGET_FRAMES,
     CONTROL_VIDEO_MODE,
     FUN_CONTROL_NEGATIVE_PROMPT,
     FUN_CONTROL_POSITIVE_PROMPT,
@@ -91,7 +93,7 @@ def main():
     print(f"  * Fun Control Negative [{fc_neg_source}]:\n    {resolved_fc_neg[:100]}...")
     print("-" * 70)
 
-    print(f"Starting 5-second test execution...")
+    print(f"Starting {CHUNK_DURATION_SEC}s ({CHUNK_TARGET_FRAMES} frames) test execution...")
     print(f"Backend: fun_control | Control Mode: {CONTROL_VIDEO_MODE} | Steps: {FUN_CONTROL_STEPS}")
 
     output_path = cloner.clone_video(
@@ -104,7 +106,7 @@ def main():
         job_dir=test_job_dir,
         seed=42,
         style="anime",
-        max_duration=5.0,  # Process exactly 1 chunk (5.0s / 81 frames)
+        max_duration=CHUNK_DURATION_SEC,  # Process exactly 1 chunk (10.0s / 161 frames)
         cloning_backend="fun_control",
         control_mode=CONTROL_VIDEO_MODE,
     )
