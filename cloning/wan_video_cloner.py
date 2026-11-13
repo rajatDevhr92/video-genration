@@ -119,7 +119,7 @@ def _generate_control_video_ffmpeg(
 
 
 def _process_depth_frames(raw_frames: List[Any], target_w: int, target_h: int) -> List[Any]:
-    """Generates Depth Anything V2 depth frames, with gradient proxy fallback."""
+    """Generates Depth Anything V2 pure grayscale depth frames (no colormap)."""
     import numpy as np
     import cv2
     try:
@@ -137,11 +137,12 @@ def _process_depth_frames(raw_frames: List[Any], target_w: int, target_h: int) -
             depth_norm = cv2.normalize(depth_arr, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
             if depth_norm.shape[1] != target_w or depth_norm.shape[0] != target_h:
                 depth_norm = cv2.resize(depth_norm, (target_w, target_h), interpolation=cv2.INTER_LINEAR)
-            depth_bgr = cv2.applyColorMap(depth_norm, cv2.COLORMAP_INFERNO)
+            # Standard Wan Fun Control grayscale depth map (3 identical grayscale channels, no colormap)
+            depth_bgr = cv2.cvtColor(depth_norm, cv2.COLOR_GRAY2BGR)
             processed.append(depth_bgr)
         return processed
     except Exception as e:
-        logger.info(f"[CONTROL VIDEO] Depth model notice ({e}). Using adaptive depth gradient proxy.")
+        logger.warning(f"[CONTROL VIDEO] Depth model notice ({e}). Using adaptive grayscale depth proxy.")
         processed = []
         for f in raw_frames:
             gray = cv2.cvtColor(f, cv2.COLOR_BGR2GRAY)
@@ -151,16 +152,24 @@ def _process_depth_frames(raw_frames: List[Any], target_w: int, target_h: int) -
             mag = cv2.magnitude(sobelx, sobely)
             mag_norm = cv2.normalize(mag, None, 0, 180, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
             depth_proxy = cv2.addWeighted(blurred, 0.6, mag_norm, 0.4, 0)
-            depth_bgr = cv2.applyColorMap(depth_proxy, cv2.COLORMAP_INFERNO)
+            depth_bgr = cv2.cvtColor(depth_proxy, cv2.COLOR_GRAY2BGR)
             processed.append(depth_bgr)
         return processed
 
 
 def _process_pose_frames(raw_frames: List[Any], target_w: int, target_h: int) -> List[Any]:
-    """Generates DWPose / Openpose frames, with contour proxy fallback."""
+    """Generates DWPose / Openpose skeleton frames. If pose fails, logs clear warning and stops."""
     import numpy as np
     import cv2
     try:
+        try:
+            import mediapipe as mp
+            if not hasattr(mp, "solutions"):
+                import mediapipe.python.solutions as mps
+                mp.solutions = mps
+        except Exception:
+            pass
+
         from controlnet_aux import DWposeDetector
         from PIL import Image
         import torch
@@ -178,17 +187,12 @@ def _process_pose_frames(raw_frames: List[Any], target_w: int, target_h: int) ->
             processed.append(pose_bgr)
         return processed
     except Exception as e:
-        logger.info(f"[CONTROL VIDEO] Pose model notice ({e}). Using structure contour pose proxy.")
-        processed = []
-        for f in raw_frames:
-            gray = cv2.cvtColor(f, cv2.COLOR_BGR2GRAY)
-            edges = cv2.Canny(gray, 40, 120)
-            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
-            dilated = cv2.dilate(edges, kernel, iterations=1)
-            pose_canvas = np.zeros((f.shape[0], f.shape[1], 3), dtype=np.uint8)
-            pose_canvas[dilated > 0] = [0, 255, 255]
-            processed.append(pose_canvas)
-        return processed
+        logger.error(f"[CONTROL VIDEO] WARNING: Pose extraction failed: {e}. Stopping as requested.")
+        print(f"[CONTROL VIDEO] WARNING: Pose extraction failed: {e}. Stopping as requested.")
+        raise RuntimeError(
+            f"Pose extraction failed with mode='pose': {e}. "
+            f"Please ensure controlnet_aux and onnxruntime are properly installed on the server."
+        ) from e
 
 
 def extract_control_video(
@@ -297,6 +301,49 @@ def extract_control_video(
     _write_frames_to_mp4(control_frames, output_path, target_w, target_h, fps)
     logger.info(f"[CONTROL VIDEO] Control video generated successfully: {output_path} ({output_path.stat().st_size} bytes)")
     return output_path
+
+
+def check_not_control_video(candidate_path: Path, control_video_path: Path, max_allowed_similarity: float = 0.88) -> Tuple[bool, float]:
+    """
+    Sanity check: compares candidate output video against the control video.
+    If frame similarity is > max_allowed_similarity (e.g. 0.88), ComfyUI returned
+    the control video itself instead of the generated diffusion video.
+    Returns (is_valid, similarity_score).
+    """
+    try:
+        import cv2
+        import numpy as np
+
+        cap_cand = cv2.VideoCapture(str(candidate_path))
+        cap_ctrl = cv2.VideoCapture(str(control_video_path))
+
+        similarities = []
+        total_frames = int(cap_cand.get(cv2.CAP_PROP_FRAME_COUNT) or 80)
+        sample_indices = set(np.linspace(5, max(5, total_frames - 5), num=5, dtype=int))
+
+        idx = 0
+        while cap_cand.isOpened() and cap_ctrl.isOpened() and len(similarities) < 5:
+            ret_c, f_c = cap_cand.read()
+            ret_k, f_k = cap_ctrl.read()
+            if not ret_c or not ret_k:
+                break
+            if idx in sample_indices:
+                g_c = cv2.cvtColor(cv2.resize(f_c, (160, 90)), cv2.COLOR_BGR2GRAY)
+                g_k = cv2.cvtColor(cv2.resize(f_k, (160, 90)), cv2.COLOR_BGR2GRAY)
+                diff = np.abs(g_c.astype(np.float32) - g_k.astype(np.float32))
+                sim = 1.0 - (float(np.mean(diff)) / 255.0)
+                similarities.append(sim)
+            idx += 1
+
+        cap_cand.release()
+        cap_ctrl.release()
+
+        avg_sim = float(np.mean(similarities)) if similarities else 0.0
+        is_valid = avg_sim < max_allowed_similarity
+        return is_valid, avg_sim
+    except Exception as e:
+        logger.warning(f"[SANITY CHECK] Could not compare candidate with control video: {e}")
+        return True, 0.0
 
 
 class WanVideoCloner:
@@ -811,29 +858,33 @@ class WanVideoCloner:
             result = self.runner.wait(prompt_id, timeout=1800)
             print("[WAN V2V] Wan 2.2 V2V execution completed successfully on GPU.")
 
-            # Find produced video across outputs
+            # Find produced video strictly from SaveVideo node (node 16), avoiding input/control video node 20
             videos = []
-            for node_id, node_output in result.get("outputs", {}).items():
-                if "gifs" in node_output:
-                    videos.extend(node_output["gifs"])
-                if "videos" in node_output:
-                    videos.extend(node_output["videos"])
-                if "images" in node_output:
-                    animated = node_output.get("animated", [])
-                    for idx, img in enumerate(node_output["images"]):
-                        if isinstance(img, dict):
-                            fname = img.get("filename", "").lower()
-                            is_anim = idx < len(animated) and animated[idx] is True
-                            if is_anim or fname.endswith((".mp4", ".mov", ".webm", ".mkv", ".gif")):
-                                videos.append(img)
+            save_node_id = "16"
+            all_outputs = result.get("outputs", {})
+
+            if save_node_id in all_outputs:
+                save_out = all_outputs[save_node_id]
+                if "videos" in save_out:
+                    videos.extend(save_out["videos"])
+                elif "gifs" in save_out:
+                    videos.extend(save_out["gifs"])
+                elif "images" in save_out:
+                    for img in save_out["images"]:
+                        if isinstance(img, dict) and img.get("filename", "").lower().endswith((".mp4", ".mov", ".webm", ".mkv", ".gif")):
+                            videos.append(img)
 
             if not videos:
-                raise RuntimeError("Wan 2.2 V2V completed without video output.")
+                logger.error(f"[WAN V2V] SaveVideo node ({save_node_id}) produced no video output! ComfyUI output nodes: {list(all_outputs.keys())}")
+                raise RuntimeError(f"Wan 2.2 V2V SaveVideo node ({save_node_id}) completed without video output. Refusing to fall back to other nodes.")
 
             if hasattr(self.runner, "download_video"):
                 self.runner.download_video(videos[0], output_video_path)
             else:
                 self.runner.download_image(videos[0], output_video_path)
+
+            if not output_video_path.exists() or output_video_path.stat().st_size < 1000:
+                raise RuntimeError(f"Wan V2V video download failed or produced empty file: {output_video_path}")
             return output_video_path
         except Exception as v2v_err:
             logger.error(
@@ -989,29 +1040,39 @@ class WanVideoCloner:
             result = self.runner.wait(prompt_id, timeout=1800)
             print("[WAN FUN CONTROL] Wan 2.2 Fun Control execution completed successfully on GPU.")
 
-            # Find produced video across outputs
+            # Find produced video strictly from SaveVideo node (nodes["save_video"]), avoiding input/control video node 20
             videos = []
-            for node_id, node_output in result.get("outputs", {}).items():
-                if "gifs" in node_output:
-                    videos.extend(node_output["gifs"])
-                if "videos" in node_output:
-                    videos.extend(node_output["videos"])
-                if "images" in node_output:
-                    animated = node_output.get("animated", [])
-                    for idx, img in enumerate(node_output["images"]):
-                        if isinstance(img, dict):
-                            fname = img.get("filename", "").lower()
-                            is_anim = idx < len(animated) and animated[idx] is True
-                            if is_anim or fname.endswith((".mp4", ".mov", ".webm", ".mkv", ".gif")):
-                                videos.append(img)
+            save_node_id = str(nodes.get("save_video", "16"))
+            all_outputs = result.get("outputs", {})
+
+            if save_node_id in all_outputs:
+                save_out = all_outputs[save_node_id]
+                if "videos" in save_out:
+                    videos.extend(save_out["videos"])
+                elif "gifs" in save_out:
+                    videos.extend(save_out["gifs"])
+                elif "images" in save_out:
+                    for img in save_out["images"]:
+                        if isinstance(img, dict) and img.get("filename", "").lower().endswith((".mp4", ".mov", ".webm", ".mkv", ".gif")):
+                            videos.append(img)
 
             if not videos:
-                raise RuntimeError("Wan 2.2 Fun Control completed without video output.")
+                logger.error(
+                    f"[WAN FUN CONTROL] SaveVideo node ({save_node_id}) produced no video output. "
+                    f"ComfyUI output nodes present: {list(all_outputs.keys())}."
+                )
+                raise RuntimeError(
+                    f"Wan 2.2 Fun Control SaveVideo node ({save_node_id}) produced no video output. "
+                    f"Refusing to fall back to other nodes."
+                )
 
             if hasattr(self.runner, "download_video"):
                 self.runner.download_video(videos[0], output_video_path)
             else:
                 self.runner.download_image(videos[0], output_video_path)
+
+            if not output_video_path.exists() or output_video_path.stat().st_size < 1000:
+                raise RuntimeError(f"Wan Fun Control video download failed or produced empty file: {output_video_path}")
             return output_video_path
         except Exception as fun_err:
             logger.error(
@@ -1480,6 +1541,20 @@ class WanVideoCloner:
                     shutil.copy2(actual_wan_video, candidate_chunk)
                 actual_wan_video.unlink(missing_ok=True)
 
+                # Sanity check: Ensure generated candidate is NOT the control video
+                if control_video_to_use.exists():
+                    is_not_ctrl, ctrl_sim = check_not_control_video(candidate_chunk, control_video_to_use, max_allowed_similarity=0.88)
+                    if not is_not_ctrl:
+                        logger.error(
+                            f"[SANITY CHECK FAILED] Chunk {chunk_idx + 1} attempt {attempt + 1} output is nearly identical "
+                            f"to control video (similarity={ctrl_sim:.3f} >= 0.88)! Rejecting attempt."
+                        )
+                        print(
+                            f"[SANITY CHECK FAILED] Chunk {chunk_idx + 1} attempt {attempt + 1} output is identical to control video! "
+                            f"Rejecting attempt."
+                        )
+                        continue
+
                 # Quality evaluation gate
                 quality_res = check_chunk(source_chunk_mp4=chunk_src_video, output_chunk_mp4=candidate_chunk)
                 score = quality_res.get("overall_score", 0.0)
@@ -1516,21 +1591,36 @@ class WanVideoCloner:
                     )
 
             if not passed_quality:
-                logger.warning(
-                    f"[QUALITY GATE] WARNING: Chunk {chunk_idx + 1} did not pass quality check after {max_retries} attempts. "
-                    f"Retaining highest-scoring attempt (score={best_score:.3f}). Job continuing."
-                )
-                print(
-                    f"[QUALITY GATE] WARNING: Chunk {chunk_idx + 1} failed quality checks after {max_retries} attempts. "
-                    f"Keeping best attempt (score={best_score:.3f})."
-                )
-                chosen_candidate_path = best_candidate_path
+                if best_candidate_path and best_candidate_path.exists():
+                    logger.warning(
+                        f"[QUALITY GATE] WARNING: Chunk {chunk_idx + 1} did not pass quality check after {max_retries} attempts. "
+                        f"Retaining highest-scoring attempt (score={best_score:.3f}). Job continuing."
+                    )
+                    print(
+                        f"[QUALITY GATE] WARNING: Chunk {chunk_idx + 1} failed quality checks after {max_retries} attempts. "
+                        f"Keeping best attempt (score={best_score:.3f})."
+                    )
+                    chosen_candidate_path = best_candidate_path
+                else:
+                    logger.error(
+                        f"[WAN CLONER] Chunk {chunk_idx + 1} failed all generation attempts without producing valid anime output."
+                    )
+                    raise RuntimeError(
+                        f"Chunk {chunk_idx + 1} failed all generation attempts without producing valid anime output. "
+                        f"Refusing to fall back to control or source video."
+                    )
 
             # Finalize chosen candidate as chunk_target
             if chosen_candidate_path and chosen_candidate_path.exists():
                 shutil.copy2(chosen_candidate_path, chunk_target)
-            elif not chunk_target.exists():
-                raise RuntimeError(f"Chunk {chunk_idx + 1} failed all generation attempts without producing output.")
+            else:
+                logger.error(
+                    f"[WAN CLONER] Chunk {chunk_idx + 1} failed all generation attempts without producing valid output."
+                )
+                raise RuntimeError(
+                    f"Chunk {chunk_idx + 1} failed all generation attempts without producing valid output. "
+                    f"Refusing to fall back to control or source video."
+                )
 
             # Record quality scores of every attempt to chunks/chunk_XXXX_quality.json
             quality_payload = {

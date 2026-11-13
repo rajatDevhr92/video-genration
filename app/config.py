@@ -79,7 +79,7 @@ FUN_CONTROL_SCHEDULER = os.getenv("FUN_CONTROL_SCHEDULER", "simple")
 FUN_CONTROL_SHIFT = float(os.getenv("FUN_CONTROL_SHIFT", "5.0"))
 
 # Control video generation mode: "pose+depth" (default), "pose", "depth", "canny"
-CONTROL_VIDEO_MODE = os.getenv("CONTROL_VIDEO_MODE", "pose+depth")
+CONTROL_VIDEO_MODE = os.getenv("CONTROL_VIDEO_MODE", "depth")
 
 # Re-anchor interval for chunk chaining (prevents color and detail drift)
 REANCHOR_EVERY_N_CHUNKS = int(os.getenv("REANCHOR_EVERY_N_CHUNKS", "15"))
@@ -89,7 +89,7 @@ REANCHOR_EVERY_N_CHUNKS = int(os.getenv("REANCHOR_EVERY_N_CHUNKS", "15"))
 # ---------------------------------------------------------------------------
 QUALITY_MOTION_THRESHOLD = float(os.getenv("QUALITY_MOTION_THRESHOLD", "0.35"))
 QUALITY_FLICKER_THRESHOLD = float(os.getenv("QUALITY_FLICKER_THRESHOLD", "35.0"))
-QUALITY_MAX_RETRIES = int(os.getenv("QUALITY_MAX_RETRIES", "3"))
+QUALITY_MAX_RETRIES = int(os.getenv("QUALITY_MAX_RETRIES", "1"))
 CLIP_MODEL_NAME = os.getenv("CLIP_MODEL_NAME", "openai/clip-vit-base-patch32")
 
 # Node IDs inside wan2.2_fun_control_api.json

@@ -106,7 +106,7 @@ def main():
         style="anime",
         max_duration=5.0,  # Process exactly 1 chunk (5.0s / 81 frames)
         cloning_backend="fun_control",
-        control_mode="pose+depth",
+        control_mode=CONTROL_VIDEO_MODE,
     )
 
     print("\n" + "=" * 70)
