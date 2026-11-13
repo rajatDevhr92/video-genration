@@ -81,6 +81,31 @@ class CloningJobRequest(BaseModel):
         default=0.75,
         description="Optional: Denoise level for V2V (0.50 to 0.88, default 0.75)."
     )
+    control_mode: Optional[str] = Field(
+        default=None,
+        description="Control video mode: 'pose+depth' (default), 'pose', 'depth', or 'canny'."
+    )
+    cloning_backend: Optional[str] = Field(
+        default=None,
+        description="Cloning backend: 'fun_control' (default) or 'legacy_i2v'."
+    )
+    prompt_override: Optional[Dict[str, str]] = Field(
+        default=None,
+        description="Optional prompt overrides: 'fun_control_positive', 'fun_control_negative', 'qwen_keyframe', 'qwen_negative'"
+    )
+    job_id: Optional[str] = Field(
+        default=None,
+        description="Optional existing job_id to resume without creating a new folder."
+    )
+
+
+class ResumeJobRequest(BaseModel):
+    job_id: str = Field(description="The existing job_id to resume")
+    max_duration: Optional[float] = None
+    denoise: Optional[float] = None
+    control_mode: Optional[str] = None
+    cloning_backend: Optional[str] = None
+    prompt_override: Optional[Dict[str, str]] = None
 
 
 def resolve_input(name: str) -> Path:
@@ -210,6 +235,9 @@ def process_cloning_job(
     mode: str = "wan_v2v",
     max_duration: Optional[float] = None,
     denoise: Optional[float] = 0.75,
+    control_mode: Optional[str] = None,
+    cloning_backend: Optional[str] = None,
+    prompt_override: Optional[Dict[str, str]] = None,
 ):
     """
     Background worker:
@@ -286,6 +314,9 @@ def process_cloning_job(
                 status_callback=chunk_status_cb,
                 max_duration=max_duration,
                 denoise=denoise or 0.75,
+                cloning_backend=cloning_backend,
+                control_mode=control_mode,
+                prompt_override=prompt_override,
             )
 
             # Scan generated character faces in job_dir to include in status
@@ -443,18 +474,27 @@ def create_cloning_job(request: CloningJobRequest):
         )
     source_video = resolve_input(target_video_str)
 
-    job_id = f"clone_{uuid.uuid4().hex[:12]}"
-    job_dir = OUTPUT_DIR / job_id
-    job_dir.mkdir(parents=True, exist_ok=True)
+    if request.job_id and request.job_id.strip():
+        job_id = request.job_id.strip()
+        job_dir = OUTPUT_DIR / job_id
+        job_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"[CLONING API] Resuming existing job_id: {job_id}")
+    else:
+        job_id = f"clone_{uuid.uuid4().hex[:12]}"
+        job_dir = OUTPUT_DIR / job_id
+        job_dir.mkdir(parents=True, exist_ok=True)
 
     # Save a copy of the input source video directly into the job's output directory
     input_video_dest = job_dir / f"input_{source_video.name}"
-    try:
-        shutil.copy2(source_video, input_video_dest)
+    if not input_video_dest.exists() or input_video_dest.stat().st_size == 0:
+        try:
+            shutil.copy2(source_video, input_video_dest)
+            active_source_video = input_video_dest
+        except Exception as copy_err:
+            logger.warning(f"Could not copy source video into {job_dir}: {copy_err}")
+            active_source_video = source_video
+    else:
         active_source_video = input_video_dest
-    except Exception as copy_err:
-        logger.warning(f"Could not copy source video into {job_dir}: {copy_err}")
-        active_source_video = source_video
 
     with open(job_dir / "cloning_record.json", "w", encoding="utf-8") as f:
         json.dump(
@@ -462,6 +502,7 @@ def create_cloning_job(request: CloningJobRequest):
                 "source_video": target_video_str,
                 "input_video_copy": str(active_source_video),
                 "characters": [c.model_dump() for c in request.characters] if request.characters else [],
+                "prompt_override": request.prompt_override,
             },
             f,
             indent=2,
@@ -484,6 +525,9 @@ def create_cloning_job(request: CloningJobRequest):
         request.mode or "wan_v2v",
         request.max_duration,
         request.denoise or 0.75,
+        request.control_mode,
+        request.cloning_backend,
+        request.prompt_override,
     )
 
     return {
@@ -513,6 +557,18 @@ async def create_cloning_job_upload(
         default=0.75,
         description="Optional: Denoise level for V2V (0.50 to 0.88, default 0.75)."
     ),
+    control_mode: Optional[str] = Form(
+        default=None,
+        description="Control video mode: 'pose+depth' (default), 'pose', 'depth', or 'canny'."
+    ),
+    cloning_backend: Optional[str] = Form(
+        default=None,
+        description="Cloning backend: 'fun_control' (default) or 'legacy_i2v'."
+    ),
+    prompt_override: Optional[str] = Form(
+        default=None,
+        description="Optional JSON string of prompt overrides: e.g. {'fun_control_positive': '...', 'fun_control_negative': '...'}"
+    ),
 ):
     """
     Direct multipart/form-data upload: upload the video file directly with character configurations.
@@ -531,6 +587,18 @@ async def create_cloning_job_upload(
             raise HTTPException(
                 status_code=422,
                 detail=f"Invalid 'characters' JSON form field: {err}. Expected format: [{{'gender':'female','age':25}}]"
+            )
+
+    parsed_prompt_override = None
+    if prompt_override and prompt_override.strip():
+        try:
+            parsed_prompt_override = json.loads(prompt_override)
+            if not isinstance(parsed_prompt_override, dict):
+                parsed_prompt_override = None
+        except Exception as err:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid 'prompt_override' JSON form field: {err}"
             )
 
     job_id = f"clone_{uuid.uuid4().hex[:12]}"
@@ -556,6 +624,9 @@ async def create_cloning_job_upload(
                 "input_video_copy": str(saved_video_path),
                 "characters": [c.model_dump() for c in char_targets],
                 "mode": active_mode,
+                "control_mode": control_mode,
+                "cloning_backend": cloning_backend,
+                "prompt_override": parsed_prompt_override,
             },
             f,
             indent=2,
@@ -579,6 +650,9 @@ async def create_cloning_job_upload(
         active_mode,
         max_duration,
         denoise or 0.75,
+        control_mode,
+        cloning_backend,
+        parsed_prompt_override,
     )
 
     return {
@@ -607,3 +681,136 @@ def cloning_job_status(job_id: str):
 
     with open(status_path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+@router.post("/resume")
+def resume_cloning_job(request: ResumeJobRequest):
+    """Resumes an interrupted cloning job using its existing directory and saved settings."""
+    return _resume_job_by_id(
+        job_id=request.job_id,
+        max_duration=request.max_duration,
+        denoise=request.denoise,
+        control_mode=request.control_mode,
+        cloning_backend=request.cloning_backend,
+        prompt_override=request.prompt_override,
+    )
+
+
+@router.post("/jobs/{job_id}/resume")
+def resume_cloning_job_by_path(
+    job_id: str,
+    max_duration: Optional[float] = None,
+    denoise: Optional[float] = None,
+    control_mode: Optional[str] = None,
+    cloning_backend: Optional[str] = None,
+    prompt_override: Optional[str] = None,
+):
+    """Resumes an interrupted cloning job by job_id URL path parameter."""
+    parsed_override = None
+    if prompt_override:
+        try:
+            parsed_override = json.loads(prompt_override)
+        except Exception:
+            pass
+    return _resume_job_by_id(
+        job_id=job_id,
+        max_duration=max_duration,
+        denoise=denoise,
+        control_mode=control_mode,
+        cloning_backend=cloning_backend,
+        prompt_override=parsed_override,
+    )
+
+
+def _resume_job_by_id(
+    job_id: str,
+    max_duration: Optional[float] = None,
+    denoise: Optional[float] = None,
+    control_mode: Optional[str] = None,
+    cloning_backend: Optional[str] = None,
+    prompt_override: Optional[Dict[str, str]] = None,
+):
+    clean_id = job_id.strip()
+    job_dir = OUTPUT_DIR / clean_id
+    if not job_dir.exists():
+        raise HTTPException(status_code=404, detail=f"Job directory not found for ID '{clean_id}'")
+
+    state_file = job_dir / "job_state.json"
+    record_file = job_dir / "cloning_record.json"
+
+    saved_state = {}
+    if state_file.exists():
+        try:
+            with open(state_file, "r", encoding="utf-8") as sf:
+                saved_state = json.load(sf)
+        except Exception as se:
+            logger.warning(f"Could not read {state_file}: {se}")
+
+    record_data = {}
+    if record_file.exists():
+        try:
+            with open(record_file, "r", encoding="utf-8") as rf:
+                record_data = json.load(rf)
+        except Exception as re:
+            logger.warning(f"Could not read {record_file}: {re}")
+
+    source_video_path = None
+    input_copies = list(job_dir.glob("input_*.*"))
+    if input_copies and input_copies[0].is_file() and input_copies[0].stat().st_size > 0:
+        source_video_path = input_copies[0]
+    elif "input_video_copy" in record_data and Path(record_data["input_video_copy"]).is_file():
+        source_video_path = Path(record_data["input_video_copy"])
+    elif "source_video" in saved_state and Path(saved_state["source_video"]).is_file():
+        source_video_path = Path(saved_state["source_video"])
+    elif "source_video" in record_data:
+        try:
+            source_video_path = resolve_input(record_data["source_video"])
+        except Exception:
+            pass
+
+    if source_video_path is None or not source_video_path.exists():
+        raise HTTPException(
+            status_code=422,
+            detail=f"Could not locate source video in {job_dir} to resume job.",
+        )
+
+    raw_characters = record_data.get("characters") or []
+    characters = [CharacterTarget(**c) for c in raw_characters] if raw_characters else None
+
+    active_backend = cloning_backend or saved_state.get("cloning_backend") or "fun_control"
+    active_control = control_mode or saved_state.get("control_mode") or "pose+depth"
+    active_denoise = denoise if denoise is not None else saved_state.get("denoise", 0.75)
+    active_max_dur = max_duration if max_duration is not None else saved_state.get("active_duration")
+    active_prompt_override = (
+        prompt_override
+        or saved_state.get("prompt_override")
+        or record_data.get("prompt_override")
+    )
+
+    write_status(
+        job_dir,
+        job_id=clean_id,
+        status="resuming",
+        input_video_url=f"/output/{clean_id}/{source_video_path.name}",
+    )
+
+    executor.submit(
+        process_cloning_job,
+        clean_id,
+        job_dir,
+        source_video_path,
+        characters,
+        "wan_v2v",
+        active_max_dur,
+        active_denoise,
+        active_control,
+        active_backend,
+        active_prompt_override,
+    )
+
+    return {
+        "job_id": clean_id,
+        "status": "resumed",
+        "resumed_from": str(job_dir),
+        "status_url": f"/api/v1/cloning/jobs/{clean_id}",
+    }

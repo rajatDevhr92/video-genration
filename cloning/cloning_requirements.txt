@@ -1,8 +1,14 @@
-# Extra packages for the cloning safety check. Install on the RunPod server.
+# Core packages for realistic-to-anime video pipeline & Wan 2.2 Fun Control
 torch
-transformers
+torchvision
+torchaudio
 pillow
-insightface
-onnxruntime-gpu
-opencv-python-headless
 numpy
+opencv-python-headless
+transformers
+timm
+controlnet_aux
+onnxruntime-gpu
+insightface
+scipy
+accelerate

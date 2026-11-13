@@ -22,7 +22,28 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
 
 from app.config import (
+    CLONING_BACKEND,
     COMFY_DIR,
+    CONTROL_VIDEO_MODE,
+    FUN_CONTROL_CFG,
+    FUN_CONTROL_CLIP_MODEL,
+    FUN_CONTROL_HIGH_NOISE_MODEL,
+    FUN_CONTROL_LORA_HIGH,
+    FUN_CONTROL_LORA_LOW,
+    FUN_CONTROL_LOW_NOISE_MODEL,
+    FUN_CONTROL_NEGATIVE_PROMPT,
+    FUN_CONTROL_NODE_IDS,
+    FUN_CONTROL_POSITIVE_PROMPT,
+    FUN_CONTROL_STEPS,
+    FUN_CONTROL_STEPS_LORA,
+    FUN_CONTROL_VAE_MODEL,
+    FUN_CONTROL_WORKFLOW,
+    OUTPUT_DIR,
+    QWEN_KEYFRAME_NEGATIVE,
+    QWEN_KEYFRAME_PROMPT,
+    REANCHOR_EVERY_N_CHUNKS,
+    QUALITY_MAX_RETRIES,
+    USE_LIGHTNING_LORA,
     VIDEO_FPS,
     VIDEO_HEIGHT,
     VIDEO_WIDTH,
@@ -33,8 +54,249 @@ from app.composition_generator import CompositionGenerator
 from app.keyframe_generator import KeyframeGenerator
 from app.workflow_runner import WorkflowRunner
 from app.gpu_memory import print_gpu_memory
+from .cloning_quality import check_chunk
 
 logger = logging.getLogger(__name__)
+
+
+def _write_frames_to_mp4(frames: List[Any], output_path: Path, width: int, height: int, fps: int = 16):
+    """Encodes a sequence of BGR frames directly to an H.264 MP4 video via FFmpeg pipe."""
+    cmd = [
+        "ffmpeg", "-y",
+        "-f", "rawvideo",
+        "-vcodec", "rawvideo",
+        "-s", f"{width}x{height}",
+        "-pix_fmt", "bgr24",
+        "-r", str(fps),
+        "-i", "-",
+        "-c:v", "libx264",
+        "-pix_fmt", "yuv420p",
+        "-r", str(fps),
+        str(output_path),
+    ]
+    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    for frame in frames:
+        proc.stdin.write(frame.tobytes())
+    proc.stdin.close()
+    proc.wait()
+    if proc.returncode != 0:
+        err = proc.stderr.read().decode("utf-8", errors="ignore")
+        raise RuntimeError(f"FFmpeg writing control video failed:\n{err}")
+
+
+def _generate_control_video_ffmpeg(
+    chunk_src_mp4: Path,
+    output_path: Path,
+    mode: str,
+    width: int,
+    height: int,
+    fps: int,
+    target_frames: int,
+):
+    """High-speed FFmpeg filter fallback if python CV libraries are missing."""
+    if mode == "canny":
+        vf = f"scale={width}:{height},edgedetect=low=0.1:high=0.3,format=yuv420p"
+    elif mode == "depth":
+        vf = f"scale={width}:{height},curves=all='0/0 0.5/0.8 1/1',format=yuv420p"
+    elif mode == "pose":
+        vf = f"scale={width}:{height},edgedetect=low=0.15:high=0.35,format=yuv420p"
+    else:  # pose+depth
+        vf = f"scale={width}:{height},edgedetect=low=0.1:high=0.35,format=yuv420p"
+
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", str(chunk_src_mp4),
+        "-vf", vf,
+        "-r", str(fps),
+        "-frames:v", str(target_frames),
+        "-c:v", "libx264",
+        "-pix_fmt", "yuv420p",
+        str(output_path),
+    ]
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if res.returncode != 0:
+        raise RuntimeError(f"FFmpeg control video generation failed: {res.stderr}")
+
+
+def _process_depth_frames(raw_frames: List[Any], target_w: int, target_h: int) -> List[Any]:
+    """Generates Depth Anything V2 depth frames, with gradient proxy fallback."""
+    import numpy as np
+    import cv2
+    try:
+        from transformers import pipeline
+        from PIL import Image
+        import torch
+        device = 0 if torch.cuda.is_available() else -1
+        depth_pipe = pipeline("depth-estimation", model="depth-anything/Depth-Anything-V2-Small-hf", device=device)
+        processed = []
+        for f in raw_frames:
+            rgb = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
+            pil_img = Image.fromarray(rgb)
+            depth_map = depth_pipe(pil_img)["depth"]
+            depth_arr = np.array(depth_map)
+            depth_norm = cv2.normalize(depth_arr, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+            if depth_norm.shape[1] != target_w or depth_norm.shape[0] != target_h:
+                depth_norm = cv2.resize(depth_norm, (target_w, target_h), interpolation=cv2.INTER_LINEAR)
+            depth_bgr = cv2.applyColorMap(depth_norm, cv2.COLORMAP_INFERNO)
+            processed.append(depth_bgr)
+        return processed
+    except Exception as e:
+        logger.info(f"[CONTROL VIDEO] Depth model notice ({e}). Using adaptive depth gradient proxy.")
+        processed = []
+        for f in raw_frames:
+            gray = cv2.cvtColor(f, cv2.COLOR_BGR2GRAY)
+            blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+            sobelx = cv2.Sobel(blurred, cv2.CV_64F, 1, 0, ksize=3)
+            sobely = cv2.Sobel(blurred, cv2.CV_64F, 0, 1, ksize=3)
+            mag = cv2.magnitude(sobelx, sobely)
+            mag_norm = cv2.normalize(mag, None, 0, 180, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+            depth_proxy = cv2.addWeighted(blurred, 0.6, mag_norm, 0.4, 0)
+            depth_bgr = cv2.applyColorMap(depth_proxy, cv2.COLORMAP_INFERNO)
+            processed.append(depth_bgr)
+        return processed
+
+
+def _process_pose_frames(raw_frames: List[Any], target_w: int, target_h: int) -> List[Any]:
+    """Generates DWPose / Openpose frames, with contour proxy fallback."""
+    import numpy as np
+    import cv2
+    try:
+        from controlnet_aux import DWposeDetector
+        from PIL import Image
+        import torch
+        detector = DWposeDetector.from_pretrained("yzd-v/DWPose")
+        if torch.cuda.is_available():
+            detector = detector.to("cuda")
+        processed = []
+        for f in raw_frames:
+            rgb = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
+            pil_img = Image.fromarray(rgb)
+            pose_img = detector(pil_img, output_type="np")
+            pose_bgr = cv2.cvtColor(pose_img, cv2.COLOR_RGB2BGR)
+            if pose_bgr.shape[1] != target_w or pose_bgr.shape[0] != target_h:
+                pose_bgr = cv2.resize(pose_bgr, (target_w, target_h), interpolation=cv2.INTER_NEAREST)
+            processed.append(pose_bgr)
+        return processed
+    except Exception as e:
+        logger.info(f"[CONTROL VIDEO] Pose model notice ({e}). Using structure contour pose proxy.")
+        processed = []
+        for f in raw_frames:
+            gray = cv2.cvtColor(f, cv2.COLOR_BGR2GRAY)
+            edges = cv2.Canny(gray, 40, 120)
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+            dilated = cv2.dilate(edges, kernel, iterations=1)
+            pose_canvas = np.zeros((f.shape[0], f.shape[1], 3), dtype=np.uint8)
+            pose_canvas[dilated > 0] = [0, 255, 255]
+            processed.append(pose_canvas)
+        return processed
+
+
+def extract_control_video(
+    chunk_src_mp4: Path,
+    mode: str = "pose+depth",
+    output_path: Optional[Path] = None,
+    width: Optional[int] = None,
+    height: Optional[int] = None,
+    fps: int = 16,
+    target_frames: int = 81,
+) -> Path:
+    """
+    Creates an 81-frame control video from each chunk.
+    Supports mode = 'pose', 'depth', 'canny', 'pose+depth'.
+    Saves next to the chunk as chunks/chunk_XXXX_control.mp4 and reuses on resume.
+    """
+    chunk_src_mp4 = Path(chunk_src_mp4)
+    if output_path is None:
+        chunk_stem = chunk_src_mp4.stem
+        if chunk_stem.endswith("_src"):
+            base_name = chunk_stem[:-4]
+        else:
+            base_name = chunk_stem
+        output_path = chunk_src_mp4.parent / f"{base_name}_control.mp4"
+    else:
+        output_path = Path(output_path)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Resume check: reuse existing control video if valid
+    if output_path.exists() and output_path.stat().st_size > 10000:
+        logger.info(f"[CONTROL VIDEO] Reusing existing control video: {output_path.name}")
+        print(f"[CONTROL VIDEO] Reusing existing control video: {output_path.name}")
+        return output_path
+
+    mode_clean = (mode or "pose+depth").lower().strip()
+    target_w = width or VIDEO_WIDTH
+    target_h = height or VIDEO_HEIGHT
+
+    logger.info(
+        f"[CONTROL VIDEO] Generating control video (mode={mode_clean}, "
+        f"res={target_w}x{target_h}, fps={fps}, frames={target_frames}) from {chunk_src_mp4.name}..."
+    )
+    print(
+        f"[CONTROL VIDEO] Generating {mode_clean} control video ({target_w}x{target_h}, {fps} FPS, "
+        f"{target_frames} frames) for {chunk_src_mp4.name}..."
+    )
+
+    has_cv2 = False
+    try:
+        import cv2
+        import numpy as np
+        has_cv2 = True
+    except ImportError:
+        pass
+
+    if not has_cv2:
+        logger.warning("[CONTROL VIDEO] OpenCV not detected. Using FFmpeg structure filter for control video.")
+        _generate_control_video_ffmpeg(chunk_src_mp4, output_path, mode_clean, target_w, target_h, fps, target_frames)
+        return output_path
+
+    cap = cv2.VideoCapture(str(chunk_src_mp4))
+    raw_frames = []
+    while len(raw_frames) < target_frames:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        if frame.shape[1] != target_w or frame.shape[0] != target_h:
+            frame = cv2.resize(frame, (target_w, target_h), interpolation=cv2.INTER_AREA)
+        raw_frames.append(frame)
+    cap.release()
+
+    if not raw_frames:
+        logger.warning(f"[CONTROL VIDEO] Could not read frames with OpenCV. Falling back to FFmpeg.")
+        _generate_control_video_ffmpeg(chunk_src_mp4, output_path, mode_clean, target_w, target_h, fps, target_frames)
+        return output_path
+
+    while len(raw_frames) < target_frames:
+        raw_frames.append(raw_frames[-1].copy())
+    raw_frames = raw_frames[:target_frames]
+
+    control_frames = []
+    if mode_clean == "canny":
+        for f in raw_frames:
+            gray = cv2.cvtColor(f, cv2.COLOR_BGR2GRAY)
+            edges = cv2.Canny(gray, 50, 150)
+            control_frames.append(cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR))
+    elif mode_clean == "depth":
+        control_frames = _process_depth_frames(raw_frames, target_w, target_h)
+    elif mode_clean == "pose":
+        control_frames = _process_pose_frames(raw_frames, target_w, target_h)
+    elif mode_clean in ("pose+depth", "pose_depth", "depth+pose"):
+        depth_frames = _process_depth_frames(raw_frames, target_w, target_h)
+        pose_frames = _process_pose_frames(raw_frames, target_w, target_h)
+        for d_frame, p_frame in zip(depth_frames, pose_frames):
+            pose_mask = (p_frame > 10).any(axis=2, keepdims=True)
+            composite = np.where(pose_mask, p_frame, d_frame)
+            control_frames.append(composite.astype(np.uint8))
+    else:
+        logger.warning(f"[CONTROL VIDEO] Unknown control mode '{mode_clean}'. Defaulting to canny.")
+        for f in raw_frames:
+            gray = cv2.cvtColor(f, cv2.COLOR_BGR2GRAY)
+            edges = cv2.Canny(gray, 50, 150)
+            control_frames.append(cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR))
+
+    _write_frames_to_mp4(control_frames, output_path, target_w, target_h, fps)
+    logger.info(f"[CONTROL VIDEO] Control video generated successfully: {output_path} ({output_path.stat().st_size} bytes)")
+    return output_path
 
 
 class WanVideoCloner:
@@ -156,6 +418,45 @@ class WanVideoCloner:
             return self.extract_first_frame(video_path, output_image_path)
         return output_image_path
 
+    def extract_last_frame(self, video_path: Path, output_image_path: Path) -> Path:
+        """
+        Extracts the exact last frame of a video chunk for anime chunk chaining.
+        Reuses cached frame if already extracted.
+        """
+        video_path = Path(video_path)
+        output_image_path = Path(output_image_path)
+        output_image_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if output_image_path.exists() and output_image_path.stat().st_size > 1000:
+            return output_image_path
+
+        cmd = [
+            "ffmpeg", "-y",
+            "-sseof", "-0.1",
+            "-i", str(video_path),
+            "-update", "1",
+            "-q:v", "1",
+            "-frames:v", "1",
+            str(output_image_path),
+        ]
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if res.returncode == 0 and output_image_path.exists() and output_image_path.stat().st_size > 1000:
+            return output_image_path
+
+        cmd_select = [
+            "ffmpeg", "-y",
+            "-i", str(video_path),
+            "-vf", "select=eq(n\\,80)",
+            "-vframes", "1",
+            "-q:v", "1",
+            str(output_image_path),
+        ]
+        res_sel = subprocess.run(cmd_select, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if res_sel.returncode == 0 and output_image_path.exists() and output_image_path.stat().st_size > 1000:
+            return output_image_path
+
+        return self.extract_first_frame(video_path, output_image_path)
+
     def prefilter_image_to_anime(self, input_image_path: Path, output_image_path: Path, wan_w: int, wan_h: int) -> Path:
         """
         Applies fast edge-preserving bilateral smoothing and cel-shaded color/contour
@@ -243,6 +544,31 @@ class WanVideoCloner:
             ]
             subprocess.run(fb_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
         return output_chunk_path
+
+    def extract_control_video(
+        self,
+        chunk_src_mp4: Path,
+        mode: Optional[str] = None,
+        output_path: Optional[Path] = None,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+        fps: int = 16,
+        target_frames: int = 81,
+    ) -> Path:
+        """
+        Creates an 81-frame control video from each chunk.
+        Supports mode = 'pose', 'depth', 'canny', 'pose+depth' (default).
+        Reuses chunks/chunk_XXXX_control.mp4 on resume.
+        """
+        return extract_control_video(
+            chunk_src_mp4=chunk_src_mp4,
+            mode=mode or CONTROL_VIDEO_MODE,
+            output_path=output_path,
+            width=width,
+            height=height,
+            fps=fps,
+            target_frames=target_frames,
+        )
 
     def build_solo_character_prompt(self, char_prompt: str, gender: str = "character", style: str = "anime") -> str:
         """
@@ -520,32 +846,244 @@ class WanVideoCloner:
             temp_img_path.unlink(missing_ok=True)
             temp_vid_path.unlink(missing_ok=True)
 
+    def animate_with_wan_fun_control(
+        self,
+        control_video_path: Path,
+        keyframe_path: Path,
+        motion_prompt: Optional[str] = None,
+        output_video_path: Path = None,
+        seed: int = 12345,
+        length_frames: int = 81,
+        fps: int = 16,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+        negative_prompt: Optional[str] = None,
+        steps: Optional[int] = None,
+        cfg: Optional[float] = None,
+        use_lora: Optional[bool] = None,
+        prompt_override: Optional[Dict[str, str]] = None,
+    ) -> Path:
+        """
+        Runs Wan 2.2 14B Fun Control video generation using structural control video and anime start keyframe.
+        Dual-expert high-noise and low-noise models run full sampling from step 0 (no start_at_step hack).
+        LoRA usage is configurable (default False: 20 steps, no LoRA).
+        """
+        control_video_path = Path(control_video_path)
+        keyframe_path = Path(keyframe_path)
+        output_video_path = Path(output_video_path)
+        output_video_path.parent.mkdir(parents=True, exist_ok=True)
+
+        self.input_dir.mkdir(parents=True, exist_ok=True)
+        temp_img_name = f"wan_fun_ref_{uuid.uuid4().hex[:12]}{keyframe_path.suffix.lower()}"
+        temp_vid_name = f"wan_fun_ctl_{uuid.uuid4().hex[:12]}.mp4"
+        temp_img_path = self.input_dir / temp_img_name
+        temp_vid_path = self.input_dir / temp_vid_name
+
+        shutil.copy2(keyframe_path, temp_img_path)
+        shutil.copy2(control_video_path, temp_vid_path)
+
+        target_w = width or VIDEO_WIDTH
+        target_h = height or VIDEO_HEIGHT
+
+        # Resolve prompts with overrides
+        if prompt_override:
+            active_prompt = prompt_override.get("fun_control_positive") or motion_prompt or FUN_CONTROL_POSITIVE_PROMPT
+            active_neg_prompt = prompt_override.get("fun_control_negative") or negative_prompt or FUN_CONTROL_NEGATIVE_PROMPT
+        else:
+            active_prompt = motion_prompt or FUN_CONTROL_POSITIVE_PROMPT
+            active_neg_prompt = negative_prompt or FUN_CONTROL_NEGATIVE_PROMPT
+
+        active_use_lora = USE_LIGHTNING_LORA if use_lora is None else use_lora
+        if steps is not None:
+            active_steps = int(steps)
+        else:
+            active_steps = FUN_CONTROL_STEPS_LORA if active_use_lora else FUN_CONTROL_STEPS
+        active_cfg = FUN_CONTROL_CFG if cfg is None else float(cfg)
+        mid_step = active_steps // 2
+
+        try:
+            workflow = self.runner.load_workflow(FUN_CONTROL_WORKFLOW)
+            nodes = FUN_CONTROL_NODE_IDS
+
+            # 1. Inputs: start image (ref_image) and control video
+            if nodes["load_ref_image"] in workflow:
+                workflow[nodes["load_ref_image"]]["inputs"]["image"] = temp_img_name
+            if nodes["load_control_video"] in workflow:
+                workflow[nodes["load_control_video"]]["inputs"]["file"] = temp_vid_name
+
+            # 2. Prompts
+            if nodes["prompt_pos"] in workflow:
+                workflow[nodes["prompt_pos"]]["inputs"]["text"] = active_prompt
+            if active_neg_prompt and nodes["prompt_neg"] in workflow:
+                workflow[nodes["prompt_neg"]]["inputs"]["text"] = active_neg_prompt
+
+            # 3. Model filenames
+            if nodes["unet_high"] in workflow:
+                workflow[nodes["unet_high"]]["inputs"]["unet_name"] = FUN_CONTROL_HIGH_NOISE_MODEL
+            if nodes["unet_low"] in workflow:
+                workflow[nodes["unet_low"]]["inputs"]["unet_name"] = FUN_CONTROL_LOW_NOISE_MODEL
+            if nodes["vae"] in workflow and "vae_name" in workflow[nodes["vae"]].get("inputs", {}):
+                workflow[nodes["vae"]]["inputs"]["vae_name"] = FUN_CONTROL_VAE_MODEL
+            if nodes["clip"] in workflow and "clip_name" in workflow[nodes["clip"]].get("inputs", {}):
+                workflow[nodes["clip"]]["inputs"]["clip_name"] = FUN_CONTROL_CLIP_MODEL
+
+            # 4. LoRA vs non-LoRA routing
+            if active_use_lora:
+                if nodes["lora_high"] in workflow:
+                    workflow[nodes["lora_high"]]["inputs"]["lora_name"] = FUN_CONTROL_LORA_HIGH
+                    workflow[nodes["shift_high"]]["inputs"]["model"] = [nodes["lora_high"], 0]
+                if nodes["lora_low"] in workflow:
+                    workflow[nodes["lora_low"]]["inputs"]["lora_name"] = FUN_CONTROL_LORA_LOW
+                    workflow[nodes["shift_low"]]["inputs"]["model"] = [nodes["lora_low"], 0]
+            else:
+                # Bypass LoRAs: route UNET directly to ModelSamplingSD3
+                if nodes["shift_high"] in workflow:
+                    workflow[nodes["shift_high"]]["inputs"]["model"] = [nodes["unet_high"], 0]
+                if nodes["shift_low"] in workflow:
+                    workflow[nodes["shift_low"]]["inputs"]["model"] = [nodes["unet_low"], 0]
+
+            # 5. Dimensions and length
+            if nodes["fun_control"] in workflow:
+                workflow[nodes["fun_control"]]["inputs"]["width"] = target_w
+                workflow[nodes["fun_control"]]["inputs"]["height"] = target_h
+                workflow[nodes["fun_control"]]["inputs"]["length"] = length_frames
+            if nodes["create_video"] in workflow:
+                workflow[nodes["create_video"]]["inputs"]["fps"] = float(fps)
+
+            # 6. Samplers (step 0 to mid_step for high-noise; mid_step to active_steps for low-noise)
+            if nodes["sampler_high"] in workflow:
+                workflow[nodes["sampler_high"]]["inputs"]["noise_seed"] = seed
+                workflow[nodes["sampler_high"]]["inputs"]["steps"] = active_steps
+                workflow[nodes["sampler_high"]]["inputs"]["cfg"] = active_cfg
+                workflow[nodes["sampler_high"]]["inputs"]["start_at_step"] = 0
+                workflow[nodes["sampler_high"]]["inputs"]["end_at_step"] = mid_step
+                workflow[nodes["sampler_high"]]["inputs"]["add_noise"] = "enable"
+                workflow[nodes["sampler_high"]]["inputs"]["return_with_leftover_noise"] = "enable"
+
+            if nodes["sampler_low"] in workflow:
+                workflow[nodes["sampler_low"]]["inputs"]["noise_seed"] = seed
+                workflow[nodes["sampler_low"]]["inputs"]["steps"] = active_steps
+                workflow[nodes["sampler_low"]]["inputs"]["cfg"] = active_cfg
+                workflow[nodes["sampler_low"]]["inputs"]["start_at_step"] = mid_step
+                workflow[nodes["sampler_low"]]["inputs"]["end_at_step"] = active_steps
+                workflow[nodes["sampler_low"]]["inputs"]["add_noise"] = "disable"
+                workflow[nodes["sampler_low"]]["inputs"]["return_with_leftover_noise"] = "disable"
+
+            # 7. Output filename prefix
+            if nodes["save_video"] in workflow:
+                workflow[nodes["save_video"]]["inputs"]["filename_prefix"] = (
+                    f"cloning/wan_fun_{uuid.uuid4().hex[:12]}"
+                )
+
+            logger.info(
+                f"[WAN FUN CONTROL] Submitting Wan 2.2 Fun Control job (seed={seed}, resolution={target_w}x{target_h}, "
+                f"frames={length_frames}, steps={active_steps} [0->{mid_step}->{active_steps}], cfg={active_cfg}, "
+                f"lora={active_use_lora})..."
+            )
+            print(
+                f"[WAN FUN CONTROL] Submitting Wan 2.2 Fun Control job to ComfyUI ({target_w}x{target_h}, seed={seed}, "
+                f"length={length_frames} frames, steps={active_steps}, cfg={active_cfg}, lora={active_use_lora})..."
+            )
+            prompt_id, client_id = self.runner.submit(workflow)
+            print(f"[WAN FUN CONTROL] ComfyUI Prompt ID: {prompt_id} (Client: {client_id}). Waiting for GPU execution...")
+            result = self.runner.wait(prompt_id, timeout=1800)
+            print("[WAN FUN CONTROL] Wan 2.2 Fun Control execution completed successfully on GPU.")
+
+            # Find produced video across outputs
+            videos = []
+            for node_id, node_output in result.get("outputs", {}).items():
+                if "gifs" in node_output:
+                    videos.extend(node_output["gifs"])
+                if "videos" in node_output:
+                    videos.extend(node_output["videos"])
+                if "images" in node_output:
+                    animated = node_output.get("animated", [])
+                    for idx, img in enumerate(node_output["images"]):
+                        if isinstance(img, dict):
+                            fname = img.get("filename", "").lower()
+                            is_anim = idx < len(animated) and animated[idx] is True
+                            if is_anim or fname.endswith((".mp4", ".mov", ".webm", ".mkv", ".gif")):
+                                videos.append(img)
+
+            if not videos:
+                raise RuntimeError("Wan 2.2 Fun Control completed without video output.")
+
+            if hasattr(self.runner, "download_video"):
+                self.runner.download_video(videos[0], output_video_path)
+            else:
+                self.runner.download_image(videos[0], output_video_path)
+            return output_video_path
+        except Exception as fun_err:
+            logger.error(
+                f"[WAN FUN CONTROL] Wan 2.2 Fun Control execution failed on GPU: {fun_err}",
+                exc_info=True,
+            )
+            print(f"[WAN FUN CONTROL] ERROR: Fun Control execution failed: {fun_err}")
+            raise RuntimeError(f"Wan 2.2 Fun Control execution failed on GPU: {fun_err}") from fun_err
+        finally:
+            temp_img_path.unlink(missing_ok=True)
+            temp_vid_path.unlink(missing_ok=True)
+
     def clone_video(
         self,
         source_video: Path,
         character_prompts: List[str],
         output_video: Path,
-        job_dir: Path,
+        job_dir: Optional[Path] = None,
+        job_id: Optional[str] = None,
         seed: int = 42,
         style: str = "anime",
         characters: Optional[List[Dict[str, Any]]] = None,
         denoise: float = 0.75,
         status_callback: Optional[Any] = None,
         max_duration: Optional[float] = None,
+        cloning_backend: Optional[str] = None,
+        control_mode: Optional[str] = None,
+        prompt_override: Optional[Dict[str, str]] = None,
     ) -> Path:
         """
-        Auto-detecting Wan V2V Video Cloning Pipeline (Realistic Video -> Anime Video):
+        Auto-detecting Wan V2V / Fun Control Video Cloning Pipeline (Realistic Video -> Anime Video):
         1. Auto-detects video resolution, framerate, duration via ffprobe.
-        2. Slices long videos (e.g. 5m to 7m+) into sequential ~5s chunks with resume capability.
+        2. Slices long videos (e.g. 5m to 30m+) into sequential ~5s chunks with resume capability.
         3. Generates high-res character facial identity reference portraits via Krea 2 (ONCE).
-        4. Re-synthesizes each chunk keyframe with Qwen Image Edit Diffusion into 100% 2D anime.
-        5. Animates each chunk through Wan 2.2 14B Dual Experts I2V.
-        6. Seamlessly stitches all chunks via FFmpeg concat and remuxes full original audio.
+        4. Re-synthesizes initial keyframe with Qwen Image Edit into 100% 2D anime.
+        5. Chains consecutive chunks with Wan 2.2 Fun Control using last frame + control video.
+        6. Automatic quality gate checks motion, anime style, and flicker with retry loop.
+        7. Seamlessly stitches all chunks via FFmpeg concat and remuxes full original audio.
+        8. Manages job_state.json for stateful resume across server/API restarts.
         """
         output_video = Path(output_video)
         output_video.parent.mkdir(parents=True, exist_ok=True)
-        job_dir = Path(job_dir)
+
+        if job_dir is None:
+            if job_id:
+                job_dir = OUTPUT_DIR / job_id
+            else:
+                job_dir = OUTPUT_DIR / f"clone_{uuid.uuid4().hex[:12]}"
+        else:
+            job_dir = Path(job_dir)
         job_dir.mkdir(parents=True, exist_ok=True)
+
+        # Stateful Resume: Check if job_state.json exists
+        state_file = job_dir / "job_state.json"
+        saved_state = {}
+        completed_chunk_indices = []
+        if state_file.exists():
+            try:
+                with open(state_file, "r", encoding="utf-8") as sf:
+                    saved_state = json.load(sf)
+                logger.info(f"[WAN CLONER] [RESUME] Loaded existing job_state.json for {job_dir.name}")
+                print(f"[WAN CLONER] [RESUME] Loaded existing job_state.json for {job_dir.name}")
+                completed_chunk_indices = saved_state.get("completed_chunks", [])
+                if cloning_backend is None and "cloning_backend" in saved_state:
+                    cloning_backend = saved_state["cloning_backend"]
+                if control_mode is None and "control_mode" in saved_state:
+                    control_mode = saved_state["control_mode"]
+                if prompt_override is None and "prompt_override" in saved_state:
+                    prompt_override = saved_state["prompt_override"]
+            except Exception as se:
+                logger.warning(f"[WAN CLONER] Could not parse job_state.json: {se}")
+
         style_clean = (style or "anime").lower().strip()
 
         # Step 1: Probe source video (auto-detect 1080p, 30 FPS, aspect ratio, duration, audio)
@@ -634,69 +1172,18 @@ class WanVideoCloner:
         m_slot_str = f"Image {male_ref_slot}" if male_ref_slot else "Image 3"
 
         if style_clean == "anime":
-            if generated_character_images:
-                edit_prompt = (
-                    f"Masterpiece 2D Japanese anime illustration, Kyoto Animation and Makoto Shinkai style.\n"
-                    f"MANDATORY 100% FULL-FRAME 2D ANIME REDRAW: The ENTIRE image in Image 1 must be completely transformed into a cohesive, hand-drawn 2D anime illustration. Every single square inch — all characters, full bodies, furniture, sofa, couch, walls, doors, cabinets, and room background — must be rendered in pure 2D cel-shaded anime style with clean anime ink outlines. ABSOLUTELY ZERO live-action photograph elements or real human textures.\n\n"
-                    f"1. ENVIRONMENT & FURNITURE - 100% 2D ANIME ART:\n"
-                    f"   - Completely repaint the sofa, couch, cushions, bed, seating, and floor into stylized 2D anime furniture with clean anime outline strokes, smooth anime shading, and vibrant anime colors. Eliminate all photographic leather, cloth grain, and realistic textures.\n"
-                    f"   - Transform the entire background (walls, doors, kitchen cabinets, countertops, ceiling, lighting) into hand-painted 2D Japanese anime background art with luminous anime lighting and rich cinematic color palette.\n"
-                    f"   - Remove all text, logos, stamps, and watermarks.\n\n"
-                    f"2. FEMALE CHARACTER - FULL-BODY 2D ANIME CONVERSION ({f_slot_str}):\n"
-                    f"   - Identify the female actor in Image 1.\n"
-                    f"   - Completely transform her into the gorgeous 2D anime woman strictly matching {f_slot_str}.\n"
-                    f"   - Render her stylized anime hairstyle and hair color from {f_slot_str}, large expressive detailed anime eyes, and clean anime facial contours.\n"
-                    f"   - Render her ENTIRE body from head to toe — face, neck, shoulders, chest, arms, hands, back, hips, thighs, knees, legs, and feet — in smooth 2D cel-shaded anime skin with clean dark anime outline linework, radiant anime skin tone, and soft anime shading.\n\n"
-                    f"3. MALE CHARACTER - FULL-BODY 2D ANIME CONVERSION ({m_slot_str}):\n"
-                    f"   - Identify the male actor in Image 1.\n"
-                    f"   - Completely transform him into the handsome 2D anime man strictly matching {m_slot_str}.\n"
-                    f"   - Render his stylized anime haircut from {m_slot_str}, sharp defined anime jawline, and expressive anime eyes.\n"
-                    f"   - Render his ENTIRE body from head to toe — face, neck, shoulders, chest, torso, abdomen, hips, groin, private areas, thighs, knees, legs, and feet — in pure 2D anime style with clean anime ink outlines and smooth flat cel-shaded anime skin.\n"
-                    f"   - COMPLETELY ELIMINATE all realistic human body hair, skin pores, photographic blemishes, and live-action skin textures across his entire lower body, thighs, and legs.\n\n"
-                    f"4. POSE, ANGLE & INTERACTION LOCK:\n"
-                    f"   - Faithfully preserve 100% of the original physical body positions, intimate interaction, limb angles, spatial interaction, and camera perspective from Image 1.\n"
-                    f"   - The entire image must be a unified 2D anime animation still frame. High-end anime aesthetic, crisp cel-shading, pure 2D anime art, no photorealism, no real human skin, no photograph."
-                )
+            p_override = prompt_override or {}
+            raw_qwen_prompt = p_override.get("qwen_keyframe") or QWEN_KEYFRAME_PROMPT
+            if "{f_slot_str}" in raw_qwen_prompt or "{m_slot_str}" in raw_qwen_prompt:
+                edit_prompt = raw_qwen_prompt.format(f_slot_str=f_slot_str, m_slot_str=m_slot_str)
             else:
-                edit_prompt = (
-                    f"Masterpiece 2D Japanese anime illustration, Kyoto Animation and Makoto Shinkai style.\n"
-                    f"MANDATORY 100% FULL-FRAME 2D ANIME REDRAW: The ENTIRE image in Image 1 must be completely transformed into a cohesive, hand-drawn 2D anime illustration. Every single square inch — all people, characters, full bodies, clothing, skin, furniture, sofa, couch, bed, seating, walls, doors, windows, and room background — must be rendered in pure 2D cel-shaded anime style with clean dark anime ink outlines. ABSOLUTELY ZERO live-action photograph elements, photographic grain, real human skin pores, or camera textures.\n\n"
-                    f"1. CHARACTERS & ACTORS - 100% 2D ANIME REDRAW:\n"
-                    f"   - Identify all people/actors in Image 1.\n"
-                    f"   - Completely redraw their faces into beautiful 2D anime faces with large expressive detailed anime eyes, delicate anime facial contours, stylized anime noses, and anime mouths.\n"
-                    f"   - Redraw their hair into sleek, flowing 2D anime hair with crisp clump geometry and anime highlights.\n"
-                    f"   - Redraw their ENTIRE bodies from head to toe in smooth 2D cel-shaded anime skin with clean dark anime outline linework, radiant anime skin tone, and soft anime shading.\n"
-                    f"   - Completely eliminate all realistic human body hair, skin pores, blemishes, and live-action photographic skin textures.\n\n"
-                    f"2. ENVIRONMENT, FURNITURE & LIGHTING - 100% 2D ANIME ART:\n"
-                    f"   - Completely repaint all furniture, bed, sofa, couch, cushions, floor, and objects into stylized 2D anime artwork with clean anime outline strokes, smooth anime shading, and vibrant anime colors.\n"
-                    f"   - Transform the entire background into hand-painted 2D Japanese anime background art with luminous anime lighting and rich cinematic color palette.\n"
-                    f"   - Remove all text, logos, stamps, subtitles, and watermarks.\n\n"
-                    f"3. POSE, ANGLE & INTERACTION LOCK:\n"
-                    f"   - Faithfully preserve 100% of the original physical body positions, choreography, limb angles, spatial interactions, framing, and camera perspective from Image 1.\n"
-                    f"   - The entire image must be a unified 2D anime animation still frame. High-end anime aesthetic, crisp cel-shading, pure 2D anime art, no photorealism, no real human skin, no photograph."
-                )
-            anime_qwen_negative = (
-                "photorealistic, realistic, photograph, raw photo, live action, live action footage, "
-                "real human skin, skin pores, natural skin texture, body hair, photographic texture, "
-                "real leather, photographic furniture, real room photo, real couch, real sofa, "
-                "camera noise, 3d, 3d render, cgi, realistic lighting, bad anatomy, extra limbs, "
-                "fused bodies, text, watermark, logo, Princess CUM, subtitles"
-            )
+                edit_prompt = raw_qwen_prompt
+
+            anime_qwen_negative = p_override.get("qwen_negative") or QWEN_KEYFRAME_NEGATIVE
             active_denoise = max(float(denoise), 0.50)
             active_cfg = 5.0
-            motion_prompt = (
-                f"masterpiece 2D Japanese anime animation, Kyoto Animation and Makoto Shinkai aesthetic, "
-                f"full-frame 2D anime scene in motion, hand-drawn anime characters and hand-painted anime background, "
-                f"smooth fluid hand-drawn anime movement, clean cel-shaded anime linework, gorgeous luminous anime lighting, "
-                f"vibrant anime color palette, pure 2D anime cinematography, high quality anime film, no live action"
-            )
-            wan_negative_prompt = (
-                "photorealistic, realistic, photograph, raw photo, live action, live action footage, real human, "
-                "real human skin, skin pores, body hair, photographic furniture, real room photo, real couch, real sofa, "
-                "3d, 3d render, camera noise, real life footage, "
-                "色调艳丽，过曝，静态，细节模糊不清，字幕，静止，整体发灰，最差质量，低质量，JPEG压缩残留，"
-                "丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合"
-            )
+            motion_prompt = p_override.get("fun_control_positive") or FUN_CONTROL_POSITIVE_PROMPT
+            wan_negative_prompt = p_override.get("fun_control_negative") or FUN_CONTROL_NEGATIVE_PROMPT
         else:
             edit_prompt = (
                 f"Masterpiece 8k cinematic 35mm film still. Highly detailed photographic transformation of BOTH actors in Image 1.\n\n"
@@ -734,6 +1221,30 @@ class WanVideoCloner:
         chunks_dir.mkdir(parents=True, exist_ok=True)
         completed_chunk_paths = []
 
+        active_backend = (cloning_backend or CLONING_BACKEND or "fun_control").lower().strip()
+        active_control_mode = (control_mode or CONTROL_VIDEO_MODE or "pose+depth").lower().strip()
+
+        job_state = {
+            "job_id": job_dir.name,
+            "source_video": str(source_video),
+            "style": style_clean,
+            "cloning_backend": active_backend,
+            "control_mode": active_control_mode,
+            "prompt_override": prompt_override,
+            "seed": seed,
+            "denoise": denoise,
+            "total_duration": total_duration,
+            "active_duration": active_duration,
+            "num_chunks": num_chunks,
+            "chunk_sec": CHUNK_SEC,
+            "target_frames": TARGET_FRAMES,
+            "completed_chunks": completed_chunk_indices,
+            "status": "in_progress",
+            "updated_at": time.time(),
+        }
+        with open(state_file, "w", encoding="utf-8") as sf:
+            json.dump(job_state, sf, indent=2)
+
         for chunk_idx in range(num_chunks):
             start_t = chunk_idx * CHUNK_SEC
             this_chunk_dur = min(CHUNK_SEC, active_duration - start_t)
@@ -743,11 +1254,15 @@ class WanVideoCloner:
             if chunk_target.exists() and chunk_target.stat().st_size > 50000:
                 logger.info(f"[WAN CLONER] [RESUME] Chunk {chunk_idx + 1}/{num_chunks} already completed. Skipping.")
                 print(f"[WAN CLONER] [RESUME] Chunk {chunk_idx + 1}/{num_chunks} already completed ({chunk_target.name}). Skipping.")
+                if chunk_idx not in completed_chunk_indices:
+                    completed_chunk_indices.append(chunk_idx)
                 completed_chunk_paths.append(chunk_target)
                 continue
 
             logger.info(f"[WAN CLONER] === Chunk {chunk_idx + 1}/{num_chunks} ({start_t:.1f}s - {start_t + this_chunk_dur:.1f}s) ===")
             print(f"[WAN CLONER] === Chunk {chunk_idx + 1}/{num_chunks} ({start_t:.1f}s - {start_t + this_chunk_dur:.1f}s) ===")
+            logger.debug(f"[WAN CLONER] Chunk {chunk_idx + 1} Positive Prompt: {motion_prompt}")
+            logger.debug(f"[WAN CLONER] Chunk {chunk_idx + 1} Negative Prompt: {wan_negative_prompt}")
 
             if status_callback:
                 status_callback(
@@ -772,85 +1287,278 @@ class WanVideoCloner:
                 style=style_clean,
             )
 
-            # 4b. Extract keyframe for this chunk
-            chunk_raw_frame = chunks_dir / f"keyframe_{chunk_idx:04d}_raw.png"
-            if chunk_idx == 0:
-                shutil.copy2(extracted_frame, chunk_raw_frame)
-            else:
-                self.extract_frame_at_time(source_video, start_t, chunk_raw_frame)
-
-            # Create a cel-shaded anime version of the keyframe as anchor fallback
-            chunk_prefiltered_frame = chunks_dir / f"keyframe_{chunk_idx:04d}_prefiltered.png"
-            self.prefilter_image_to_anime(
-                input_image_path=chunk_raw_frame,
-                output_image_path=chunk_prefiltered_frame,
-                wan_w=wan_w,
-                wan_h=wan_h,
-            )
-
-            # 4c. Keyframe preparation:
-            styled_chunk_keyframe = chunks_dir / f"keyframe_{chunk_idx:04d}_styled.png"
-            refs_to_use = generated_character_images if generated_character_images else []
-            keyframe_denoise = 0.85 if style_clean == "anime" else active_denoise
-            try:
-                self.keyframe_generator.generate(
-                    scene_image=chunk_raw_frame,
-                    character_references=refs_to_use,
-                    prompt=edit_prompt,
-                    negative_prompt=anime_qwen_negative,
-                    output_path=styled_chunk_keyframe,
-                    seed=chunk_seed,
-                    denoise=keyframe_denoise,
-                    cfg=active_cfg,
-                )
-            except Exception as e:
-                logger.warning(f"[WAN CLONER] Keyframe anime restyle notice: {e}. Using cel-shaded anime keyframe anchor.")
-                print(f"[WAN CLONER] Using cel-shaded anime keyframe anchor for chunk {chunk_idx + 1}.")
-                styled_chunk_keyframe = chunk_prefiltered_frame
-
-            if chunk_idx == 0:
-                shutil.copy2(styled_chunk_keyframe, job_dir / "styled_scene_keyframe.png")
-
-            # 4d. Animate with Wan 2.2 V2V (Video-to-Video with exact 1:1 motion preservation)
-            temp_wan_raw = chunks_dir / f"temp_wan_{chunk_idx:04d}.mp4"
-            print_gpu_memory(f"Before Wan 2.2 V2V Chunk {chunk_idx + 1}")
-            actual_wan_video = self.animate_with_wan_v2v(
-                chunk_video_path=chunk_src_video,
-                keyframe_path=styled_chunk_keyframe,
-                motion_prompt=motion_prompt,
-                output_video_path=temp_wan_raw,
-                seed=chunk_seed,
-                length_frames=TARGET_FRAMES,
-                fps=16,
+            # 4a-ctl. Generate or reuse control video for Wan Fun Control (mode: pose, depth, canny, or pose+depth)
+            chunk_control_video = chunks_dir / f"chunk_{chunk_idx:04d}_control.mp4"
+            active_control_mode = control_mode or CONTROL_VIDEO_MODE
+            self.extract_control_video(
+                chunk_src_mp4=chunk_src_video,
+                mode=active_control_mode,
+                output_path=chunk_control_video,
                 width=wan_w,
                 height=wan_h,
-                negative_prompt=wan_negative_prompt,
-                denoise=active_denoise,
-                cfg=active_cfg,
+                fps=16,
+                target_frames=TARGET_FRAMES,
             )
-            print_gpu_memory(f"After Wan 2.2 V2V Chunk {chunk_idx + 1}")
 
-            if not actual_wan_video.exists() or actual_wan_video.stat().st_size == 0:
-                raise RuntimeError(f"Wan 2.2 chunk {chunk_idx + 1} produced no video file: {actual_wan_video}")
+            # 4b & 4c. Anime Start Frame & Chunk Chaining / Re-anchoring
+            styled_chunk_keyframe = chunks_dir / f"keyframe_{chunk_idx:04d}_styled.png"
+            is_reanchor_chunk = (chunk_idx > 0) and (chunk_idx % REANCHOR_EVERY_N_CHUNKS == 0)
 
-            # 4e. Resample chunk to source FPS and clamp duration
-            resample_cmd = [
-                "ffmpeg", "-y",
-                "-i", str(actual_wan_video),
-                "-t", str(round(this_chunk_dur, 3)),
-                "-r", str(src_fps),
-                "-c:v", "libx264",
-                "-pix_fmt", "yuv420p",
-                str(chunk_target),
-            ]
-            res_chunk = subprocess.run(resample_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            if res_chunk.returncode != 0:
-                logger.error(f"[WAN CLONER] FFmpeg chunk resample failed:\n{res_chunk.stderr}")
-                shutil.copy2(actual_wan_video, chunk_target)
+            if chunk_idx == 0:
+                # Chunk 0: Qwen Image Edit redraw from initial source scene frame
+                logger.info(f"[WAN CLONER] [CHUNK 0] Generating initial 2D anime anchor keyframe with Qwen Image Edit...")
+                print(f"[WAN CLONER] [CHUNK 0] Generating initial 2D anime anchor keyframe with Qwen Image Edit...")
+                chunk_raw_frame = chunks_dir / f"keyframe_{chunk_idx:04d}_raw.png"
+                shutil.copy2(extracted_frame, chunk_raw_frame)
 
-            actual_wan_video.unlink(missing_ok=True)
+                chunk_prefiltered_frame = chunks_dir / f"keyframe_{chunk_idx:04d}_prefiltered.png"
+                self.prefilter_image_to_anime(
+                    input_image_path=chunk_raw_frame,
+                    output_image_path=chunk_prefiltered_frame,
+                    wan_w=wan_w,
+                    wan_h=wan_h,
+                )
+
+                refs_to_use = generated_character_images if generated_character_images else []
+                keyframe_denoise = 0.85 if style_clean == "anime" else active_denoise
+                try:
+                    self.keyframe_generator.generate(
+                        scene_image=chunk_raw_frame,
+                        character_references=refs_to_use,
+                        prompt=edit_prompt,
+                        negative_prompt=anime_qwen_negative,
+                        output_path=styled_chunk_keyframe,
+                        seed=chunk_seed,
+                        denoise=keyframe_denoise,
+                        cfg=active_cfg,
+                    )
+                except Exception as e:
+                    logger.warning(f"[WAN CLONER] Keyframe anime restyle notice: {e}. Using cel-shaded fallback.")
+                    styled_chunk_keyframe = chunk_prefiltered_frame
+
+                shutil.copy2(styled_chunk_keyframe, job_dir / "styled_scene_keyframe.png")
+
+            elif is_reanchor_chunk:
+                # Re-anchor every N chunks (default 15) to prevent color/detail drift
+                logger.info(
+                    f"[WAN CLONER] [RE-ANCHOR] Chunk {chunk_idx + 1}/{num_chunks}: "
+                    f"Re-anchoring via Qwen Image Edit with character reference portraits (every {REANCHOR_EVERY_N_CHUNKS} chunks)."
+                )
+                print(
+                    f"[WAN CLONER] [RE-ANCHOR] Chunk {chunk_idx + 1}/{num_chunks}: "
+                    f"Re-anchoring via Qwen Image Edit with character references (drift prevention)..."
+                )
+                chunk_raw_frame = chunks_dir / f"keyframe_{chunk_idx:04d}_raw.png"
+                self.extract_frame_at_time(source_video, start_t, chunk_raw_frame)
+
+                refs_to_use = generated_character_images if generated_character_images else []
+                keyframe_denoise = 0.85 if style_clean == "anime" else active_denoise
+                try:
+                    self.keyframe_generator.generate(
+                        scene_image=chunk_raw_frame,
+                        character_references=refs_to_use,
+                        prompt=edit_prompt,
+                        negative_prompt=anime_qwen_negative,
+                        output_path=styled_chunk_keyframe,
+                        seed=chunk_seed,
+                        denoise=keyframe_denoise,
+                        cfg=active_cfg,
+                    )
+                except Exception as e:
+                    logger.warning(f"[WAN CLONER] Re-anchor redraw notice: {e}. Falling back to previous chunk's last frame.")
+                    prev_chunk_video = chunks_dir / f"chunk_{chunk_idx - 1:04d}.mp4"
+                    self.extract_last_frame(prev_chunk_video, styled_chunk_keyframe)
+
+            else:
+                # Chained Chunk: Use the LAST frame of the generated chunk N-1 (already pure anime) as start image
+                prev_chunk_video = chunks_dir / f"chunk_{chunk_idx - 1:04d}.mp4"
+                chained_keyframe = chunks_dir / f"keyframe_{chunk_idx:04d}_chained.png"
+                logger.info(
+                    f"[WAN CLONER] [CHAINED] Chunk {chunk_idx + 1}/{num_chunks}: "
+                    f"Chaining start frame from last frame of chunk {chunk_idx} ({prev_chunk_video.name})."
+                )
+                print(
+                    f"[WAN CLONER] [CHAINED] Chunk {chunk_idx + 1}/{num_chunks}: "
+                    f"Chaining start frame from last frame of chunk {chunk_idx} ({prev_chunk_video.name})."
+                )
+
+                if prev_chunk_video.exists() and prev_chunk_video.stat().st_size > 1000:
+                    self.extract_last_frame(prev_chunk_video, chained_keyframe)
+                    styled_chunk_keyframe = chained_keyframe
+                else:
+                    logger.warning(
+                        f"[WAN CLONER] Previous chunk {prev_chunk_video.name} not found on disk. "
+                        f"Extracting source frame fallback."
+                    )
+                    chunk_raw_frame = chunks_dir / f"keyframe_{chunk_idx:04d}_raw.png"
+                    self.extract_frame_at_time(source_video, start_t, chunk_raw_frame)
+                    styled_chunk_keyframe = chunk_raw_frame
+
+            # 4d. Animate with Wan with Quality Gate and Retry Loop
+            active_backend = (cloning_backend or CLONING_BACKEND or "fun_control").lower().strip()
+            quality_file = chunks_dir / f"chunk_{chunk_idx:04d}_quality.json"
+            max_retries = QUALITY_MAX_RETRIES
+            attempts_record = []
+            chosen_candidate_path = None
+            best_score = -1.0
+            best_candidate_path = None
+            passed_quality = False
+
+            for attempt in range(max_retries):
+                attempt_seed = chunk_seed + attempt * 7919
+                temp_wan_raw = chunks_dir / f"temp_wan_{chunk_idx:04d}_att{attempt}.mp4"
+                candidate_chunk = chunks_dir / f"chunk_{chunk_idx:04d}_att{attempt}.mp4"
+
+                logger.info(
+                    f"[WAN CLONER] Animating Chunk {chunk_idx + 1}/{num_chunks} "
+                    f"(attempt {attempt + 1}/{max_retries}, seed={attempt_seed})..."
+                )
+                print(
+                    f"[WAN CLONER] Animating Chunk {chunk_idx + 1}/{num_chunks} "
+                    f"(attempt {attempt + 1}/{max_retries}, seed={attempt_seed})..."
+                )
+
+                if active_backend == "legacy_i2v":
+                    print_gpu_memory(f"Before Wan 2.2 V2V Chunk {chunk_idx + 1} (att {attempt + 1})")
+                    actual_wan_video = self.animate_with_wan_v2v(
+                        chunk_video_path=chunk_src_video,
+                        keyframe_path=styled_chunk_keyframe,
+                        motion_prompt=motion_prompt,
+                        output_video_path=temp_wan_raw,
+                        seed=attempt_seed,
+                        length_frames=TARGET_FRAMES,
+                        fps=16,
+                        width=wan_w,
+                        height=wan_h,
+                        negative_prompt=wan_negative_prompt,
+                        denoise=active_denoise,
+                        cfg=active_cfg,
+                    )
+                    print_gpu_memory(f"After Wan 2.2 V2V Chunk {chunk_idx + 1} (att {attempt + 1})")
+                else:
+                    # Wan 2.2 Fun Control (Default)
+                    chunk_control_video = chunks_dir / f"chunk_{chunk_idx:04d}_control.mp4"
+                    control_video_to_use = (
+                        chunk_control_video
+                        if (chunk_control_video.exists() and chunk_control_video.stat().st_size > 1000)
+                        else chunk_src_video
+                    )
+                    print_gpu_memory(f"Before Wan 2.2 Fun Control Chunk {chunk_idx + 1} (att {attempt + 1})")
+                    actual_wan_video = self.animate_with_wan_fun_control(
+                        control_video_path=control_video_to_use,
+                        keyframe_path=styled_chunk_keyframe,
+                        motion_prompt=motion_prompt,
+                        output_video_path=temp_wan_raw,
+                        seed=attempt_seed,
+                        length_frames=TARGET_FRAMES,
+                        fps=16,
+                        width=wan_w,
+                        height=wan_h,
+                        negative_prompt=wan_negative_prompt,
+                        steps=FUN_CONTROL_STEPS,
+                        cfg=FUN_CONTROL_CFG,
+                        prompt_override=prompt_override,
+                    )
+                    print_gpu_memory(f"After Wan 2.2 Fun Control Chunk {chunk_idx + 1} (att {attempt + 1})")
+
+                if not actual_wan_video.exists() or actual_wan_video.stat().st_size == 0:
+                    logger.error(f"[WAN CLONER] Wan chunk {chunk_idx + 1} attempt {attempt + 1} produced no video file.")
+                    continue
+
+                # 4e. Resample chunk candidate to source FPS and clamp duration
+                resample_cmd = [
+                    "ffmpeg", "-y",
+                    "-i", str(actual_wan_video),
+                    "-t", str(round(this_chunk_dur, 3)),
+                    "-r", str(src_fps),
+                    "-c:v", "libx264",
+                    "-pix_fmt", "yuv420p",
+                    str(candidate_chunk),
+                ]
+                res_chunk = subprocess.run(resample_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                if res_chunk.returncode != 0 or not candidate_chunk.exists():
+                    shutil.copy2(actual_wan_video, candidate_chunk)
+                actual_wan_video.unlink(missing_ok=True)
+
+                # Quality evaluation gate
+                quality_res = check_chunk(source_chunk_mp4=chunk_src_video, output_chunk_mp4=candidate_chunk)
+                score = quality_res.get("overall_score", 0.0)
+                attempts_record.append({
+                    "attempt": attempt + 1,
+                    "seed": attempt_seed,
+                    "scores": quality_res,
+                })
+
+                if score > best_score:
+                    best_score = score
+                    best_candidate_path = candidate_chunk
+
+                if quality_res.get("passed", False):
+                    logger.info(
+                        f"[QUALITY GATE] Chunk {chunk_idx + 1} PASSED quality check on attempt {attempt + 1} "
+                        f"(overall={score:.3f}, motion={quality_res.get('motion_score', 0):.3f}, "
+                        f"anime={quality_res.get('anime_score', 0):.3f}, flicker={quality_res.get('flicker_score', 0):.3f})."
+                    )
+                    print(
+                        f"[QUALITY GATE] Chunk {chunk_idx + 1} PASSED quality check on attempt {attempt + 1} (score={score:.3f})."
+                    )
+                    chosen_candidate_path = candidate_chunk
+                    passed_quality = True
+                    break
+                else:
+                    logger.warning(
+                        f"[QUALITY GATE] Chunk {chunk_idx + 1} attempt {attempt + 1} failed quality check "
+                        f"(motion_passed={quality_res.get('motion_passed')}, anime_passed={quality_res.get('anime_passed')}, "
+                        f"flicker_passed={quality_res.get('flicker_passed')}, score={score:.3f}). Retrying with new seed..."
+                    )
+                    print(
+                        f"[QUALITY GATE] Chunk {chunk_idx + 1} attempt {attempt + 1} failed check (score={score:.3f}). Retrying..."
+                    )
+
+            if not passed_quality:
+                logger.warning(
+                    f"[QUALITY GATE] WARNING: Chunk {chunk_idx + 1} did not pass quality check after {max_retries} attempts. "
+                    f"Retaining highest-scoring attempt (score={best_score:.3f}). Job continuing."
+                )
+                print(
+                    f"[QUALITY GATE] WARNING: Chunk {chunk_idx + 1} failed quality checks after {max_retries} attempts. "
+                    f"Keeping best attempt (score={best_score:.3f})."
+                )
+                chosen_candidate_path = best_candidate_path
+
+            # Finalize chosen candidate as chunk_target
+            if chosen_candidate_path and chosen_candidate_path.exists():
+                shutil.copy2(chosen_candidate_path, chunk_target)
+            elif not chunk_target.exists():
+                raise RuntimeError(f"Chunk {chunk_idx + 1} failed all generation attempts without producing output.")
+
+            # Record quality scores of every attempt to chunks/chunk_XXXX_quality.json
+            quality_payload = {
+                "chunk_index": chunk_idx,
+                "passed": passed_quality,
+                "num_attempts": len(attempts_record),
+                "best_score": best_score,
+                "attempts": attempts_record,
+            }
+            with open(quality_file, "w", encoding="utf-8") as qf:
+                json.dump(quality_payload, qf, indent=2)
+
+            # Cleanup temporary candidate attempt files
+            for att in range(max_retries):
+                att_file = chunks_dir / f"chunk_{chunk_idx:04d}_att{att}.mp4"
+                att_file.unlink(missing_ok=True)
+
             chunk_src_video.unlink(missing_ok=True)
             completed_chunk_paths.append(chunk_target)
+            if chunk_idx not in completed_chunk_indices:
+                completed_chunk_indices.append(chunk_idx)
+            job_state["completed_chunks"] = sorted(completed_chunk_indices)
+            job_state["updated_at"] = time.time()
+            try:
+                with open(state_file, "w", encoding="utf-8") as sf:
+                    json.dump(job_state, sf, indent=2)
+            except Exception as se:
+                logger.warning(f"[WAN CLONER] Could not update job_state.json: {se}")
 
             # Force garbage collection between chunks to keep VRAM completely clean
             gc.collect()
@@ -909,6 +1617,15 @@ class WanVideoCloner:
 
         if stitched_video != completed_chunk_paths[0]:
             stitched_video.unlink(missing_ok=True)
+
+        job_state["status"] = "completed"
+        job_state["output_video"] = str(output_video)
+        job_state["completed_at"] = time.time()
+        try:
+            with open(state_file, "w", encoding="utf-8") as sf:
+                json.dump(job_state, sf, indent=2)
+        except Exception as se:
+            logger.warning(f"[WAN CLONER] Could not finalize job_state.json: {se}")
 
         logger.info(f"[WAN CLONER] Long video cloning complete! Saved to {output_video}")
         print(f"[WAN CLONER] Long video cloning complete! Saved to {output_video}")
