@@ -1303,7 +1303,15 @@ class WanVideoCloner:
 
         CHUNK_SEC = CHUNK_DURATION_SEC
         TARGET_FRAMES = CHUNK_TARGET_FRAMES
-        num_chunks = max(1, int(math.ceil(active_duration / CHUNK_SEC)))
+
+        # Guard against tiny trailing micro-chunks (e.g. 25.01s with 5s chunks producing a 0.01s empty chunk)
+        rem = active_duration % CHUNK_SEC
+        if 0 < rem < 0.5:
+            active_duration = float(int(active_duration // CHUNK_SEC) * CHUNK_SEC)
+            num_chunks = max(1, int(active_duration // CHUNK_SEC))
+        else:
+            num_chunks = max(1, int(math.ceil(active_duration / CHUNK_SEC)))
+
         logger.info(f"[WAN CLONER] Processing {active_duration:.2f}s in {num_chunks} chunks ({CHUNK_SEC}s / {TARGET_FRAMES} frames each)...")
         print(f"[WAN CLONER] Processing {active_duration:.2f}s in {num_chunks} chunks ({CHUNK_SEC}s / {TARGET_FRAMES} frames each)...")
 
@@ -1338,6 +1346,10 @@ class WanVideoCloner:
         for chunk_idx in range(num_chunks):
             start_t = chunk_idx * CHUNK_SEC
             this_chunk_dur = min(CHUNK_SEC, active_duration - start_t)
+            if this_chunk_dur < 0.5:
+                logger.info(f"[WAN CLONER] Skipping trailing sub-second fragment ({this_chunk_dur:.2f}s < 0.5s)")
+                continue
+
             chunk_target = chunks_dir / f"chunk_{chunk_idx:04d}.mp4"
 
             # Checkpoint / Resume capability: skip if this chunk is already finished
@@ -1545,7 +1557,7 @@ class WanVideoCloner:
                         width=wan_w,
                         height=wan_h,
                         negative_prompt=wan_negative_prompt,
-                        steps=FUN_CONTROL_STEPS,
+                        steps=None,
                         cfg=FUN_CONTROL_CFG,
                         prompt_override=prompt_override,
                     )
