@@ -1430,7 +1430,7 @@ class WanVideoCloner:
                         prompt=edit_prompt,
                         negative_prompt=anime_qwen_negative,
                         output_path=styled_chunk_keyframe,
-                        seed=chunk_seed,
+                        seed=seed,
                         denoise=keyframe_denoise,
                         cfg=active_cfg,
                     )
@@ -1462,7 +1462,7 @@ class WanVideoCloner:
                         prompt=edit_prompt,
                         negative_prompt=anime_qwen_negative,
                         output_path=styled_chunk_keyframe,
-                        seed=chunk_seed,
+                        seed=seed,
                         denoise=keyframe_denoise,
                         cfg=active_cfg,
                     )

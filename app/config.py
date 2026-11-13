@@ -85,8 +85,9 @@ CONTROL_VIDEO_MODE = os.getenv("CONTROL_VIDEO_MODE", "depth")
 CHUNK_DURATION_SEC = float(os.getenv("CHUNK_DURATION_SEC", "5.0"))
 CHUNK_TARGET_FRAMES = int(os.getenv("CHUNK_TARGET_FRAMES", "81"))
 
-# Re-anchor interval for chunk chaining (prevents color and detail drift)
-REANCHOR_EVERY_N_CHUNKS = int(os.getenv("REANCHOR_EVERY_N_CHUNKS", "15"))
+# Re-anchor interval for chunk chaining: re-anchor EVERY chunk (1) so every chunk
+# gets a fresh Qwen 2D anime anchor frame matching its control video, eliminating ghosting and drift.
+REANCHOR_EVERY_N_CHUNKS = int(os.getenv("REANCHOR_EVERY_N_CHUNKS", "1"))
 
 # ---------------------------------------------------------------------------
 # Quality gate thresholds and retry settings
