@@ -93,6 +93,14 @@ class CloningJobRequest(BaseModel):
         default=None,
         description="Optional prompt overrides: 'fun_control_positive', 'fun_control_negative', 'qwen_keyframe', 'qwen_negative'"
     )
+    reanchor_mode: Optional[str] = Field(
+        default=None,
+        description="Re-anchor mode: 'every_chunk' (default), 'every_n', or 'auto'."
+    )
+    qwen_seed: Optional[int] = Field(
+        default=None,
+        description="Fixed Qwen keyframe seed (default: 42 or derived from seed)."
+    )
     job_id: Optional[str] = Field(
         default=None,
         description="Optional existing job_id to resume without creating a new folder."
@@ -106,6 +114,8 @@ class ResumeJobRequest(BaseModel):
     control_mode: Optional[str] = None
     cloning_backend: Optional[str] = None
     prompt_override: Optional[Dict[str, str]] = None
+    reanchor_mode: Optional[str] = None
+    qwen_seed: Optional[int] = None
 
 
 def resolve_input(name: str) -> Path:
@@ -238,6 +248,8 @@ def process_cloning_job(
     control_mode: Optional[str] = None,
     cloning_backend: Optional[str] = None,
     prompt_override: Optional[Dict[str, str]] = None,
+    reanchor_mode: Optional[str] = None,
+    qwen_seed: Optional[int] = None,
 ):
     """
     Background worker:
@@ -317,6 +329,8 @@ def process_cloning_job(
                 cloning_backend=cloning_backend,
                 control_mode=control_mode,
                 prompt_override=prompt_override,
+                reanchor_mode=reanchor_mode,
+                qwen_seed=qwen_seed,
             )
 
             # Scan generated character faces in job_dir to include in status
@@ -503,6 +517,8 @@ def create_cloning_job(request: CloningJobRequest):
                 "input_video_copy": str(active_source_video),
                 "characters": [c.model_dump() for c in request.characters] if request.characters else [],
                 "prompt_override": request.prompt_override,
+                "reanchor_mode": request.reanchor_mode,
+                "qwen_seed": request.qwen_seed,
             },
             f,
             indent=2,
@@ -528,6 +544,8 @@ def create_cloning_job(request: CloningJobRequest):
         request.control_mode,
         request.cloning_backend,
         request.prompt_override,
+        request.reanchor_mode,
+        request.qwen_seed,
     )
 
     return {
@@ -568,6 +586,14 @@ async def create_cloning_job_upload(
     prompt_override: Optional[str] = Form(
         default=None,
         description="Optional JSON string of prompt overrides: e.g. {'fun_control_positive': '...', 'fun_control_negative': '...'}"
+    ),
+    reanchor_mode: Optional[str] = Form(
+        default=None,
+        description="Re-anchor mode: 'every_chunk' (default), 'every_n', or 'auto'."
+    ),
+    qwen_seed: Optional[int] = Form(
+        default=None,
+        description="Fixed Qwen keyframe seed (default: 42 or derived from seed)."
     ),
 ):
     """
@@ -627,6 +653,8 @@ async def create_cloning_job_upload(
                 "control_mode": control_mode,
                 "cloning_backend": cloning_backend,
                 "prompt_override": parsed_prompt_override,
+                "reanchor_mode": reanchor_mode,
+                "qwen_seed": qwen_seed,
             },
             f,
             indent=2,
@@ -653,6 +681,8 @@ async def create_cloning_job_upload(
         control_mode,
         cloning_backend,
         parsed_prompt_override,
+        reanchor_mode,
+        qwen_seed,
     )
 
     return {
@@ -693,6 +723,8 @@ def resume_cloning_job(request: ResumeJobRequest):
         control_mode=request.control_mode,
         cloning_backend=request.cloning_backend,
         prompt_override=request.prompt_override,
+        reanchor_mode=request.reanchor_mode,
+        qwen_seed=request.qwen_seed,
     )
 
 
@@ -704,6 +736,8 @@ def resume_cloning_job_by_path(
     control_mode: Optional[str] = None,
     cloning_backend: Optional[str] = None,
     prompt_override: Optional[str] = None,
+    reanchor_mode: Optional[str] = None,
+    qwen_seed: Optional[int] = None,
 ):
     """Resumes an interrupted cloning job by job_id URL path parameter."""
     parsed_override = None
@@ -719,6 +753,8 @@ def resume_cloning_job_by_path(
         control_mode=control_mode,
         cloning_backend=cloning_backend,
         prompt_override=parsed_override,
+        reanchor_mode=reanchor_mode,
+        qwen_seed=qwen_seed,
     )
 
 
@@ -729,6 +765,8 @@ def _resume_job_by_id(
     control_mode: Optional[str] = None,
     cloning_backend: Optional[str] = None,
     prompt_override: Optional[Dict[str, str]] = None,
+    reanchor_mode: Optional[str] = None,
+    qwen_seed: Optional[int] = None,
 ):
     clean_id = job_id.strip()
     job_dir = OUTPUT_DIR / clean_id
@@ -786,6 +824,16 @@ def _resume_job_by_id(
         or saved_state.get("prompt_override")
         or record_data.get("prompt_override")
     )
+    active_reanchor_mode = (
+        reanchor_mode
+        or saved_state.get("reanchor_mode")
+        or record_data.get("reanchor_mode")
+    )
+    active_qwen_seed = (
+        qwen_seed
+        if qwen_seed is not None
+        else saved_state.get("qwen_seed", record_data.get("qwen_seed"))
+    )
 
     write_status(
         job_dir,
@@ -806,6 +854,8 @@ def _resume_job_by_id(
         active_control,
         active_backend,
         active_prompt_override,
+        active_reanchor_mode,
+        active_qwen_seed,
     )
 
     return {

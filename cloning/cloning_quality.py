@@ -343,3 +343,179 @@ def check_chunk(
         f"overall={overall_score:.3f} (motion={motion_score:.3f}, anime={anime_score:.3f}, flicker={flicker_score:.3f})"
     )
     return result
+
+
+def _compute_ssim_numpy(img1: Any, img2: Any) -> float:
+    """Computes Structural Similarity Index (SSIM) between two 2D float32 arrays."""
+    try:
+        import cv2
+        import numpy as np
+
+        C1 = (0.01 * 255.0) ** 2
+        C2 = (0.03 * 255.0) ** 2
+
+        f1 = img1.astype(np.float32)
+        f2 = img2.astype(np.float32)
+
+        mu1 = cv2.GaussianBlur(f1, (11, 11), 1.5)
+        mu2 = cv2.GaussianBlur(f2, (11, 11), 1.5)
+
+        mu1_sq = mu1 * mu1
+        mu2_sq = mu2 * mu2
+        mu1_mu2 = mu1 * mu2
+
+        sigma1_sq = cv2.GaussianBlur(f1 * f1, (11, 11), 1.5) - mu1_sq
+        sigma2_sq = cv2.GaussianBlur(f2 * f2, (11, 11), 1.5) - mu2_sq
+        sigma12 = cv2.GaussianBlur(f1 * f2, (11, 11), 1.5) - mu1_mu2
+
+        num = (2.0 * mu1_mu2 + C1) * (2.0 * sigma12 + C2)
+        den = (mu1_sq + mu2_sq + C1) * (sigma1_sq + sigma2_sq + C2)
+        ssim_map = num / (den + 1e-7)
+        return float(np.clip(np.mean(ssim_map), 0.0, 1.0))
+    except Exception:
+        return 0.0
+
+
+def check_start_alignment(
+    start_image: Any,
+    control_video: Any,
+    threshold: Optional[float] = None,
+) -> Tuple[bool, float, Dict[str, Any]]:
+    """
+    Checks structural alignment between a candidate starting keyframe and the first
+    frame of the control video (used in 'auto' re-anchor mode).
+
+    Method:
+      1. Converts both frames to 256px wide grayscale representations.
+      2. Computes Canny edge maps (low=50, high=150) followed by a 5x5 Gaussian expansion.
+         This captures body contours and pose silhouette while being robust to color/clothing differences.
+      3. Calculates structural similarity (SSIM) and normalized cross-correlation (NCC)
+         between the edge gradient maps. Composite score is the average of SSIM and NCC.
+      4. Compares against ALIGNMENT_THRESHOLD (default: 0.60, starting guess to be tuned on real footage).
+
+    Returns:
+      (passed: bool, score: float, details: dict)
+    """
+    try:
+        from app.config import ALIGNMENT_THRESHOLD
+    except ImportError:
+        ALIGNMENT_THRESHOLD = float(os.getenv("ALIGNMENT_THRESHOLD", "0.60"))
+
+    active_threshold = float(threshold if threshold is not None else ALIGNMENT_THRESHOLD)
+
+    try:
+        import cv2
+        import numpy as np
+
+        # 1. Load start_image
+        if isinstance(start_image, (str, Path)):
+            img_start = cv2.imread(str(start_image))
+        elif isinstance(start_image, np.ndarray):
+            img_start = start_image
+        else:
+            img_start = None
+
+        if img_start is None or img_start.size == 0:
+            logger.warning("[ALIGNMENT] start_image missing or unreadable. Forcing re-anchor.")
+            return False, 0.0, {"error": "start_image missing or empty", "threshold": active_threshold}
+
+        # 2. Extract first frame of control_video
+        if isinstance(control_video, (str, Path)):
+            cap = cv2.VideoCapture(str(control_video))
+            ret, img_ctrl = cap.read()
+            cap.release()
+            if not ret or img_ctrl is None:
+                logger.warning(f"[ALIGNMENT] Could not read first frame of {control_video}")
+                return False, 0.0, {"error": "control_video frame 0 unreadable", "threshold": active_threshold}
+        elif isinstance(control_video, np.ndarray):
+            img_ctrl = control_video
+        else:
+            return False, 0.0, {"error": "Invalid control_video type", "threshold": active_threshold}
+
+        # 3. Downscale both to 256 px wide (maintains aspect ratio, fast computation)
+        target_w = 256
+        h_s, w_s = img_start.shape[:2]
+        target_h = max(16, int(target_w * (h_s / max(w_s, 1))))
+
+        resized_start = cv2.resize(img_start, (target_w, target_h), interpolation=cv2.INTER_AREA)
+        resized_ctrl = cv2.resize(img_ctrl, (target_w, target_h), interpolation=cv2.INTER_AREA)
+
+        gray_start = cv2.cvtColor(resized_start, cv2.COLOR_BGR2GRAY) if len(resized_start.shape) == 3 else resized_start
+        gray_ctrl = cv2.cvtColor(resized_ctrl, cv2.COLOR_BGR2GRAY) if len(resized_ctrl.shape) == 3 else resized_ctrl
+
+        # 4. Compute Canny edge maps + slight Gaussian expansion
+        edges_start = cv2.Canny(gray_start, 50, 150)
+        edges_ctrl = cv2.Canny(gray_ctrl, 50, 150)
+
+        blur_start = cv2.GaussianBlur(edges_start.astype(np.float32), (5, 5), 1.5)
+        blur_ctrl = cv2.GaussianBlur(edges_ctrl.astype(np.float32), (5, 5), 1.5)
+
+        # 5. Compute SSIM on edge maps
+        ssim_val = _compute_ssim_numpy(blur_start, blur_ctrl)
+
+        # 6. Compute Normalized Cross-Correlation (NCC)
+        norm_s = blur_start - np.mean(blur_start)
+        norm_c = blur_ctrl - np.mean(blur_ctrl)
+        denom = np.sqrt(np.sum(norm_s ** 2) * np.sum(norm_c ** 2))
+        ncc_val = float(np.sum(norm_s * norm_c) / denom) if denom > 1e-6 else 0.0
+        ncc_val = float(np.clip(ncc_val, 0.0, 1.0))
+
+        # Composite score (weighted blend: 50% SSIM, 50% NCC)
+        composite_score = round(float(0.50 * ssim_val + 0.50 * ncc_val), 4)
+        passed = bool(composite_score >= active_threshold)
+
+        details = {
+            "score": composite_score,
+            "threshold": active_threshold,
+            "passed": passed,
+            "ssim": round(ssim_val, 4),
+            "ncc": round(ncc_val, 4),
+            "method": "canny_edge_256px_ssim_ncc",
+            "comment": "Threshold is a starting guess (default 0.60) and should be tuned on real footage.",
+        }
+
+        logger.info(
+            f"[ALIGNMENT] Start frame vs control frame 0: score={composite_score:.4f} "
+            f"(ssim={ssim_val:.4f}, ncc={ncc_val:.4f}, threshold={active_threshold:.2f}, passed={passed})"
+        )
+        return passed, composite_score, details
+
+    except Exception as e:
+        logger.warning(f"[ALIGNMENT] Error during alignment check ({e}). Defaulting to re-anchor.", exc_info=True)
+        return False, 0.0, {"error": str(e), "threshold": active_threshold, "passed": False}
+
+
+def compute_hsv_color_distance(img1_path: Any, img2_path: Any) -> Tuple[float, float]:
+    """
+    Computes color consistency between two frames in HSV space.
+    Returns (bhattacharyya_distance, correlation) in [0.0, 1.0].
+    Lower Bhattacharyya distance = closer color distribution.
+    Higher correlation = closer color distribution.
+    """
+    try:
+        import cv2
+        import numpy as np
+
+        p1 = str(img1_path)
+        p2 = str(img2_path)
+        im1 = cv2.imread(p1)
+        im2 = cv2.imread(p2)
+        if im1 is None or im2 is None:
+            return 1.0, 0.0
+
+        hsv1 = cv2.cvtColor(im1, cv2.COLOR_BGR2HSV)
+        hsv2 = cv2.cvtColor(im2, cv2.COLOR_BGR2HSV)
+
+        # 2D H-S histogram
+        hist1 = cv2.calcHist([hsv1], [0, 1], None, [30, 32], [0, 180, 0, 256])
+        hist2 = cv2.calcHist([hsv2], [0, 1], None, [30, 32], [0, 180, 0, 256])
+
+        cv2.normalize(hist1, hist1, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+        cv2.normalize(hist2, hist2, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+
+        bhatt = float(cv2.compareHist(hist1, hist2, cv2.HISTCMP_BHATTACHARYYA))
+        corr = float(cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL))
+        return round(bhatt, 4), round(corr, 4)
+    except Exception as e:
+        logger.debug(f"[SEAM COLOR] Could not compute HSV histogram distance: {e}")
+        return 0.0, 1.0

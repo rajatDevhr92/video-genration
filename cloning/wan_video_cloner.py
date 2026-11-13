@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
 
 from app.config import (
+    ALIGNMENT_THRESHOLD,
     CHUNK_DURATION_SEC,
     CHUNK_TARGET_FRAMES,
     CLONING_BACKEND,
@@ -43,7 +44,9 @@ from app.config import (
     OUTPUT_DIR,
     QWEN_KEYFRAME_NEGATIVE,
     QWEN_KEYFRAME_PROMPT,
+    QWEN_SEED,
     REANCHOR_EVERY_N_CHUNKS,
+    REANCHOR_MODE,
     QUALITY_MAX_RETRIES,
     USE_LIGHTNING_LORA,
     VIDEO_FPS,
@@ -56,7 +59,7 @@ from app.composition_generator import CompositionGenerator
 from app.keyframe_generator import KeyframeGenerator
 from app.workflow_runner import WorkflowRunner
 from app.gpu_memory import print_gpu_memory
-from .cloning_quality import check_chunk
+from .cloning_quality import check_chunk, check_start_alignment, compute_hsv_color_distance
 
 logger = logging.getLogger(__name__)
 
@@ -1130,6 +1133,8 @@ class WanVideoCloner:
         cloning_backend: Optional[str] = None,
         control_mode: Optional[str] = None,
         prompt_override: Optional[Dict[str, str]] = None,
+        reanchor_mode: Optional[str] = None,
+        qwen_seed: Optional[int] = None,
     ) -> Path:
         """
         Auto-detecting Wan V2V / Fun Control Video Cloning Pipeline (Realistic Video -> Anime Video):
@@ -1171,6 +1176,10 @@ class WanVideoCloner:
                     control_mode = saved_state["control_mode"]
                 if prompt_override is None and "prompt_override" in saved_state:
                     prompt_override = saved_state["prompt_override"]
+                if reanchor_mode is None and "reanchor_mode" in saved_state:
+                    reanchor_mode = saved_state["reanchor_mode"]
+                if qwen_seed is None and "qwen_seed" in saved_state:
+                    qwen_seed = saved_state["qwen_seed"]
             except Exception as se:
                 logger.warning(f"[WAN CLONER] Could not parse job_state.json: {se}")
 
@@ -1321,6 +1330,20 @@ class WanVideoCloner:
 
         active_backend = (cloning_backend or CLONING_BACKEND or "fun_control").lower().strip()
         active_control_mode = (control_mode or CONTROL_VIDEO_MODE or "pose+depth").lower().strip()
+        active_reanchor_mode = (
+            reanchor_mode
+            or saved_state.get("reanchor_mode")
+            or REANCHOR_MODE
+            or "every_chunk"
+        ).lower().strip()
+        if active_reanchor_mode not in ("every_chunk", "every_n", "auto"):
+            active_reanchor_mode = "every_chunk"
+
+        active_qwen_seed = (
+            int(qwen_seed)
+            if qwen_seed is not None
+            else int(saved_state.get("qwen_seed", QWEN_SEED if QWEN_SEED is not None else seed))
+        )
 
         job_state = {
             "job_id": job_dir.name,
@@ -1329,6 +1352,9 @@ class WanVideoCloner:
             "cloning_backend": active_backend,
             "control_mode": active_control_mode,
             "prompt_override": prompt_override,
+            "reanchor_mode": active_reanchor_mode,
+            "qwen_seed": active_qwen_seed,
+            "alignment_threshold": ALIGNMENT_THRESHOLD,
             "seed": seed,
             "denoise": denoise,
             "total_duration": total_duration,
@@ -1402,26 +1428,96 @@ class WanVideoCloner:
                 target_frames=TARGET_FRAMES,
             )
 
-            # 4b & 4c. Anime Start Frame & Chunk Chaining / Re-anchoring
+            # 4b & 4c. Anime Start Frame & Chunk Chaining / Re-anchoring Decision
             styled_chunk_keyframe = chunks_dir / f"keyframe_{chunk_idx:04d}_styled.png"
-            is_reanchor_chunk = (chunk_idx > 0) and (chunk_idx % REANCHOR_EVERY_N_CHUNKS == 0)
+            chained_keyframe = chunks_dir / f"keyframe_{chunk_idx:04d}_chained.png"
+            prev_chunk_video = chunks_dir / f"chunk_{chunk_idx - 1:04d}.mp4" if chunk_idx > 0 else None
+            has_prev = bool(prev_chunk_video and prev_chunk_video.exists() and prev_chunk_video.stat().st_size > 1000)
 
+            # Pre-extract previous chunk's last frame if chaining is possible
+            if has_prev:
+                try:
+                    self.extract_last_frame(prev_chunk_video, chained_keyframe)
+                except Exception as ef_err:
+                    logger.warning(f"[WAN CLONER] Could not extract last frame from {prev_chunk_video.name}: {ef_err}")
+                    has_prev = False
+
+            # Determine decision ("ANCHORED" or "CHAINED") and reason
             if chunk_idx == 0:
-                # Chunk 0: Qwen Image Edit redraw from initial source scene frame
-                logger.info(f"[WAN CLONER] [CHUNK 0] Generating initial 2D anime anchor keyframe with Qwen Image Edit...")
-                print(f"[WAN CLONER] [CHUNK 0] Generating initial 2D anime anchor keyframe with Qwen Image Edit...")
-                chunk_raw_frame = chunks_dir / f"keyframe_{chunk_idx:04d}_raw.png"
-                shutil.copy2(extracted_frame, chunk_raw_frame)
+                reanchor_decision = "ANCHORED"
+                reanchor_reason = "initial_chunk"
+            elif active_reanchor_mode == "every_chunk":
+                reanchor_decision = "ANCHORED"
+                reanchor_reason = "every_chunk_mode"
+            elif active_reanchor_mode == "every_n":
+                if chunk_idx % REANCHOR_EVERY_N_CHUNKS == 0:
+                    reanchor_decision = "ANCHORED"
+                    reanchor_reason = f"every_n_interval (every {REANCHOR_EVERY_N_CHUNKS} chunks)"
+                elif not has_prev:
+                    reanchor_decision = "ANCHORED"
+                    reanchor_reason = "missing_previous_chunk"
+                else:
+                    reanchor_decision = "CHAINED"
+                    reanchor_reason = f"within_n_interval (every {REANCHOR_EVERY_N_CHUNKS} chunks)"
+            elif active_reanchor_mode == "auto":
+                if not has_prev:
+                    reanchor_decision = "ANCHORED"
+                    reanchor_reason = "missing_previous_chunk"
+                else:
+                    align_passed, align_score, align_details = check_start_alignment(
+                        start_image=chained_keyframe,
+                        control_video=chunk_control_video,
+                        threshold=ALIGNMENT_THRESHOLD,
+                    )
+                    align_file = chunks_dir / f"chunk_{chunk_idx:04d}_alignment.json"
+                    try:
+                        with open(align_file, "w", encoding="utf-8") as af:
+                            json.dump(align_details, af, indent=2)
+                    except Exception as ae:
+                        logger.warning(f"[WAN CLONER] Could not save {align_file.name}: {ae}")
 
-                chunk_prefiltered_frame = chunks_dir / f"keyframe_{chunk_idx:04d}_prefiltered.png"
-                self.prefilter_image_to_anime(
-                    input_image_path=chunk_raw_frame,
-                    output_image_path=chunk_prefiltered_frame,
-                    wan_w=wan_w,
-                    wan_h=wan_h,
-                )
+                    if align_passed:
+                        reanchor_decision = "CHAINED"
+                        reanchor_reason = f"alignment_passed (score={align_score:.4f} >= {ALIGNMENT_THRESHOLD:.2f})"
+                    else:
+                        reanchor_decision = "ANCHORED"
+                        reanchor_reason = f"alignment_failed (score={align_score:.4f} < {ALIGNMENT_THRESHOLD:.2f})"
+            else:
+                reanchor_decision = "ANCHORED"
+                reanchor_reason = f"default_mode_{active_reanchor_mode}"
+
+            # Log decision in the exact required format:
+            # [CHUNK N] mode=..., decision=ANCHORED or CHAINED, reason=...
+            logger.info(
+                f"[CHUNK {chunk_idx + 1}] mode={active_reanchor_mode}, decision={reanchor_decision}, reason={reanchor_reason}"
+            )
+            print(
+                f"[CHUNK {chunk_idx + 1}] mode={active_reanchor_mode}, decision={reanchor_decision}, reason={reanchor_reason}"
+            )
+
+            # Execute Decision: ANCHORED (Qwen redraw from real video frame) vs CHAINED (previous chunk last frame)
+            if reanchor_decision == "ANCHORED":
+                chunk_raw_frame = chunks_dir / f"keyframe_{chunk_idx:04d}_raw.png"
+                if chunk_idx == 0:
+                    logger.info(f"[WAN CLONER] [CHUNK 0] Generating initial 2D anime anchor keyframe with Qwen Image Edit...")
+                    print(f"[WAN CLONER] [CHUNK 0] Generating initial 2D anime anchor keyframe with Qwen Image Edit...")
+                    shutil.copy2(extracted_frame, chunk_raw_frame)
+                else:
+                    logger.info(
+                        f"[WAN CLONER] [RE-ANCHOR] Chunk {chunk_idx + 1}/{num_chunks}: "
+                        f"Re-anchoring via Qwen Image Edit (mode={active_reanchor_mode}, reason={reanchor_reason})..."
+                    )
+                    print(
+                        f"[WAN CLONER] [RE-ANCHOR] Chunk {chunk_idx + 1}/{num_chunks}: "
+                        f"Re-anchoring via Qwen Image Edit (mode={active_reanchor_mode})..."
+                    )
+                    self.extract_frame_at_time(source_video, start_t, chunk_raw_frame)
 
                 refs_to_use = generated_character_images if generated_character_images else []
+                ref_names = [Path(r).name for r in refs_to_use]
+                logger.info(f"[CHUNK {chunk_idx + 1}] Qwen character references ({len(refs_to_use)}): {ref_names}")
+                print(f"[CHUNK {chunk_idx + 1}] Qwen character references ({len(refs_to_use)}): {ref_names}")
+
                 keyframe_denoise = 0.85 if style_clean == "anime" else active_denoise
                 try:
                     self.keyframe_generator.generate(
@@ -1430,51 +1526,42 @@ class WanVideoCloner:
                         prompt=edit_prompt,
                         negative_prompt=anime_qwen_negative,
                         output_path=styled_chunk_keyframe,
-                        seed=seed,
+                        seed=active_qwen_seed,
                         denoise=keyframe_denoise,
                         cfg=active_cfg,
                     )
                 except Exception as e:
-                    logger.warning(f"[WAN CLONER] Keyframe anime restyle notice: {e}. Using cel-shaded fallback.")
-                    styled_chunk_keyframe = chunk_prefiltered_frame
-
-                shutil.copy2(styled_chunk_keyframe, job_dir / "styled_scene_keyframe.png")
-
-            elif is_reanchor_chunk:
-                # Re-anchor every N chunks (default 15) to prevent color/detail drift
-                logger.info(
-                    f"[WAN CLONER] [RE-ANCHOR] Chunk {chunk_idx + 1}/{num_chunks}: "
-                    f"Re-anchoring via Qwen Image Edit with character reference portraits (every {REANCHOR_EVERY_N_CHUNKS} chunks)."
-                )
-                print(
-                    f"[WAN CLONER] [RE-ANCHOR] Chunk {chunk_idx + 1}/{num_chunks}: "
-                    f"Re-anchoring via Qwen Image Edit with character references (drift prevention)..."
-                )
-                chunk_raw_frame = chunks_dir / f"keyframe_{chunk_idx:04d}_raw.png"
-                self.extract_frame_at_time(source_video, start_t, chunk_raw_frame)
-
-                refs_to_use = generated_character_images if generated_character_images else []
-                keyframe_denoise = 0.85 if style_clean == "anime" else active_denoise
-                try:
-                    self.keyframe_generator.generate(
-                        scene_image=chunk_raw_frame,
-                        character_references=refs_to_use,
-                        prompt=edit_prompt,
-                        negative_prompt=anime_qwen_negative,
-                        output_path=styled_chunk_keyframe,
-                        seed=seed,
-                        denoise=keyframe_denoise,
-                        cfg=active_cfg,
+                    logger.warning(
+                        f"[WAN CLONER] Keyframe anime redraw notice on chunk {chunk_idx + 1}: {e}. Falling back..."
                     )
-                except Exception as e:
-                    logger.warning(f"[WAN CLONER] Re-anchor redraw notice: {e}. Falling back to previous chunk's last frame.")
-                    prev_chunk_video = chunks_dir / f"chunk_{chunk_idx - 1:04d}.mp4"
-                    self.extract_last_frame(prev_chunk_video, styled_chunk_keyframe)
+                    if chunk_idx > 0 and has_prev and chained_keyframe.exists():
+                        shutil.copy2(chained_keyframe, styled_chunk_keyframe)
+                    else:
+                        chunk_prefiltered_frame = chunks_dir / f"keyframe_{chunk_idx:04d}_prefiltered.png"
+                        self.prefilter_image_to_anime(
+                            input_image_path=chunk_raw_frame,
+                            output_image_path=chunk_prefiltered_frame,
+                            wan_w=wan_w,
+                            wan_h=wan_h,
+                        )
+                        styled_chunk_keyframe = chunk_prefiltered_frame
+
+                if chunk_idx == 0:
+                    shutil.copy2(styled_chunk_keyframe, job_dir / "styled_scene_keyframe.png")
+                elif has_prev and chained_keyframe.exists() and styled_chunk_keyframe.exists():
+                    # Task 3: Compare mean color histograms (in HSV) between previous last frame and new Qwen keyframe
+                    bhatt_dist, hist_corr = compute_hsv_color_distance(styled_chunk_keyframe, chained_keyframe)
+                    logger.info(
+                        f"[SEAM COLOR] Chunk {chunk_idx} -> Chunk {chunk_idx + 1} HSV histogram distance: "
+                        f"{bhatt_dist:.4f} (correlation: {hist_corr:.4f})"
+                    )
+                    print(
+                        f"[SEAM COLOR] Chunk {chunk_idx} -> Chunk {chunk_idx + 1} HSV histogram distance: "
+                        f"{bhatt_dist:.4f} (correlation: {hist_corr:.4f})"
+                    )
 
             else:
-                # Chained Chunk: Use the LAST frame of the generated chunk N-1 (already pure anime) as start image
-                prev_chunk_video = chunks_dir / f"chunk_{chunk_idx - 1:04d}.mp4"
-                chained_keyframe = chunks_dir / f"keyframe_{chunk_idx:04d}_chained.png"
+                # CHAINED branch
                 logger.info(
                     f"[WAN CLONER] [CHAINED] Chunk {chunk_idx + 1}/{num_chunks}: "
                     f"Chaining start frame from last frame of chunk {chunk_idx} ({prev_chunk_video.name})."
@@ -1483,18 +1570,7 @@ class WanVideoCloner:
                     f"[WAN CLONER] [CHAINED] Chunk {chunk_idx + 1}/{num_chunks}: "
                     f"Chaining start frame from last frame of chunk {chunk_idx} ({prev_chunk_video.name})."
                 )
-
-                if prev_chunk_video.exists() and prev_chunk_video.stat().st_size > 1000:
-                    self.extract_last_frame(prev_chunk_video, chained_keyframe)
-                    styled_chunk_keyframe = chained_keyframe
-                else:
-                    logger.warning(
-                        f"[WAN CLONER] Previous chunk {prev_chunk_video.name} not found on disk. "
-                        f"Extracting source frame fallback."
-                    )
-                    chunk_raw_frame = chunks_dir / f"keyframe_{chunk_idx:04d}_raw.png"
-                    self.extract_frame_at_time(source_video, start_t, chunk_raw_frame)
-                    styled_chunk_keyframe = chunk_raw_frame
+                styled_chunk_keyframe = chained_keyframe
 
             # 4d. Animate with Wan with Quality Gate and Retry Loop
             active_backend = (cloning_backend or CLONING_BACKEND or "fun_control").lower().strip()

@@ -85,9 +85,20 @@ CONTROL_VIDEO_MODE = os.getenv("CONTROL_VIDEO_MODE", "depth")
 CHUNK_DURATION_SEC = float(os.getenv("CHUNK_DURATION_SEC", "5.0"))
 CHUNK_TARGET_FRAMES = int(os.getenv("CHUNK_TARGET_FRAMES", "81"))
 
-# Re-anchor interval for chunk chaining: re-anchor EVERY chunk (1) so every chunk
-# gets a fresh Qwen 2D anime anchor frame matching its control video, eliminating ghosting and drift.
+# Re-anchor mode:
+# - "every_chunk": every chunk redraws the real source frame at its start time with Qwen (default).
+# - "every_n": keep legacy behavior using REANCHOR_EVERY_N_CHUNKS interval.
+# - "auto": chain from last generated frame, but re-anchor when start alignment check fails.
+REANCHOR_MODE = os.getenv("REANCHOR_MODE", "every_chunk").lower().strip()
 REANCHOR_EVERY_N_CHUNKS = int(os.getenv("REANCHOR_EVERY_N_CHUNKS", "1"))
+
+# Pose / structure alignment threshold for "auto" re-anchor mode:
+# Starting guess (0.60, range 0.0 to 1.0) comparing 256px Canny edge maps + SSIM/NCC.
+# Must be tuned on real footage.
+ALIGNMENT_THRESHOLD = float(os.getenv("ALIGNMENT_THRESHOLD", "0.60"))
+
+# Fixed Qwen seed per job to prevent visual pop / style drift between keyframes
+QWEN_SEED = int(os.getenv("QWEN_SEED", "42"))
 
 # ---------------------------------------------------------------------------
 # Quality gate thresholds and retry settings
