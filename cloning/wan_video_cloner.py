@@ -982,11 +982,38 @@ class WanVideoCloner:
 
             # 4. LoRA vs non-LoRA routing
             if active_use_lora:
+                lora_high = FUN_CONTROL_LORA_HIGH
+                lora_low = FUN_CONTROL_LORA_LOW
+                loras_base = COMFY_DIR / "models" / "loras"
+                if loras_base.exists():
+                    candidates_high = [
+                        lora_high,
+                        "split_files/loras/wan2.2_fun_control_lightx2v_4steps_lora_v1_high_noise.safetensors",
+                        "split_files/loras/wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors",
+                        "wan2.2_fun_control_lightx2v_4steps_lora_v1_high_noise.safetensors",
+                        "wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors",
+                    ]
+                    for cand in candidates_high:
+                        if (loras_base / cand).exists():
+                            lora_high = cand
+                            break
+                    candidates_low = [
+                        lora_low,
+                        "split_files/loras/wan2.2_fun_control_lightx2v_4steps_lora_v1_low_noise.safetensors",
+                        "split_files/loras/wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors",
+                        "wan2.2_fun_control_lightx2v_4steps_lora_v1_low_noise.safetensors",
+                        "wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors",
+                    ]
+                    for cand in candidates_low:
+                        if (loras_base / cand).exists():
+                            lora_low = cand
+                            break
+
                 if nodes["lora_high"] in workflow:
-                    workflow[nodes["lora_high"]]["inputs"]["lora_name"] = FUN_CONTROL_LORA_HIGH
+                    workflow[nodes["lora_high"]]["inputs"]["lora_name"] = lora_high
                     workflow[nodes["shift_high"]]["inputs"]["model"] = [nodes["lora_high"], 0]
                 if nodes["lora_low"] in workflow:
-                    workflow[nodes["lora_low"]]["inputs"]["lora_name"] = FUN_CONTROL_LORA_LOW
+                    workflow[nodes["lora_low"]]["inputs"]["lora_name"] = lora_low
                     workflow[nodes["shift_low"]]["inputs"]["model"] = [nodes["lora_low"], 0]
             else:
                 # Bypass LoRAs: route UNET directly to ModelSamplingSD3

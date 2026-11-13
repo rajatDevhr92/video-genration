@@ -69,8 +69,8 @@ FUN_CONTROL_LORA_LOW = os.getenv(
 )
 
 # Diffusion parameters for Fun Control.
-# Default: 20 steps and no LoRA.
-USE_LIGHTNING_LORA = os.getenv("USE_LIGHTNING_LORA", "False").lower() in ("1", "true", "yes")
+# Default: 4 steps with Lightning LoRA for fast generation (~1-2 mins per chunk instead of ~10 mins).
+USE_LIGHTNING_LORA = os.getenv("USE_LIGHTNING_LORA", "True").lower() in ("1", "true", "yes")
 FUN_CONTROL_STEPS = int(os.getenv("FUN_CONTROL_STEPS", "20"))
 FUN_CONTROL_STEPS_LORA = int(os.getenv("FUN_CONTROL_STEPS_LORA", "4"))
 FUN_CONTROL_CFG = float(os.getenv("FUN_CONTROL_CFG", "2.0"))
