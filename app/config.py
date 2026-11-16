@@ -73,13 +73,22 @@ FUN_CONTROL_LORA_LOW = os.getenv(
 USE_LIGHTNING_LORA = os.getenv("USE_LIGHTNING_LORA", "True").lower() in ("1", "true", "yes")
 FUN_CONTROL_STEPS = int(os.getenv("FUN_CONTROL_STEPS", "20"))
 FUN_CONTROL_STEPS_LORA = int(os.getenv("FUN_CONTROL_STEPS_LORA", "4"))
-FUN_CONTROL_CFG = float(os.getenv("FUN_CONTROL_CFG", "2.0"))
+# CFG 4.0 (boosted from 2.0) empowers positive anime prompt to strongly override realistic textures.
+FUN_CONTROL_CFG = float(os.getenv("FUN_CONTROL_CFG", "4.0"))
 FUN_CONTROL_SAMPLER = os.getenv("FUN_CONTROL_SAMPLER", "euler")
 FUN_CONTROL_SCHEDULER = os.getenv("FUN_CONTROL_SCHEDULER", "simple")
 FUN_CONTROL_SHIFT = float(os.getenv("FUN_CONTROL_SHIFT", "5.0"))
 
 # Control video generation mode: "pose+depth", "pose", "depth" (default), "canny"
 CONTROL_VIDEO_MODE = os.getenv("CONTROL_VIDEO_MODE", "depth")
+
+# Depth stylization parameters for anime conversion:
+# 1. Blur sigma: 2.0 - 2.5 removes skin pores, micro-textures, and photographic noise.
+DEPTH_BLUR_SIGMA = float(os.getenv("DEPTH_BLUR_SIGMA", "2.2"))
+# 2. Posterize / Levels: 8 - 10 discrete steps turns smooth 3D gradient into flat 2D cel-shaded layers.
+DEPTH_POSTERIZE_LEVELS = int(os.getenv("DEPTH_POSTERIZE_LEVELS", "10"))
+# 3. Depth control strength: 0.55 - 0.62 softens depth contrast towards neutral gray so anime style dominates.
+DEPTH_CONTROL_STRENGTH = float(os.getenv("DEPTH_CONTROL_STRENGTH", "0.60"))
 
 # Multi-chunk slicing settings: 5.0s at 16 FPS = 81 frames (4n + 1 required by Wan 2.2)
 CHUNK_DURATION_SEC = float(os.getenv("CHUNK_DURATION_SEC", "5.0"))

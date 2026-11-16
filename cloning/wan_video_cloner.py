@@ -28,6 +28,9 @@ from app.config import (
     CLONING_BACKEND,
     COMFY_DIR,
     CONTROL_VIDEO_MODE,
+    DEPTH_BLUR_SIGMA,
+    DEPTH_CONTROL_STRENGTH,
+    DEPTH_POSTERIZE_LEVELS,
     FUN_CONTROL_CFG,
     FUN_CONTROL_CLIP_MODEL,
     FUN_CONTROL_HIGH_NOISE_MODEL,
@@ -123,8 +126,45 @@ def _generate_control_video_ffmpeg(
         raise RuntimeError(f"FFmpeg control video generation failed: {res.stderr}")
 
 
+def _stylize_depth_frame_for_anime(
+    depth_norm: Any,
+    blur_sigma: float = DEPTH_BLUR_SIGMA,
+    posterize_levels: int = DEPTH_POSTERIZE_LEVELS,
+    strength: float = DEPTH_CONTROL_STRENGTH,
+) -> Any:
+    """
+    Applies anime cel-shading stylization to a normalized 0-255 depth map:
+    1. Gaussian Blur: Removes skin pores, muscle micro-bumps, and photographic noise.
+    2. Posterize / Levels: Quantizes continuous 3D volume into 8-10 discrete cel-shaded steps.
+    3. Contrast Softening: Blends towards neutral mid-gray 128 so depth guides general motion
+       without forcing realistic photorealistic skin curves.
+    """
+    import cv2
+    import numpy as np
+
+    # 1. Gaussian Blur (removes micro-bumps & skin pores)
+    ksize = int(round(blur_sigma * 3)) | 1
+    ksize = max(3, ksize)
+    blurred = cv2.GaussianBlur(depth_norm, (ksize, ksize), blur_sigma)
+
+    # 2. Posterize / Levels (converts smooth 3D gradient into flat 2D anime cel-shaded layers)
+    if posterize_levels > 1:
+        n_levels = max(2, min(32, int(posterize_levels)))
+        step = 255.0 / (n_levels - 1)
+        bucket = 256.0 / n_levels
+        posterized = np.clip(np.floor(blurred.astype(np.float32) / bucket) * step, 0, 255).astype(np.uint8)
+    else:
+        posterized = blurred
+
+    # 3. Soften contrast towards neutral mid-gray (128) so positive anime prompt dominates
+    active_strength = max(0.2, min(1.0, float(strength)))
+    neutral = np.full_like(posterized, 128)
+    soft_depth = cv2.addWeighted(posterized, active_strength, neutral, 1.0 - active_strength, 0)
+    return soft_depth
+
+
 def _process_depth_frames(raw_frames: List[Any], target_w: int, target_h: int) -> List[Any]:
-    """Generates Depth Anything V2 pure grayscale depth frames (no colormap)."""
+    """Generates Depth Anything V2 pure grayscale depth frames stylized for 2D anime (blur + posterize + soft contrast)."""
     import numpy as np
     import cv2
     try:
@@ -142,8 +182,10 @@ def _process_depth_frames(raw_frames: List[Any], target_w: int, target_h: int) -
             depth_norm = cv2.normalize(depth_arr, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
             if depth_norm.shape[1] != target_w or depth_norm.shape[0] != target_h:
                 depth_norm = cv2.resize(depth_norm, (target_w, target_h), interpolation=cv2.INTER_LINEAR)
-            # Standard Wan Fun Control grayscale depth map (3 identical grayscale channels, no colormap)
-            depth_bgr = cv2.cvtColor(depth_norm, cv2.COLOR_GRAY2BGR)
+
+            # Apply anime cel-shaded stylization (blur + posterize + softened contrast)
+            styled_depth = _stylize_depth_frame_for_anime(depth_norm)
+            depth_bgr = cv2.cvtColor(styled_depth, cv2.COLOR_GRAY2BGR)
             processed.append(depth_bgr)
         return processed
     except Exception as e:
@@ -157,7 +199,8 @@ def _process_depth_frames(raw_frames: List[Any], target_w: int, target_h: int) -
             mag = cv2.magnitude(sobelx, sobely)
             mag_norm = cv2.normalize(mag, None, 0, 180, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
             depth_proxy = cv2.addWeighted(blurred, 0.6, mag_norm, 0.4, 0)
-            depth_bgr = cv2.cvtColor(depth_proxy, cv2.COLOR_GRAY2BGR)
+            styled_depth = _stylize_depth_frame_for_anime(depth_proxy)
+            depth_bgr = cv2.cvtColor(styled_depth, cv2.COLOR_GRAY2BGR)
             processed.append(depth_bgr)
         return processed
 
@@ -349,6 +392,48 @@ def check_not_control_video(candidate_path: Path, control_video_path: Path, max_
     except Exception as e:
         logger.warning(f"[SANITY CHECK] Could not compare candidate with control video: {e}")
         return True, 0.0
+
+
+def _stitch_chunks_with_crossfade(
+    chunk_paths: List[Path],
+    output_path: Path,
+    crossfade_dur: float = 0.3,
+    chunk_duration: float = 5.0,
+) -> bool:
+    """Stitches chunks using FFmpeg xfade filter for seamless cross-dissolve transitions."""
+    if len(chunk_paths) < 2 or crossfade_dur <= 0:
+        return False
+    try:
+        inputs = []
+        for p in chunk_paths:
+            inputs.extend(["-i", str(p)])
+
+        filter_parts = []
+        last_v = "0:v"
+        accumulated_offset = max(0.5, chunk_duration - crossfade_dur)
+        for idx in range(1, len(chunk_paths)):
+            next_v = f"v{idx}"
+            filter_parts.append(
+                f"[{last_v}][{idx}:v]xfade=transition=fade:duration={crossfade_dur:.3f}:offset={accumulated_offset:.3f}[{next_v}]"
+            )
+            last_v = next_v
+            accumulated_offset += max(0.5, chunk_duration - crossfade_dur)
+
+        filter_str = ";".join(filter_parts)
+        cmd = [
+            "ffmpeg", "-y",
+            *inputs,
+            "-filter_complex", filter_str,
+            "-map", f"[{last_v}]",
+            "-c:v", "libx264",
+            "-pix_fmt", "yuv420p",
+            str(output_path),
+        ]
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        return res.returncode == 0 and output_path.exists() and output_path.stat().st_size > 1000
+    except Exception as e:
+        logger.warning(f"[STITCH] Crossfade stitch notice ({e}). Falling back to standard concat.")
+        return False
 
 
 class WanVideoCloner:
@@ -1777,32 +1862,50 @@ class WanVideoCloner:
         if len(completed_chunk_paths) == 1:
             stitched_video = completed_chunk_paths[0]
         else:
-            concat_list_file = job_dir / "concat_chunks.txt"
-            with open(concat_list_file, "w", encoding="utf-8") as f:
-                for p in completed_chunk_paths:
-                    f.write(f"file '{p.resolve()}'\n")
-
             stitched_video = job_dir / "temp_stitched_all_chunks.mp4"
-            concat_cmd = [
-                "ffmpeg", "-y",
-                "-f", "concat",
-                "-safe", "0",
-                "-i", str(concat_list_file),
-                "-c", "copy",
-                str(stitched_video),
-            ]
-            res_cat = subprocess.run(concat_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            if res_cat.returncode != 0:
-                concat_cmd_reencode = [
+
+            # Try smooth crossfade first if multiple chunks exist
+            xfade_success = False
+            if len(completed_chunk_paths) >= 2:
+                try:
+                    xfade_success = _stitch_chunks_with_crossfade(
+                        completed_chunk_paths,
+                        stitched_video,
+                        crossfade_dur=0.3,
+                        chunk_duration=CHUNK_SEC,
+                    )
+                    if xfade_success:
+                        logger.info(f"[WAN CLONER] Seamless cross-fade (xfade) stitching completed successfully.")
+                        print(f"[WAN CLONER] Seamless cross-fade (xfade) stitching completed successfully.")
+                except Exception as xe:
+                    logger.warning(f"[WAN CLONER] Crossfade stitch notice ({xe}). Falling back to concat.")
+
+            if not xfade_success:
+                concat_list_file = job_dir / "concat_chunks.txt"
+                with open(concat_list_file, "w", encoding="utf-8") as f:
+                    for p in completed_chunk_paths:
+                        f.write(f"file '{p.resolve()}'\n")
+
+                concat_cmd = [
                     "ffmpeg", "-y",
                     "-f", "concat",
                     "-safe", "0",
                     "-i", str(concat_list_file),
-                    "-c:v", "libx264",
-                    "-pix_fmt", "yuv420p",
+                    "-c", "copy",
                     str(stitched_video),
                 ]
-                subprocess.run(concat_cmd_reencode, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+                res_cat = subprocess.run(concat_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                if res_cat.returncode != 0:
+                    concat_cmd_reencode = [
+                        "ffmpeg", "-y",
+                        "-f", "concat",
+                        "-safe", "0",
+                        "-i", str(concat_list_file),
+                        "-c:v", "libx264",
+                        "-pix_fmt", "yuv420p",
+                        str(stitched_video),
+                    ]
+                    subprocess.run(concat_cmd_reencode, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
 
         # Mux full original audio track onto output
         logger.info(f"[WAN CLONER] Muxing original audio onto output video...")
